@@ -1,0 +1,6 @@
+{
+  "name": "Counter",
+  "description": "Dashboard for managing student bookings and attendance check-ins/outs",
+  "repository": "https://github.com/ilmn25/260131-web",
+  "requestFramePermissions": []
+}
