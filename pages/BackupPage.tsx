@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
@@ -29,7 +30,8 @@ const BackupPage: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 10000);
+    // Update every second to show seconds ticking
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -187,6 +189,7 @@ const BackupPage: React.FC = () => {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
     hour12: false
   });
 
@@ -386,7 +389,7 @@ const BackupPage: React.FC = () => {
       {/* Confirmation Modal */}
       {confirmModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmModal(null)}>
-          <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden p-8 md:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-sm overflow-hidden p-8 md:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
             <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.type === 'restore' ? 'bg-orange-50' : 'bg-red-50'}`}>
               {confirmModal.type === 'restore' ? (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 md:h-8 md:w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>

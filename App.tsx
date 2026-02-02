@@ -1,6 +1,8 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from './services/supabaseClient';
+import { api } from './services/api';
 import AttendancePage from './pages/AttendancePage';
 import CoursesPage from './pages/CoursesPage';
 import StudentsPage from './pages/StudentsPage';
@@ -10,6 +12,7 @@ import AuthPage from './pages/AuthPage';
 import OrgSelectionPage from './pages/OrgSelectionPage';
 import ParentDashboard from './pages/ParentDashboard';
 import { useTranslation } from 'react-i18next';
+import { Organization } from './types';
 
 const NavLink: React.FC<{ to: string; icon: React.ReactNode; children: React.ReactNode }> = ({ to, icon, children }) => {
   const location = useLocation();
@@ -117,10 +120,19 @@ const UserProfile: React.FC<{ email: string; onLogout: () => void }> = ({ email,
 const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ children, userEmail }) => {
   const location = useLocation();
   const { t } = useTranslation();
+  const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   
   const isDashboardView = location.pathname === '/dashboard';
   const match = location.pathname.match(/^\/org\/([^/]+)/);
   const orgId = match ? match[1] : null;
+
+  useEffect(() => {
+    if (orgId) {
+      api.getOrganization(orgId).then(setCurrentOrg).catch(() => setCurrentOrg(null));
+    } else {
+      setCurrentOrg(null);
+    }
+  }, [orgId]);
 
   // Determine the display name for the header
   const getPageTitle = () => {
@@ -158,9 +170,9 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
               )}
               <div className="flex flex-col min-w-0">
                 <span className="text-[8px] sm:text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] sm:tracking-[0.3em] opacity-80 leading-none mb-1 sm:mb-1.5 truncate">
-                  {t('app.name')}
+                  {currentOrg ? currentOrg.name : t('app.name')}
                 </span>
-                <h1 className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 tracking-tight truncate max-w-[120px] sm:max-w-md">
+                <h1 className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 tracking-tight truncate max-w-[120px] sm:text-nowrap sm:max-w-md">
                   {getPageTitle()}
                 </h1>
               </div>
