@@ -52,9 +52,10 @@ const ImportPage: React.FC = () => {
   const [resolvedBookings, setResolvedBookings] = useState<ResolvedBooking[]>([]);
   const [importSuccessCount, setImportSuccessCount] = useState(0);
 
-  // Duplicate detection state
+  // Modal states
   const [duplicateBookings, setDuplicateBookings] = useState<Booking[]>([]);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
 
   const uniqueCsvStudents = useMemo(() => Array.from(new Set(csvData.map(r => r.student))), [csvData]);
   const uniqueCsvCourses = useMemo(() => Array.from(new Set(csvData.map(r => r.course))), [csvData]);
@@ -123,7 +124,7 @@ const ImportPage: React.FC = () => {
 
           setStudentMap(sMap);
           setCourseMap(cMap);
-          setStep(2);
+          setShowBackupModal(true);
         } catch (err: any) {
           alert('Failed to fetch org details: ' + err.message);
         } finally {
@@ -132,6 +133,19 @@ const ImportPage: React.FC = () => {
       }
     };
     reader.readAsText(file);
+  };
+  
+  const handleProceedToMapping = () => {
+    setShowBackupModal(false);
+    setStep(2);
+  };
+  
+  const handleGoToBackup = () => {
+    navigate(`/org/${orgId}/backup`);
+  };
+  
+  const handleCancelBackupDialog = () => {
+    setShowBackupModal(false);
   };
 
   const calculateEndTime = (startTime: string, duration: number) => {
@@ -489,6 +503,30 @@ const ImportPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showBackupModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={handleCancelBackupDialog}>
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="px-10 py-8 border-b border-amber-100 bg-amber-50/30 shrink-0 flex items-start space-x-6">
+                    <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-black text-amber-900 tracking-tight">{t('import_page.backup_title')}</h3>
+                        <p className="text-amber-700/80 text-sm font-medium mt-1">{t('import_page.backup_subtitle')}</p>
+                    </div>
+                </div>
+                
+                <div className="p-10 bg-slate-50 flex flex-col sm:flex-row items-center justify-end gap-3 shrink-0">
+                    <button onClick={handleCancelBackupDialog} className="w-full sm:w-auto px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">{t('common.cancel')}</button>
+                    <button onClick={handleProceedToMapping} className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-2xl font-black shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">{t('import_page.continue_anyway')}</button>
+                    <button onClick={handleGoToBackup} className="w-full sm:w-auto px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black shadow-xl shadow-amber-100 transition-all active:scale-95 text-xs uppercase tracking-widest">{t('import_page.go_to_backup')}</button>
+                </div>
+            </div>
+        </div>
+      )}
 
       {showDuplicateModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={handleCancelDuplicateCheck}>

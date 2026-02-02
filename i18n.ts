@@ -49,7 +49,11 @@ const resources = {
         duplicate_subtitle: "{{count}} bookings appear to already exist. How would you like to proceed?",
         import_all: "Import All Anyway",
         skip_duplicates: "Skip Duplicates",
-        cancel_import: "Cancel Import"
+        cancel_import: "Cancel Import",
+        backup_title: "Backup Recommended",
+        backup_subtitle: "Before importing new data, it's a good idea to create a backup of your current workspace to prevent accidental data loss.",
+        continue_anyway: "Continue without Backup",
+        go_to_backup: "Go to Backup Page"
       }
     }
   },
@@ -98,7 +102,11 @@ const resources = {
         duplicate_subtitle: "我们发现 {{count}} 条预约似乎已存在。您希望如何处理？",
         import_all: "全部导入",
         skip_duplicates: "跳过重复项",
-        cancel_import: "取消导入"
+        cancel_import: "取消导入",
+        backup_title: "建议备份",
+        backup_subtitle: "在导入新数据之前，建议您创建当前工作区的备份，以防意外数据丢失。",
+        continue_anyway: "继续导入（不备份）",
+        go_to_backup: "前往备份页面"
       }
     }
   },
@@ -147,7 +155,11 @@ const resources = {
         duplicate_subtitle: "我們發現 {{count}} 筆預約似乎已存在。您希望如何處理？",
         import_all: "全部匯入",
         skip_duplicates: "略過重複項",
-        cancel_import: "取消匯入"
+        cancel_import: "取消匯入",
+        backup_title: "建議備份",
+        backup_subtitle: "在匯入新資料之前，建議您建立目前工作區的備份，以防意外資料遺失。",
+        continue_anyway: "繼續匯入（不備份）",
+        go_to_backup: "前往備份頁面"
       }
     }
   },
@@ -196,7 +208,11 @@ const resources = {
         duplicate_subtitle: "{{count}}件の予約が既に存在するようです。どのように処理しますか？",
         import_all: "すべてインポート",
         skip_duplicates: "重複をスキップ",
-        cancel_import: "インポートをキャンセル"
+        cancel_import: "インポートをキャンセル",
+        backup_title: "バックアップを推奨",
+        backup_subtitle: "新しいデータをインポートする前に、偶発的なデータ損失を防ぐために、現在のワークスペースのバックアップを作成することをお勧めします。",
+        continue_anyway: "バックアップせずに続行",
+        go_to_backup: "バックアップページへ移動"
       }
     }
   },
@@ -245,7 +261,11 @@ const resources = {
         duplicate_subtitle: "{{count}}개의 예약이 이미 존재하는 것 같습니다. 어떻게 진행하시겠습니까?",
         import_all: "모두 가져오기",
         skip_duplicates: "중복 항목 건너뛰기",
-        cancel_import: "가져오기 취소"
+        cancel_import: "가져오기 취소",
+        backup_title: "백업 권장",
+        backup_subtitle: "새 데이터를 가져오기 전에 현재 작업 공간의 백업을 만들어 예기치 않은 데이터 손실을 방지하는 것이 좋습니다.",
+        continue_anyway: "백업 없이 계속",
+        go_to_backup: "백업 페이지로 이동"
       }
     }
   }
