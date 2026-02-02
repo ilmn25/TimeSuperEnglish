@@ -43,7 +43,7 @@ const AttendancePage: React.FC = () => {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
   const [manualModalConfig, setManualModalConfig] = useState<{ id: string, name: string } | null>(null);
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
 
   const isToday = date === hktToday;
   const monthName = viewDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
@@ -6,7 +5,7 @@ import { Booking, Course, Student, Attendance } from '../types';
 import TimelinePanel from '../components/TimelinePanel';
 import { useTranslation } from 'react-i18next';
 
-type SortField = 'date' | 'time' | 'student' | 'course';
+type SortField = 'date' | 'time' | 'student' | 'course' | 'status';
 type SortOrder = 'asc' | 'desc';
 type BookingStatus = 'blue' | 'green' | 'yellow' | 'red';
 
@@ -38,6 +37,7 @@ const BookingsPage: React.FC = () => {
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [filterStudent, setFilterStudent] = useState('');
   const [filterCourse, setFilterCourse] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
 
   // Timeline State
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
@@ -157,7 +157,14 @@ const BookingsPage: React.FC = () => {
       const matchesCourse = !filterCourse || b.course_id === filterCourse;
       const matchesDate = selectedDates.length === 0 || selectedDates.includes(b.date);
       return matchesStudent && matchesCourse && matchesDate;
+    }).map(b => {
+      const dayAttendances = monthAttendances.filter(a => a.date === b.date && a.student_id === b.student_id);
+      return { ...b, calculatedStatus: getBookingStatus(b, dayAttendances) };
     });
+
+    if (filterStatus) {
+      result = result.filter(b => b.calculatedStatus === filterStatus);
+    }
 
     return result.sort((a, b) => {
       let comparison = 0;
@@ -174,10 +181,44 @@ const BookingsPage: React.FC = () => {
         case 'course':
           comparison = (a.courses?.name || '').localeCompare(b.courses?.name || '');
           break;
+        case 'status':
+          const statusPriority = { red: 0, yellow: 1, green: 2, blue: 3 };
+          comparison = (statusPriority[a.calculatedStatus] || 0) - (statusPriority[b.calculatedStatus] || 0);
+          break;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [monthBookings, filterStudent, filterCourse, selectedDates, sortField, sortOrder]);
+  }, [monthBookings, monthAttendances, filterStudent, filterCourse, selectedDates, filterStatus, sortField, sortOrder, getBookingStatus]);
+
+  const summaryStats = useMemo(() => {
+    let totalMinutes = 0;
+    let attendedCount = 0;
+    let missedCount = 0;
+    let futureCount = 0;
+
+    processedBookings.forEach(booking => {
+      // Time calc
+      const [sH, sM] = booking.start.split(':').map(Number);
+      const [eH, eM] = booking.end.split(':').map(Number);
+      totalMinutes += (eH * 60 + eM) - (sH * 60 + sM);
+
+      const status = booking.calculatedStatus;
+      if (status === 'green' || status === 'yellow') attendedCount++;
+      else if (status === 'red') missedCount++;
+      else if (status === 'blue') futureCount++;
+    });
+
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+
+    return {
+      totalEntries: processedBookings.length,
+      totalTime: `${hours}h ${mins}m`,
+      attended: attendedCount,
+      missed: missedCount,
+      future: futureCount
+    };
+  }, [processedBookings]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -263,6 +304,7 @@ const BookingsPage: React.FC = () => {
     setSelectedDates([]);
     setFilterStudent('');
     setFilterCourse('');
+    setFilterStatus('');
   };
 
   // Status calculation for dots (respecting student/course filters)
@@ -428,7 +470,7 @@ const BookingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Student & Course Filters */}
+        {/* Student, Course & Status Filters */}
         <div className="px-6 py-4 bg-slate-50/40 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
             <div className="flex-1 group">
               <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_student')}</label>
@@ -469,6 +511,58 @@ const BookingsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            <div className="flex-1 group">
+              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_status')}</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <select 
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-700 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">{t('bookings.all_statuses')}</option>
+                  <option value="red">{t('status.missed')}</option>
+                  <option value="green">{t('status.attended')}</option>
+                  <option value="blue">{t('status.future')}</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+            </div>
+        </div>
+      </div>
+
+      {/* Filtered Summary Section */}
+      <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('bookings.summary_title')}</h3>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+           <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col justify-between">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('bookings.total_entries')}</span>
+              <span className="text-2xl font-black text-slate-900 leading-none">{summaryStats.totalEntries}</span>
+           </div>
+           <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col justify-between">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{t('bookings.total_time')}</span>
+              <span className="text-2xl font-black text-indigo-600 leading-none">{summaryStats.totalTime}</span>
+           </div>
+           <div className="p-4 bg-green-50/50 border border-green-100 rounded-2xl flex flex-col justify-between">
+              <span className="text-[10px] font-black text-green-500/70 uppercase tracking-widest mb-2">{t('status.attended')}</span>
+              <span className="text-2xl font-black text-green-600 leading-none">{summaryStats.attended}</span>
+           </div>
+           <div className="p-4 bg-red-50/50 border border-red-100 rounded-2xl flex flex-col justify-between">
+              <span className="text-[10px] font-black text-red-400/70 uppercase tracking-widest mb-2">{t('status.missed')}</span>
+              <span className="text-2xl font-black text-red-600 leading-none">{summaryStats.missed}</span>
+           </div>
+           <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl flex flex-col justify-between col-span-2 md:col-span-1">
+              <span className="text-[10px] font-black text-blue-400/70 uppercase tracking-widest mb-2">{t('status.future')}</span>
+              <span className="text-2xl font-black text-blue-600 leading-none">{summaryStats.future}</span>
+           </div>
         </div>
       </div>
 
@@ -488,14 +582,13 @@ const BookingsPage: React.FC = () => {
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('time')}>{t('bookings.time')} {renderSortArrow('time')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('student')}>{t('bookings.student')} {renderSortArrow('student')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('course')}>{t('bookings.course')} {renderSortArrow('course')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.status')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('status')}>{t('bookings.status')} {renderSortArrow('status')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('bookings.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {processedBookings.map(booking => {
-                  const dayAttendances = monthAttendances.filter(a => a.date === booking.date && a.student_id === booking.student_id);
-                  const status = getBookingStatus(booking, dayAttendances);
+                  const status = booking.calculatedStatus;
                   const isSelectedForTimeline = selectedTimelineInfo?.studentId === booking.student_id && selectedTimelineInfo?.date === booking.date;
                   
                   return (
