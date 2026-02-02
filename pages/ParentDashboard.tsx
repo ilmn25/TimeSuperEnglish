@@ -68,6 +68,7 @@ const ParentDashboard: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
   
   // Dragging State (for calendar)
   const [isDragging, setIsDragging] = useState(false);
@@ -213,11 +214,40 @@ const ParentDashboard: React.FC = () => {
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, [isDragging, dragStart, dragEnd, selectedDates]);
 
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const renderSortArrow = (field: SortField) => {
+    if (sortField !== field) return null;
+    return <span className="ml-1 text-[10px]">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  const uniqueCoursesForFilter = useMemo(() => {
+    const allBookingsWithCourses = childrenData.flatMap(c => c.bookings).filter(b => b.courses);
+    const uniqueCoursesMap = new Map<string, { id: string, name: string }>();
+    allBookingsWithCourses.forEach(b => {
+        if (b.courses && !uniqueCoursesMap.has(b.courses.id)) {
+            uniqueCoursesMap.set(b.courses.id, { id: b.courses.id, name: b.courses.name });
+        }
+    });
+    return Array.from(uniqueCoursesMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [childrenData]);
+
   // Process all bookings for the Bookings View
   const processedAllBookings = useMemo(() => {
     const all = childrenData.flatMap(c => c.bookings.map(b => {
       const dayAttendances = c.attendances.filter(a => a.date === b.date);
-      return { ...b, calculatedStatus: getBookingStatus(b, dayAttendances) };
+      return { 
+        ...b, 
+        students: c.student,
+        calculatedStatus: getBookingStatus(b, dayAttendances) 
+      };
     }));
 
     let result = all.filter(b => {
@@ -232,15 +262,29 @@ const ParentDashboard: React.FC = () => {
     }
 
     return result.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      const timeCompare = a.start.localeCompare(b.start);
+      const studentCompare = (a.students?.name || '').localeCompare(b.students?.name || '');
+      const courseCompare = (a.courses?.name || '').localeCompare(b.courses?.name || '');
+      const statusPriority = { red: 0, yellow: 1, green: 2, blue: 3 };
+      const statusCompare = (statusPriority[a.calculatedStatus] || 0) - (statusPriority[b.calculatedStatus] || 0);
+
       let comparison = 0;
       switch (sortField) {
-        case 'date': comparison = a.date.localeCompare(b.date); break;
-        case 'time': comparison = a.start.localeCompare(b.start); break;
-        case 'student': comparison = (a.students?.name || '').localeCompare(b.students?.name || ''); break;
-        case 'course': comparison = (a.courses?.name || '').localeCompare(b.courses?.name || ''); break;
-        case 'status': 
-          const p = { red: 0, yellow: 1, green: 2, blue: 3 };
-          comparison = (p[a.calculatedStatus] || 0) - (p[b.calculatedStatus] || 0);
+        case 'date':
+          comparison = dateCompare !== 0 ? dateCompare : timeCompare;
+          break;
+        case 'time':
+          comparison = timeCompare !== 0 ? timeCompare : dateCompare;
+          break;
+        case 'student':
+          comparison = studentCompare !== 0 ? studentCompare : (dateCompare !== 0 ? dateCompare : timeCompare);
+          break;
+        case 'course':
+          comparison = courseCompare !== 0 ? courseCompare : (dateCompare !== 0 ? dateCompare : timeCompare);
+          break;
+        case 'status':
+          comparison = statusCompare !== 0 ? statusCompare : (dateCompare !== 0 ? dateCompare : timeCompare);
           break;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
@@ -394,7 +438,7 @@ const ParentDashboard: React.FC = () => {
         </button>
       </div>
 
-      {/* Shared Calendar (Optional behavior: shared across views or specific?) */}
+      {/* Shared Calendar */}
       <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-w-none' : 'max-w-3xl mx-auto'}`}>
         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
           <div className="flex items-center space-x-1">
@@ -495,6 +539,74 @@ const ParentDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {activeTab === 'bookings' && (
+          <div className="px-6 py-4 bg-slate-50/40 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 group">
+              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_student')}</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                </div>
+                <select 
+                  value={filterStudent}
+                  onChange={(e) => setFilterStudent(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-700 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">{t('bookings.all_students')}</option>
+                  {childrenData.map(c => <option key={c.student.id} value={c.student.id}>{c.student.name}</option>)}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 group">
+              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_course')}</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.246.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                </div>
+                <select 
+                  value={filterCourse}
+                  onChange={(e) => setFilterCourse(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-700 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">{t('bookings.all_courses')}</option>
+                  {uniqueCoursesForFilter.map(course => (
+                    <option key={course.id} value={course.id}>{course.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 group">
+              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_status')}</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <select 
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-700 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">{t('bookings.all_statuses')}</option>
+                  <option value="red">{t('status.missed')}</option>
+                  <option value="green">{t('status.attended')}</option>
+                  <option value="blue">{t('status.future')}</option>
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {activeTab === 'attendance' ? (
@@ -525,69 +637,46 @@ const ParentDashboard: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8 animate-in fade-in duration-500">
-          {/* Bookings View Specific: Filters, Summary, Table */}
-          <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm p-6 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_student')}</label>
-                <select 
-                  value={filterStudent}
-                  onChange={(e) => setFilterStudent(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 appearance-none"
-                >
-                  <option value="">{t('bookings.all_students')}</option>
-                  {childrenData.map(c => <option key={c.student.id} value={c.student.id}>{c.student.name}</option>)}
-                </select>
+          {/* Summary Section */}
+          <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden">
+            <button
+              onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
+              className="w-full flex items-center justify-between p-6 text-left"
+              aria-expanded={isSummaryExpanded}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('bookings.summary_title')}</h3>
               </div>
-              <div>
-                <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_course')}</label>
-                <select 
-                  value={filterCourse}
-                  onChange={(e) => setFilterCourse(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 appearance-none"
-                >
-                  <option value="">{t('bookings.all_courses')}</option>
-                  {Array.from(new Set(childrenData.flatMap(c => c.bookings.map(b => b.courses?.name)).filter(Boolean))).map(name => (
-                    <option key={name} value={childrenData.flatMap(c => c.bookings).find(b => b.courses?.name === name)?.course_id}>{name}</option>
-                  ))}
-                </select>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-slate-400 transition-transform duration-300 ${isSummaryExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isSummaryExpanded ? 'max-h-96' : 'max-h-0'}`}>
+              <div className="px-6 pb-6 pt-0">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{t('bookings.total_entries')}</span>
+                    <span className="text-xl font-black text-slate-900">{summaryStats.totalEntries}</span>
+                  </div>
+                  <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-1">{t('bookings.total_time')}</span>
+                    <span className="text-xl font-black text-indigo-600">{summaryStats.totalTime}</span>
+                  </div>
+                  <div className="p-4 bg-green-50/50 border border-green-100 rounded-2xl">
+                    <span className="text-[10px] font-black text-green-500/70 uppercase tracking-widest block mb-1">{t('status.attended')}</span>
+                    <span className="text-xl font-black text-green-600">{summaryStats.attended}</span>
+                  </div>
+                  <div className="p-4 bg-red-50/50 border border-red-100 rounded-2xl">
+                    <span className="text-[10px] font-black text-red-400/70 uppercase tracking-widest block mb-1">{t('status.missed')}</span>
+                    <span className="text-xl font-black text-red-600">{summaryStats.missed}</span>
+                  </div>
+                  <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
+                    <span className="text-[10px] font-black text-blue-400/70 uppercase tracking-widest block mb-1">{t('status.future')}</span>
+                    <span className="text-xl font-black text-blue-600">{summaryStats.future}</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_status')}</label>
-                <select 
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 appearance-none"
-                >
-                  <option value="">{t('bookings.all_statuses')}</option>
-                  <option value="red">{t('status.missed')}</option>
-                  <option value="green">{t('status.attended')}</option>
-                  <option value="blue">{t('status.future')}</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-4 border-t border-slate-50">
-               <div className="p-4 bg-slate-50 rounded-2xl">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{t('bookings.total_entries')}</span>
-                  <span className="text-xl font-black text-slate-900">{summaryStats.totalEntries}</span>
-               </div>
-               <div className="p-4 bg-indigo-50/50 rounded-2xl">
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-1">{t('bookings.total_time')}</span>
-                  <span className="text-xl font-black text-indigo-600">{summaryStats.totalTime}</span>
-               </div>
-               <div className="p-4 bg-green-50/50 rounded-2xl">
-                  <span className="text-[10px] font-black text-green-500/70 uppercase tracking-widest block mb-1">{t('status.attended')}</span>
-                  <span className="text-xl font-black text-green-600">{summaryStats.attended}</span>
-               </div>
-               <div className="p-4 bg-red-50/50 rounded-2xl">
-                  <span className="text-[10px] font-black text-red-400/70 uppercase tracking-widest block mb-1">{t('status.missed')}</span>
-                  <span className="text-xl font-black text-red-600">{summaryStats.missed}</span>
-               </div>
-               <div className="p-4 bg-blue-50/50 rounded-2xl">
-                  <span className="text-[10px] font-black text-blue-400/70 uppercase tracking-widest block mb-1">{t('status.future')}</span>
-                  <span className="text-xl font-black text-blue-600">{summaryStats.future}</span>
-               </div>
             </div>
           </div>
 
@@ -596,38 +685,67 @@ const ParentDashboard: React.FC = () => {
               <table className="w-full text-left min-w-[700px]">
                 <thead className="bg-slate-900 border-b border-slate-800">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('date'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.date')} {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('time'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.time')} {sortField === 'time' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('student'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.student')} {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('course'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.course')} {sortField === 'course' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('status'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.status')} {sortField === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => toggleSort('date')}>{t('bookings.date')} {renderSortArrow('date')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => toggleSort('time')}>{t('bookings.time')} {renderSortArrow('time')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => toggleSort('student')}>{t('bookings.student')} {renderSortArrow('student')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => toggleSort('course')}>{t('bookings.course')} {renderSortArrow('course')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => toggleSort('status')}>{t('bookings.status')} {renderSortArrow('status')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {processedAllBookings.map(b => {
-                    const s = b.calculatedStatus;
-                    const isSelected = selectedTimelineInfo?.studentId === b.student_id && selectedTimelineInfo?.date === b.date;
+                <tbody>
+                  {processedAllBookings.map((booking, index, bookings) => {
+                    const prevBooking = index > 0 ? bookings[index - 1] : null;
+      
+                    const getGroupKey = (b: any, field: SortField): string | number => {
+                      switch (field) {
+                        case 'date': return b.date;
+                        case 'student': return b.students?.id || b.students?.name || '';
+                        case 'course': return b.course_id || b.courses?.name || '';
+                        case 'status': return b.calculatedStatus;
+                        case 'time': return b.start;
+                        default: return b.id;
+                      }
+                    };
+                    
+                    const isNewGroup = !prevBooking || getGroupKey(booking, sortField) !== getGroupKey(prevBooking, sortField);
+                    const status = booking.calculatedStatus;
+                    const isSelected = selectedTimelineInfo?.studentId === booking.student_id && selectedTimelineInfo?.date === booking.date;
+                    
                     return (
-                      <tr key={b.id} onClick={() => handleRowClick(b)} className={`cursor-pointer transition-colors ${isSelected ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col">
-                            <span className="text-xs font-black text-slate-900">{b.date}</span>
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{new Date(b.date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                      <tr 
+                        key={booking.id} 
+                        onClick={() => handleRowClick(booking)} 
+                        className={`transition-colors group cursor-pointer ${isSelected ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}
+                          ${index > 0 ? (isNewGroup ? 'border-t-4 border-slate-200' : 'border-t border-slate-100') : ''}
+                        `}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap align-top">
+                          <div className={`flex flex-col transition-opacity duration-200 ${(sortField === 'date' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
+                            <span className="text-xs font-black text-slate-900">{booking.date}</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{new Date(booking.date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-xs text-indigo-600 font-mono font-black">{b.start.slice(0, 5)} - {b.end.slice(0, 5)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-900 font-bold">{b.students?.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100 w-fit">
-                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: b.courses?.color || '#cbd5e1' }} />
-                            <span className="text-[9px] text-slate-600 font-black uppercase tracking-tight">{b.courses?.name}</span>
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-indigo-600 font-mono font-black align-top">
+                          <div className={`transition-opacity duration-200 ${(sortField === 'time' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
+                            {booking.start.slice(0, 5)} - {booking.end.slice(0, 5)}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <div className={`w-2 h-2 rounded-full ${statusColors[s]}`} />
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${s === 'red' ? 'text-red-500' : s === 'green' ? 'text-green-600' : 'text-blue-500'}`}>
-                              {s === 'red' ? t('status.missed') : s === 'green' ? t('status.attended') : t('status.future')}
+                        <td className="px-6 py-4 whitespace-nowrap align-top">
+                          <div className={`transition-opacity duration-200 ${(sortField === 'student' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
+                            <span className="text-xs text-slate-900 font-bold group-hover:text-indigo-600 transition-colors">{booking.students?.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap align-top">
+                          <div className={`flex items-center space-x-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100 w-fit transition-opacity duration-200 ${(sortField === 'course' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
+                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: booking.courses?.color || '#cbd5e1' }} />
+                            <span className="text-[9px] text-slate-600 font-black uppercase tracking-tight">{booking.courses?.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap align-top">
+                          <div className={`flex items-center space-x-2 transition-opacity duration-200 ${(sortField === 'status' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
+                            <div className={`w-2 h-2 rounded-full ${statusColors[status]}`} />
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${status === 'red' ? 'text-red-500' : status === 'green' ? 'text-green-600' : 'text-blue-500'}`}>
+                              {status === 'red' ? t('status.missed') : status === 'green' ? t('status.attended') : t('status.future')}
                             </span>
                           </div>
                         </td>

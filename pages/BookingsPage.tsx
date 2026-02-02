@@ -208,23 +208,29 @@ const BookingsPage: React.FC = () => {
     }
 
     return result.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      const timeCompare = a.start.localeCompare(b.start);
+      const studentCompare = (a.students?.name || '').localeCompare(b.students?.name || '');
+      const courseCompare = (a.courses?.name || '').localeCompare(b.courses?.name || '');
+      const statusPriority = { red: 0, yellow: 1, green: 2, blue: 3 };
+      const statusCompare = (statusPriority[a.calculatedStatus] || 0) - (statusPriority[b.calculatedStatus] || 0);
+
       let comparison = 0;
       switch (sortField) {
         case 'date':
-          comparison = a.date.localeCompare(b.date);
+          comparison = dateCompare !== 0 ? dateCompare : timeCompare;
           break;
         case 'time':
-          comparison = a.start.localeCompare(b.start);
+          comparison = timeCompare !== 0 ? timeCompare : dateCompare;
           break;
         case 'student':
-          comparison = (a.students?.name || '').localeCompare(b.students?.name || '');
+          comparison = studentCompare !== 0 ? studentCompare : (dateCompare !== 0 ? dateCompare : timeCompare);
           break;
         case 'course':
-          comparison = (a.courses?.name || '').localeCompare(b.courses?.name || '');
+          comparison = courseCompare !== 0 ? courseCompare : (dateCompare !== 0 ? dateCompare : timeCompare);
           break;
         case 'status':
-          const statusPriority = { red: 0, yellow: 1, green: 2, blue: 3 };
-          comparison = (statusPriority[a.calculatedStatus] || 0) - (statusPriority[b.calculatedStatus] || 0);
+          comparison = statusCompare !== 0 ? statusCompare : (dateCompare !== 0 ? dateCompare : timeCompare);
           break;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
@@ -700,8 +706,22 @@ const BookingsPage: React.FC = () => {
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('bookings.actions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {processedBookings.map(booking => {
+              <tbody>
+                {processedBookings.map((booking, index, bookings) => {
+                  const prevBooking = index > 0 ? bookings[index - 1] : null;
+    
+                  const getGroupKey = (b: any, field: SortField): string | number => {
+                    switch (field) {
+                      case 'date': return b.date;
+                      case 'student': return b.students?.id || b.students?.name || '';
+                      case 'course': return b.course_id || b.courses?.name || '';
+                      case 'status': return b.calculatedStatus;
+                      case 'time': return b.start;
+                      default: return b.id;
+                    }
+                  };
+                  
+                  const isNewGroup = !prevBooking || getGroupKey(booking, sortField) !== getGroupKey(prevBooking, sortField);
                   const status = booking.calculatedStatus;
                   const isSelectedForTimeline = selectedTimelineInfo?.studentId === booking.student_id && selectedTimelineInfo?.date === booking.date;
                   
@@ -709,28 +729,36 @@ const BookingsPage: React.FC = () => {
                     <tr 
                       key={booking.id} 
                       onClick={() => handleRowClick(booking)}
-                      className={`transition-colors group cursor-pointer ${isSelectedForTimeline ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}`}
+                      className={`transition-colors group cursor-pointer ${isSelectedForTimeline ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}
+                        ${index > 0 ? (isNewGroup ? 'border-t-4 border-slate-200' : 'border-t border-slate-100') : ''}
+                      `}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col">
+                      <td className="px-6 py-4 whitespace-nowrap align-top">
+                        <div className={`flex flex-col transition-opacity duration-200 ${(sortField === 'date' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
                           <span className="text-xs font-black text-slate-900">{booking.date}</span>
                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
                             {new Date(booking.date).toLocaleDateString('en-US', { weekday: 'short' })}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-indigo-600 font-mono font-black">{booking.start.slice(0, 5)} - {booking.end.slice(0, 5)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-xs text-slate-900 font-bold group-hover:text-indigo-600 transition-colors">{booking.students?.name}</span>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs text-indigo-600 font-mono font-black align-top">
+                        <div className={`transition-opacity duration-200 ${(sortField === 'time' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
+                          {booking.start.slice(0, 5)} - {booking.end.slice(0, 5)}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100 w-fit">
+                      <td className="px-6 py-4 whitespace-nowrap align-top">
+                        <div className={`transition-opacity duration-200 ${(sortField === 'student' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
+                          <span className="text-xs text-slate-900 font-bold group-hover:text-indigo-600 transition-colors">{booking.students?.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap align-top">
+                        <div className={`flex items-center space-x-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100 w-fit transition-opacity duration-200 ${(sortField === 'course' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
                           <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: booking.courses?.color || '#cbd5e1' }} />
                           <span className="text-[9px] text-slate-600 font-black uppercase tracking-tight truncate max-w-[120px]">{booking.courses?.name}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
+                      <td className="px-6 py-4 whitespace-nowrap align-top">
+                        <div className={`flex items-center space-x-2 transition-opacity duration-200 ${(sortField === 'status' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
                            <div className={`w-2 h-2 rounded-full ${statusColors[status]}`} />
                            <span className={`text-[10px] font-black uppercase tracking-widest ${
                              status === 'red' ? 'text-red-500' :
@@ -743,7 +771,7 @@ const BookingsPage: React.FC = () => {
                            </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap align-top" onClick={(e) => e.stopPropagation()}>
                         <button 
                           onClick={() => { setEditingBooking(booking); setFormData({ student_id: booking.student_id, course_id: booking.course_id, date: booking.date, start: booking.start.slice(0,5), end: booking.end.slice(0,5) }); setIsFormOpen(true); }} 
                           className="p-1.5 text-slate-300 hover:text-indigo-600 transition-all rounded-lg hover:bg-indigo-50"
