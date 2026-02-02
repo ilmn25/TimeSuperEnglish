@@ -42,7 +42,14 @@ const resources = {
         complete_subtitle: "{{count}} bookings successfully synchronized.",
         view_bookings: "View Bookings",
         error_file: "CSV file must have a header row and at least one data row.",
-        error_no_data: "No valid data rows found in CSV."
+        error_no_data: "No valid data rows found in CSV.",
+        in_progress_title: "Import in Progress",
+        warning_refresh: "Please do not refresh or close this page until the process is complete.",
+        duplicate_title: "Duplicates Detected",
+        duplicate_subtitle: "{{count}} bookings appear to already exist. How would you like to proceed?",
+        import_all: "Import All Anyway",
+        skip_duplicates: "Skip Duplicates",
+        cancel_import: "Cancel Import"
       }
     }
   },
@@ -84,7 +91,14 @@ const resources = {
         complete_subtitle: "成功同步 {{count}} 条预约。",
         view_bookings: "查看预约",
         error_file: "CSV 文件必须包含表头行和至少一个数据行。",
-        error_no_data: "CSV 中未找到有效数据行。"
+        error_no_data: "CSV 中未找到有效数据行。",
+        in_progress_title: "正在导入",
+        warning_refresh: "在处理完成前，请不要刷新或关闭此页面。",
+        duplicate_title: "检测到重复项",
+        duplicate_subtitle: "我们发现 {{count}} 条预约似乎已存在。您希望如何处理？",
+        import_all: "全部导入",
+        skip_duplicates: "跳过重复项",
+        cancel_import: "取消导入"
       }
     }
   },
@@ -126,7 +140,14 @@ const resources = {
         complete_subtitle: "成功同步 {{count}} 條預約。",
         view_bookings: "查看預約",
         error_file: "CSV 檔案必須包含表頭行和至少一個數據行。",
-        error_no_data: "CSV 中未找到有效數據行。"
+        error_no_data: "CSV 中未找到有效數據行。",
+        in_progress_title: "正在匯入",
+        warning_refresh: "在處理完成前，請不要刷新或關閉此頁面。",
+        duplicate_title: "偵測到重複項",
+        duplicate_subtitle: "我們發現 {{count}} 筆預約似乎已存在。您希望如何處理？",
+        import_all: "全部匯入",
+        skip_duplicates: "略過重複項",
+        cancel_import: "取消匯入"
       }
     }
   },
@@ -168,7 +189,14 @@ const resources = {
         complete_subtitle: "{{count}} 件の予約が正常に同期されました。",
         view_bookings: "予約を表示",
         error_file: "CSVファイルにはヘッダー行と少なくとも1つのデータ行が必要です。",
-        error_no_data: "CSV内に有効なデータ行が見つかりませんでした。"
+        error_no_data: "CSV内に有効なデータ行が見つかりませんでした。",
+        in_progress_title: "インポート中",
+        warning_refresh: "処理が完了するまで、このページを更新したり閉じたりしないでください。",
+        duplicate_title: "重複が検出されました",
+        duplicate_subtitle: "{{count}}件の予約が既に存在するようです。どのように処理しますか？",
+        import_all: "すべてインポート",
+        skip_duplicates: "重複をスキップ",
+        cancel_import: "インポートをキャンセル"
       }
     }
   },
@@ -210,7 +238,14 @@ const resources = {
         complete_subtitle: "{{count}} 개의 예약이 성공적으로 동기화되었습니다.",
         view_bookings: "예약 보기",
         error_file: "CSV 파일에는 헤더 행과 최소 하나 이상의 데이터 행이 있어야 합니다.",
-        error_no_data: "CSV에서 유효한 데이터 행을 찾을 수 없습니다."
+        error_no_data: "CSV에서 유효한 데이터 행을 찾을 수 없습니다。",
+        in_progress_title: "가져오는 중",
+        warning_refresh: "프로세스가 완료될 때까지 이 페이지를 새로 고치거나 닫지 마십시오.",
+        duplicate_title: "중복 항목 감지됨",
+        duplicate_subtitle: "{{count}}개의 예약이 이미 존재하는 것 같습니다. 어떻게 진행하시겠습니까?",
+        import_all: "모두 가져오기",
+        skip_duplicates: "중복 항목 건너뛰기",
+        cancel_import: "가져오기 취소"
       }
     }
   }

@@ -2,8 +2,9 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Student, Course } from '../types';
+import { Student, Course, Booking } from '../types';
 import { useTranslation } from 'react-i18next';
+import { useImportStatus } from '../App';
 
 interface CSVRow {
   student: string;
@@ -35,6 +36,7 @@ const ImportPage: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { startImport, updateImportProgress, finishImport } = useImportStatus();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [csvData, setCsvData] = useState<CSVRow[]>([]);
@@ -49,6 +51,10 @@ const ImportPage: React.FC = () => {
   // Resolved list for step 3 preview
   const [resolvedBookings, setResolvedBookings] = useState<ResolvedBooking[]>([]);
   const [importSuccessCount, setImportSuccessCount] = useState(0);
+
+  // Duplicate detection state
+  const [duplicateBookings, setDuplicateBookings] = useState<Booking[]>([]);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   const uniqueCsvStudents = useMemo(() => Array.from(new Set(csvData.map(r => r.student))), [csvData]);
   const uniqueCsvCourses = useMemo(() => Array.from(new Set(csvData.map(r => r.course))), [csvData]);
@@ -136,34 +142,32 @@ const ImportPage: React.FC = () => {
     return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
   };
 
-  // Step 2 -> Step 3: Resolve Entities (Students/Courses)
   const resolveEntities = async () => {
     if (!orgId) return;
     setIsProcessing(true);
     try {
-      // 1. Resolve Students (Create missing)
       const resolvedStudents: Record<string, string> = {};
       for (const name of uniqueCsvStudents) {
         if (studentMap[name] === 'create') {
-          const newStudent = await api.createStudent(orgId, name, '');
+          const newStudentResponse = await api.createStudent(orgId, name, '');
+          const newStudent = Array.isArray(newStudentResponse) ? newStudentResponse[0] : newStudentResponse;
           resolvedStudents[name] = newStudent.id;
         } else {
           resolvedStudents[name] = studentMap[name];
         }
       }
 
-      // 2. Resolve Courses (Create missing)
       const resolvedCourses: Record<string, string> = {};
       for (const name of uniqueCsvCourses) {
         if (courseMap[name] === 'create') {
-          const newCourse = await api.createCourse(orgId, name, '#6366f1');
+          const newCourseResponse = await api.createCourse(orgId, name, '#6366f1');
+          const newCourse = Array.isArray(newCourseResponse) ? newCourseResponse[0] : newCourseResponse;
           resolvedCourses[name] = newCourse.id;
         } else {
           resolvedCourses[name] = courseMap[name];
         }
       }
 
-      // 3. Prepare resolved list for review
       const resolved: ResolvedBooking[] = csvData.map(row => ({
         studentName: row.student,
         courseName: row.course,
@@ -173,9 +177,31 @@ const ImportPage: React.FC = () => {
         start: `${row.time}:00`,
         end: calculateEndTime(row.time, row.duration)
       }));
-
       setResolvedBookings(resolved);
-      setStep(3);
+
+      const allExistingBookings: Booking[] = (await api.getAllBookings(orgId)) || [];
+      const existingBookingsMap = new Map<string, Booking>();
+      allExistingBookings.forEach(b => {
+        const key = `${b.student_id}|${b.course_id}|${b.date}|${b.start}|${b.end}`;
+        existingBookingsMap.set(key, b);
+      });
+
+      const duplicates: Booking[] = [];
+      resolved.forEach(rb => {
+        const key = `${rb.studentId}|${rb.courseId}|${rb.date}|${rb.start}|${rb.end}`;
+        const existingBooking = existingBookingsMap.get(key);
+        if (existingBooking) {
+          duplicates.push(existingBooking);
+        }
+      });
+      
+      if (duplicates.length > 0) {
+        setDuplicateBookings(duplicates);
+        setShowDuplicateModal(true);
+      } else {
+        setStep(3);
+      }
+
     } catch (err: any) {
       alert('Resolution failed: ' + err.message);
     } finally {
@@ -183,11 +209,39 @@ const ImportPage: React.FC = () => {
     }
   };
 
-  // Step 3 -> Step 4: Import Bookings
+  const handleImportAll = () => {
+    setShowDuplicateModal(false);
+    setStep(3);
+  };
+
+  const handleSkipDuplicates = () => {
+    const duplicateKeys = new Set(
+      duplicateBookings.map(d => `${d.student_id}|${d.course_id}|${d.date}|${d.start}|${d.end}`)
+    );
+    
+    const nonDuplicates = resolvedBookings.filter(b => {
+      const key = `${b.studentId}|${b.courseId}|${b.date}|${b.start}|${b.end}`;
+      return !duplicateKeys.has(key);
+    });
+    
+    setResolvedBookings(nonDuplicates);
+    setShowDuplicateModal(false);
+    setStep(3);
+  };
+
+  const handleCancelDuplicateCheck = () => {
+    setShowDuplicateModal(false);
+    setStep(2); 
+  };
+  
   const handleImportBookings = async () => {
-    if (!orgId) return;
+    if (!orgId || resolvedBookings.length === 0) {
+        if (resolvedBookings.length === 0) setStep(4);
+        return;
+    };
     setIsProcessing(true);
     setImportSuccessCount(0);
+    startImport(resolvedBookings.length);
     let successCount = 0;
     try {
       for (const booking of resolvedBookings) {
@@ -200,6 +254,7 @@ const ImportPage: React.FC = () => {
         });
         successCount++;
         setImportSuccessCount(successCount);
+        updateImportProgress(successCount);
       }
       setStep(4);
     } catch (err: any) {
@@ -207,6 +262,7 @@ const ImportPage: React.FC = () => {
       console.error(err);
     } finally {
       setIsProcessing(false);
+      finishImport();
     }
   };
 
@@ -433,6 +489,55 @@ const ImportPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showDuplicateModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={handleCancelDuplicateCheck}>
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                <div className="px-10 py-8 border-b border-red-100 bg-red-50/30 shrink-0 flex items-start space-x-6">
+                    <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-black text-red-900 tracking-tight">{t('import_page.duplicate_title')}</h3>
+                        <p className="text-red-700/80 text-sm font-medium mt-1">{t('import_page.duplicate_subtitle', { count: duplicateBookings.length })}</p>
+                    </div>
+                </div>
+                
+                <div className="p-10 flex-1 flex flex-col overflow-hidden">
+                    <div className="rounded-2xl border border-slate-100 shadow-inner overflow-y-auto no-scrollbar flex-1">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="sticky top-0 bg-slate-50 border-b border-slate-100 z-20">
+                                <tr>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.student')}</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.course')}</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.date')}</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.time')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {duplicateBookings.map((b) => (
+                                    <tr key={b.id} className="hover:bg-slate-50/50">
+                                        <td className="px-6 py-4 text-xs font-bold text-slate-900">{b.students?.name}</td>
+                                        <td className="px-6 py-4 text-xs font-bold text-slate-600">{b.courses?.name}</td>
+                                        <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.date}</td>
+                                        <td className="px-6 py-4 text-[10px] font-mono font-black text-indigo-600">{b.start.slice(0,5)} - {b.end.slice(0,5)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div className="p-10 bg-slate-50 flex flex-col sm:flex-row items-center justify-end gap-3 shrink-0">
+                    <button onClick={handleCancelDuplicateCheck} className="w-full sm:w-auto px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">{t('import_page.cancel_import')}</button>
+                    <button onClick={handleSkipDuplicates} className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-2xl font-black shadow-lg transition-all active:scale-95 text-xs uppercase tracking-widest">{t('import_page.skip_duplicates')}</button>
+                    <button onClick={handleImportAll} className="w-full sm:w-auto px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black shadow-xl shadow-red-100 transition-all active:scale-95 text-xs uppercase tracking-widest">{t('import_page.import_all')}</button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

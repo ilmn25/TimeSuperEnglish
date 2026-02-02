@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, createContext, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from './services/supabaseClient';
 import { api } from './services/api';
@@ -14,6 +14,27 @@ import OrgSelectionPage from './pages/OrgSelectionPage';
 import ParentDashboard from './pages/ParentDashboard';
 import { useTranslation } from 'react-i18next';
 import { Organization } from './types';
+
+// Create a context to manage the global state of the import process.
+interface ImportStatusContextType {
+  isImporting: boolean;
+  importProgress: number;
+  importTotal: number;
+  startImport: (total: number) => void;
+  updateImportProgress: (progress: number) => void;
+  finishImport: () => void;
+}
+
+const ImportStatusContext = createContext<ImportStatusContextType | undefined>(undefined);
+
+// Custom hook for easy consumption of the import status context.
+export const useImportStatus = () => {
+  const context = useContext(ImportStatusContext);
+  if (!context) {
+    throw new Error('useImportStatus must be used within an ImportStatusProvider');
+  }
+  return context;
+};
 
 const NavLink: React.FC<{ to: string; icon: React.ReactNode; children: React.ReactNode }> = ({ to, icon, children }) => {
   const location = useLocation();
@@ -122,6 +143,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   const location = useLocation();
   const { t } = useTranslation();
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
+  const { isImporting, importProgress, importTotal } = useImportStatus();
   
   const isDashboardView = location.pathname === '/dashboard';
   const match = location.pathname.match(/^\/org\/([^/]+)/);
@@ -236,7 +258,23 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
         {children}
       </main>
       
-      {/* Visual edge fade for horizontal nav scroll indicating more content */}
+      {isImporting && (
+        <div className="fixed bottom-6 right-6 z-[200] bg-white border-2 border-slate-100 rounded-2xl shadow-2xl p-5 w-full max-w-sm animate-in fade-in slide-in-from-bottom-5 duration-300">
+            <div className="flex items-start space-x-4">
+                <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin shrink-0 mt-1" />
+                <div>
+                    <h4 className="text-sm font-black text-slate-900">{t('import_page.in_progress_title')}</h4>
+                    <p className="text-xs text-slate-500 mt-1">
+                        {t('import_page.warning_refresh')}
+                    </p>
+                    <div className="mt-4 text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md w-fit">
+                        {importProgress} / {importTotal} {t('bookings.title')}
+                    </div>
+                </div>
+            </div>
+        </div>
+      )}
+
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -255,6 +293,36 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Global state for import process
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importTotal, setImportTotal] = useState(0);
+
+  const startImport = (total: number) => {
+    setIsImporting(true);
+    setImportTotal(total);
+    setImportProgress(0);
+  };
+  
+  const updateImportProgress = (progress: number) => {
+    setImportProgress(progress);
+  };
+  
+  const finishImport = () => {
+    setIsImporting(false);
+    setImportTotal(0);
+    setImportProgress(0);
+  };
+
+  const contextValue = {
+    isImporting,
+    importProgress,
+    importTotal,
+    startImport,
+    updateImportProgress,
+    finishImport,
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -267,6 +335,18 @@ const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Global beforeunload handler to prevent leaving during import
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isImporting) {
+        e.preventDefault();
+        e.returnValue = ''; // Required for Chrome
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isImporting]);
 
   if (isInitializing) {
     return (
@@ -291,28 +371,30 @@ const App: React.FC = () => {
   }
 
   return (
-    <HashRouter>
-      <Layout userEmail={session?.user?.email}>
-        <Routes>
-          <Route path="/dashboard" element={<ParentDashboard />} />
-          <Route path="/org" element={<OrgSelectionPage />} />
-          
-          <Route path="/org/:orgId">
-            <Route index element={<Navigate to="attendance" replace />} />
-            <Route path="attendance" element={<AttendancePage />} />
-            <Route path="bookings" element={<BookingsPage />} />
-            <Route path="courses" element={<CoursesPage />} />
-            <Route path="students" element={<StudentsPage />} />
-            <Route path="import" element={<ImportPage />} />
-            <Route path="backup" element={<BackupPage />} />
-          </Route>
+    <ImportStatusContext.Provider value={contextValue}>
+      <HashRouter>
+        <Layout userEmail={session?.user?.email}>
+          <Routes>
+            <Route path="/dashboard" element={<ParentDashboard />} />
+            <Route path="/org" element={<OrgSelectionPage />} />
+            
+            <Route path="/org/:orgId">
+              <Route index element={<Navigate to="attendance" replace />} />
+              <Route path="attendance" element={<AttendancePage />} />
+              <Route path="bookings" element={<BookingsPage />} />
+              <Route path="courses" element={<CoursesPage />} />
+              <Route path="students" element={<StudentsPage />} />
+              <Route path="import" element={<ImportPage />} />
+              <Route path="backup" element={<BackupPage />} />
+            </Route>
 
-          <Route path="/login" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Layout>
-    </HashRouter>
+            <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Layout>
+      </HashRouter>
+    </ImportStatusContext.Provider>
   );
 };
 
