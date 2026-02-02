@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
@@ -18,6 +19,7 @@ const OrgSelectionPage: React.FC = () => {
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [formData, setFormData] = useState({ name: '' });
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('');
 
   const navigate = useNavigate();
 
@@ -93,6 +95,8 @@ const OrgSelectionPage: React.FC = () => {
     setFormData({ name: '' });
     setIsFormOpen(false);
   };
+  
+  const orgToDelete = orgs.find(org => org.id === confirmDeleteId);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 py-10 px-4 sm:px-6">
@@ -135,7 +139,7 @@ const OrgSelectionPage: React.FC = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                       </button>
                       <button 
-                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(org.id); }} 
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(org.id); setDeleteConfirmationInput(''); }} 
                         className="p-2 text-slate-400 hover:text-red-600 bg-white hover:bg-red-50 rounded-lg shadow-sm border border-slate-100 transition-colors"
                         title={t('common.delete')}
                       >
@@ -165,8 +169,8 @@ const OrgSelectionPage: React.FC = () => {
                       {t('org.member')}
                     </span>
                   )}
-                  <span className="text-[10px] text-slate-400 font-mono truncate max-w-[120px]" title={org.owner}>
-                    ID: {org.owner.slice(0, 8)}...
+                  <span className="text-[10px] text-slate-400 font-mono truncate max-w-[120px]" title={org.id}>
+                    ID: {org.id.slice(0, 8)}...
                   </span>
                 </div>
               </div>
@@ -244,14 +248,38 @@ const OrgSelectionPage: React.FC = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {confirmDeleteId && (
+      {confirmDeleteId && orgToDelete && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">{t('org.delete_title')}</h3>
-            <p className="text-slate-500 text-sm mb-8">{t('org.delete_msg')}</p>
-            <div className="flex space-x-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-2">{t('org.delete_title')}</h3>
+            <p className="text-slate-500 text-sm mb-6">{t('org.delete_msg')}</p>
+
+            <div className="space-y-4">
+              <label htmlFor="delete-confirm-input" className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('org.name')}</label>
+              <input
+                id="delete-confirm-input"
+                type="text"
+                value={deleteConfirmationInput}
+                onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-red-500 text-slate-900 font-medium"
+                placeholder={orgToDelete.name}
+                autoComplete="off"
+                autoFocus
+              />
+            </div>
+            
+            <div className="flex space-x-4 mt-8">
               <button onClick={() => setConfirmDeleteId(null)} className="flex-1 px-6 py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-colors">{t('common.cancel')}</button>
-              <button onClick={handleDelete} disabled={isProcessing} className="flex-1 px-6 py-3 text-sm font-bold text-white rounded-2xl bg-red-600 hover:bg-red-700 transition-all flex items-center justify-center">
+              <button 
+                onClick={handleDelete} 
+                disabled={isProcessing || deleteConfirmationInput !== orgToDelete.name} 
+                className="flex-1 px-6 py-3 text-sm font-bold text-white rounded-2xl bg-red-600 hover:bg-red-700 transition-all flex items-center justify-center disabled:bg-red-300 disabled:cursor-not-allowed"
+              >
                 {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : t('common.delete')}
               </button>
             </div>

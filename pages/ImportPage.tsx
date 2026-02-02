@@ -48,6 +48,7 @@ const ImportPage: React.FC = () => {
 
   // Resolved list for step 3 preview
   const [resolvedBookings, setResolvedBookings] = useState<ResolvedBooking[]>([]);
+  const [importSuccessCount, setImportSuccessCount] = useState(0);
 
   const uniqueCsvStudents = useMemo(() => Array.from(new Set(csvData.map(r => r.student))), [csvData]);
   const uniqueCsvCourses = useMemo(() => Array.from(new Set(csvData.map(r => r.course))), [csvData]);
@@ -186,6 +187,7 @@ const ImportPage: React.FC = () => {
   const handleImportBookings = async () => {
     if (!orgId) return;
     setIsProcessing(true);
+    setImportSuccessCount(0);
     let successCount = 0;
     try {
       for (const booking of resolvedBookings) {
@@ -197,6 +199,7 @@ const ImportPage: React.FC = () => {
           end: booking.end
         });
         successCount++;
+        setImportSuccessCount(successCount);
       }
       setStep(4);
     } catch (err: any) {
@@ -375,21 +378,39 @@ const ImportPage: React.FC = () => {
               </table>
             </div>
 
-            <div className="flex items-center justify-end space-x-4 pt-8 border-t border-slate-50">
-               <button 
-                 onClick={() => setStep(2)}
-                 className="px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
-               >
-                 {t('import_page.back_to_mapping')}
-               </button>
-               <button 
-                 onClick={handleImportBookings}
-                 disabled={isProcessing}
-                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center"
-               >
-                 {isProcessing && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />}
-                 {t('import_page.confirm_import')}
-               </button>
+            <div className="pt-8 border-t border-slate-50">
+              <div className="flex items-center justify-end space-x-4">
+                 <button 
+                   onClick={() => setStep(2)}
+                   className="px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
+                 >
+                   {t('import_page.back_to_mapping')}
+                 </button>
+                 <button 
+                   onClick={handleImportBookings}
+                   disabled={isProcessing}
+                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center min-w-[200px] justify-center"
+                 >
+                   {isProcessing ? (
+                     <>
+                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />
+                       <span>{t('common.processing')} ({importSuccessCount}/{resolvedBookings.length})</span>
+                     </>
+                   ) : (
+                     t('import_page.confirm_import')
+                   )}
+                 </button>
+              </div>
+              {isProcessing && (
+                <div className="w-full mt-4">
+                  <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div 
+                      className="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${resolvedBookings.length > 0 ? (importSuccessCount / resolvedBookings.length) * 100 : 0}%` }}>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
