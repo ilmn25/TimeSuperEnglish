@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
-import { supabase } from '../services/supabaseClient';
-import { Student, Booking, Attendance } from '../types';
+import { Student, Booking, Attendance, Course } from '../types';
 import TimelinePanel from '../components/TimelinePanel';
 import { useTranslation } from 'react-i18next';
 
@@ -19,9 +18,25 @@ const getHKTDateString = (baseDate: Date = new Date()) => {
   }); 
 };
 
+const getDatesInRange = (startStr: string, endStr: string) => {
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  const dates = [];
+  const curr = new Date(Math.min(start.getTime(), end.getTime()));
+  const last = new Date(Math.max(start.getTime(), end.getTime()));
+  
+  while (curr <= last) {
+    dates.push(curr.toLocaleDateString('en-CA'));
+    curr.setDate(curr.getDate() + 1);
+  }
+  return dates;
+};
+
 const LEVELS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6'];
 
 type BookingStatus = 'blue' | 'green' | 'yellow' | 'red';
+type SortField = 'date' | 'time' | 'student' | 'course' | 'status';
+type SortOrder = 'asc' | 'desc';
 
 interface StudentDetailedData {
   student: Student & { organization_name?: string };
@@ -32,17 +47,39 @@ interface StudentDetailedData {
 
 const ParentDashboard: React.FC = () => {
   const hktToday = getHKTDateString();
+  const { t } = useTranslation();
+
+  // Navigation State
+  const [activeTab, setActiveTab] = useState<'attendance' | 'bookings'>('attendance');
+  
+  // Shared Data State
   const [viewDate, setViewDate] = useState(new Date()); 
-  const [selectedDate, setSelectedDate] = useState<string>(hktToday);
-  const [isCalendarMaximized, setIsCalendarMaximized] = useState(false);
   const [childrenData, setChildrenData] = useState<StudentDetailedData[]>([]);
   const [isLoadingMain, setIsLoadingMain] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
-  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
-  const { t } = useTranslation();
 
-  // Edit State
+  // Attendance View State
+  const [selectedDate, setSelectedDate] = useState<string>(hktToday);
+  
+  // Bookings View Filter/Sort State
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [filterStudent, setFilterStudent] = useState('');
+  const [filterCourse, setFilterCourse] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  
+  // Dragging State (for calendar)
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<string | null>(null);
+  const [dragEnd, setDragEnd] = useState<string | null>(null);
+
+  // Timeline State
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+  const [selectedTimelineInfo, setSelectedTimelineInfo] = useState<{ studentId: string; studentName: string; date: string } | null>(null);
+  const [isCalendarMaximized, setIsCalendarMaximized] = useState(false);
+
+  // Edit Student Info State
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -59,10 +96,8 @@ const ParentDashboard: React.FC = () => {
     const month = viewDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    
     const weeks: (Date | null)[][] = [];
     let currentWeek: (Date | null)[] = Array(7).fill(null);
-    
     let dayPointer = firstDay.getDay();
     for (let i = 1; i <= lastDay.getDate(); i++) {
       currentWeek[dayPointer] = new Date(year, month, i);
@@ -92,11 +127,9 @@ const ParentDashboard: React.FC = () => {
 
     const hasOverlap = dayAttendances.some(att => {
       if (att.student_id !== booking.student_id) return false;
-      
       const [aStartH, aStartM] = att.start.split(':').map(Number);
       const aStart = new Date(bookingDate);
       aStart.setHours(aStartH, aStartM, 0, 0);
-
       let aEnd: Date;
       if (att.end) {
         const [aEndH, aEndM] = att.end.split(':').map(Number);
@@ -117,7 +150,6 @@ const ParentDashboard: React.FC = () => {
     setError(null);
     try {
       const students = await api.getParentStudents();
-      
       const year = viewDate.getFullYear();
       const month = viewDate.getMonth();
       const startDate = new Date(year, month, 1).toLocaleDateString('en-CA');
@@ -138,26 +170,17 @@ const ParentDashboard: React.FC = () => {
             api.getStudentBookings(item.student.id, { startDate, endDate }),
             api.getStudentAttendances(item.student.id, { startDate, endDate })
           ]);
-          
           setChildrenData(prev => prev.map(p => 
-            p.student.id === item.student.id 
-              ? { ...p, bookings, attendances, isLoading: false } 
-              : p
+            p.student.id === item.student.id ? { ...p, bookings, attendances, isLoading: false } : p
           ));
         } catch (err) {
           console.error(`Failed to fetch data for ${item.student.name}`, err);
-          setChildrenData(prev => prev.map(p => 
-            p.student.id === item.student.id 
-              ? { ...p, isLoading: false } 
-              : p
-          ));
+          setChildrenData(prev => prev.map(p => p.student.id === item.student.id ? { ...p, isLoading: false } : p));
         }
       });
-
       await Promise.all(updatePromises);
     } catch (err: any) {
       setError(err.message || "Failed to load dashboard.");
-      console.error(err);
     } finally {
       setIsLoadingMain(false);
     }
@@ -167,39 +190,105 @@ const ParentDashboard: React.FC = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  // Drag event lifecycle for calendar
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging && dragStart && dragEnd) {
+        if (dragStart === dragEnd) {
+          if (selectedDates.includes(dragStart)) {
+            setSelectedDates(selectedDates.filter(d => d !== dragStart));
+          } else {
+            setSelectedDates([...selectedDates, dragStart]);
+          }
+        } else {
+          const range = getDatesInRange(dragStart, dragEnd);
+          setSelectedDates(prev => Array.from(new Set([...prev, ...range])));
+        }
+      }
+      setIsDragging(false);
+      setDragStart(null);
+      setDragEnd(null);
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [isDragging, dragStart, dragEnd, selectedDates]);
+
+  // Process all bookings for the Bookings View
+  const processedAllBookings = useMemo(() => {
+    const all = childrenData.flatMap(c => c.bookings.map(b => {
+      const dayAttendances = c.attendances.filter(a => a.date === b.date);
+      return { ...b, calculatedStatus: getBookingStatus(b, dayAttendances) };
+    }));
+
+    let result = all.filter(b => {
+      const matchesStudent = !filterStudent || b.student_id === filterStudent;
+      const matchesCourse = !filterCourse || b.course_id === filterCourse;
+      const matchesDate = selectedDates.length === 0 || selectedDates.includes(b.date);
+      return matchesStudent && matchesCourse && matchesDate;
+    });
+
+    if (filterStatus) {
+      result = result.filter(b => b.calculatedStatus === filterStatus);
+    }
+
+    return result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'date': comparison = a.date.localeCompare(b.date); break;
+        case 'time': comparison = a.start.localeCompare(b.start); break;
+        case 'student': comparison = (a.students?.name || '').localeCompare(b.students?.name || ''); break;
+        case 'course': comparison = (a.courses?.name || '').localeCompare(b.courses?.name || ''); break;
+        case 'status': 
+          const p = { red: 0, yellow: 1, green: 2, blue: 3 };
+          comparison = (p[a.calculatedStatus] || 0) - (p[b.calculatedStatus] || 0);
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [childrenData, filterStudent, filterCourse, selectedDates, filterStatus, sortField, sortOrder, getBookingStatus]);
+
+  const summaryStats = useMemo(() => {
+    let totalMinutes = 0;
+    let attendedCount = 0;
+    let missedCount = 0;
+    let futureCount = 0;
+
+    processedAllBookings.forEach(b => {
+      const [sH, sM] = b.start.split(':').map(Number);
+      const [eH, eM] = b.end.split(':').map(Number);
+      totalMinutes += (eH * 60 + eM) - (sH * 60 + sM);
+      const status = b.calculatedStatus;
+      if (status === 'green' || status === 'yellow') attendedCount++;
+      else if (status === 'red') missedCount++;
+      else if (status === 'blue') futureCount++;
+    });
+
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return {
+      totalEntries: processedAllBookings.length,
+      totalTime: `${hours}h ${mins}m`,
+      attended: attendedCount,
+      missed: missedCount,
+      future: futureCount
+    };
+  }, [processedAllBookings]);
+
   const handleEditStudent = (e: React.MouseEvent, student: Student) => {
     e.stopPropagation();
     setEditingStudent(student);
-    setEditFormData({
-      name: student.name || '',
-      contact: student.contact || '',
-      level: student.level || ''
-    });
+    setEditFormData({ name: student.name || '', contact: student.contact || '', level: student.level || '' });
   };
 
   const handleUpdateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingStudent) return;
-    
     setIsUpdating(true);
     try {
       const orgId = (editingStudent as any).org_id;
       if (!orgId) throw new Error("Organization ID not found for student.");
-
-      await api.updateStudent(
-        orgId, 
-        editingStudent.id, 
-        editFormData.name, 
-        editFormData.contact, 
-        editFormData.level || undefined
-      );
-      
-      setChildrenData(prev => prev.map(item => 
-        item.student.id === editingStudent.id 
-          ? { ...item, student: { ...item.student, ...editFormData } }
-          : item
-      ));
-      
+      await api.updateStudent(orgId, editingStudent.id, editFormData.name, editFormData.contact, editFormData.level || undefined);
+      setChildrenData(prev => prev.map(item => item.student.id === editingStudent.id ? { ...item, student: { ...item.student, ...editFormData } } : item));
       setEditingStudent(null);
     } catch (err: any) {
       alert(err.message || "Failed to update student info.");
@@ -212,19 +301,18 @@ const ParentDashboard: React.FC = () => {
     const next = new Date(viewDate);
     next.setMonth(next.getMonth() + offset);
     setViewDate(next);
+    setSelectedDates([]);
+    setSelectedTimelineInfo(null);
   };
 
-  const getDayStatus = (dateStr: string): BookingStatus | null => {
+  const getDayStatusOverall = (dateStr: string): BookingStatus | null => {
     const allStatuses: BookingStatus[] = [];
     childrenData.forEach(child => {
       const dayBookings = child.bookings.filter(b => b.date === dateStr);
       if (dayBookings.length === 0) return;
       const dayAttendances = child.attendances.filter(a => a.date === dateStr);
-      dayBookings.forEach(b => {
-        allStatuses.push(getBookingStatus(b, dayAttendances));
-      });
+      dayBookings.forEach(b => allStatuses.push(getBookingStatus(b, dayAttendances)));
     });
-
     if (allStatuses.length === 0) return null;
     if (allStatuses.every(s => s === 'blue')) return 'blue';
     const pastStatuses = allStatuses.filter(s => s !== 'blue');
@@ -241,46 +329,46 @@ const ParentDashboard: React.FC = () => {
       const dayBookings = child.bookings.filter(b => b.date === dateStr);
       const dayAttendances = child.attendances.filter(a => a.date === dateStr);
       if (dayBookings.length === 0) return null;
-
       let status: BookingStatus = 'blue';
       const dayStatuses = dayBookings.map(b => getBookingStatus(b, dayAttendances));
-      
       const priority = { red: 3, yellow: 2, green: 1, blue: 0 };
-      dayStatuses.forEach(s => {
-        if (priority[s] > priority[status]) status = s;
-      });
-
+      dayStatuses.forEach(s => { if (priority[s] > priority[status]) status = s; });
       return { name: child.student.name, status };
     }).filter(Boolean) as { name: string; status: BookingStatus }[];
   };
 
   const statusColors = { blue: 'bg-blue-400', green: 'bg-green-500', yellow: 'bg-yellow-400', red: 'bg-red-500' };
 
-  const selectedStudentIdData = useMemo(() => {
-    return childrenData.find(d => d.student.id === selectedStudentId);
-  }, [childrenData, selectedStudentId]);
+  const handleRowClick = (booking: Booking) => {
+    setSelectedTimelineInfo({
+      studentId: booking.student_id,
+      studentName: booking.students?.name || 'Unknown',
+      date: booking.date
+    });
+    setIsTimelineExpanded(true);
+  };
 
-  const filteredChildrenData = useMemo(() => {
-    return childrenData.map(child => ({
-      ...child,
-      bookings: child.bookings.filter(b => b.date === selectedDate),
-      attendances: child.attendances.filter(a => a.date === selectedDate)
-    }));
-  }, [childrenData, selectedDate]);
+  const timelineData = useMemo(() => {
+    if (!selectedTimelineInfo) return { bookings: [], attendances: [] };
+    const child = childrenData.find(c => c.student.id === selectedTimelineInfo.studentId);
+    if (!child) return { bookings: [], attendances: [] };
+    return {
+      bookings: child.bookings.filter(b => b.date === selectedTimelineInfo.date),
+      attendances: child.attendances.filter(a => a.date === selectedTimelineInfo.date)
+    };
+  }, [selectedTimelineInfo, childrenData]);
 
-  const layoutPaddingClass = (selectedStudentIdData && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0';
+  const clearFilters = () => {
+    setSelectedDates([]);
+    setFilterStudent('');
+    setFilterCourse('');
+    setFilterStatus('');
+  };
 
-  if (isLoadingMain && childrenData.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-slate-500 font-medium animate-pulse">{t('common.loading')}</p>
-      </div>
-    );
-  }
+  const layoutPaddingClass = (selectedTimelineInfo && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0';
 
   return (
-    <div className={`space-y-10 pb-20 transition-all duration-500 ease-in-out ${layoutPaddingClass}`}>
+    <div className={`space-y-8 pb-20 transition-all duration-500 ease-in-out ${layoutPaddingClass}`}>
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('parent.dashboard')}</h2>
@@ -288,7 +376,25 @@ const ParentDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Monthly Calendar View */}
+      {/* View Switcher Navigation */}
+      <div className="flex items-center space-x-2 bg-slate-100/50 p-1.5 rounded-[2rem] border-2 border-slate-100 w-fit">
+        <button 
+          onClick={() => setActiveTab('attendance')}
+          className={`flex items-center space-x-2 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'attendance' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-indigo-600'}`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{t('nav.attendance')}</span>
+        </button>
+        <button 
+          onClick={() => setActiveTab('bookings')}
+          className={`flex items-center space-x-2 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'bookings' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-indigo-600'}`}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          <span>{t('nav.bookings')}</span>
+        </button>
+      </div>
+
+      {/* Shared Calendar (Optional behavior: shared across views or specific?) */}
       <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-w-none' : 'max-w-3xl mx-auto'}`}>
         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
           <div className="flex items-center space-x-1">
@@ -306,20 +412,31 @@ const ParentDashboard: React.FC = () => {
             <button 
               onClick={() => setIsCalendarMaximized(!isCalendarMaximized)}
               className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
-              title={isCalendarMaximized ? "Minimize" : "Maximize"}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
             </button>
             <button 
-              onClick={() => { setSelectedDate(hktToday); setViewDate(new Date()); }}
+              onClick={() => { 
+                if (activeTab === 'attendance') setSelectedDate(hktToday);
+                else setSelectedDates([]);
+                setViewDate(new Date()); 
+              }}
               className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
             >
               {t('parent.go_today')}
             </button>
+            {activeTab === 'bookings' && (
+              <button 
+                onClick={clearFilters}
+                className="px-3 py-1.5 bg-white text-slate-400 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:bg-red-50 transition-all"
+              >
+                {t('bookings.reset')}
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="px-6 py-5 bg-white">
+        <div className="px-6 py-5 bg-white select-none">
           <div className="mx-auto">
             <div className="grid grid-cols-7 gap-1 mb-2">
               {WEEKDAYS.map(day => (
@@ -332,31 +449,36 @@ const ParentDashboard: React.FC = () => {
                   {week.map((dateObj, dIdx) => {
                     if (!dateObj) return <div key={`empty-${dIdx}`} />;
                     const dateStr = dateObj.toLocaleDateString('en-CA');
-                    const isSelected = selectedDate === dateStr;
+                    const isSelected = activeTab === 'attendance' ? selectedDate === dateStr : selectedDates.includes(dateStr);
+                    const isPreviewed = activeTab === 'bookings' && isDragging && dragStart && dragEnd && (
+                      new Date(dateStr).getTime() >= Math.min(new Date(dragStart).getTime(), new Date(dragEnd).getTime()) &&
+                      new Date(dateStr).getTime() <= Math.max(new Date(dragStart).getTime(), new Date(dragEnd).getTime())
+                    );
                     const isTodayLocal = dateStr === hktToday;
-                    const dayStatus = getDayStatus(dateStr);
+                    const dayStatus = getDayStatusOverall(dateStr);
                     const childStatuses = getChildDetailedStatusesForDay(dateStr);
 
                     return (
                       <button
                         key={dateStr}
-                        onClick={() => setSelectedDate(dateStr)}
+                        onClick={() => { if (activeTab === 'attendance') setSelectedDate(dateStr); }}
+                        onMouseDown={() => activeTab === 'bookings' && (setIsDragging(true), setDragStart(dateStr), setDragEnd(dateStr))}
+                        onMouseEnter={() => activeTab === 'bookings' && isDragging && setDragEnd(dateStr)}
                         className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${
                           isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'
                         } ${
-                          isSelected ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg shadow-indigo-100' 
+                          isSelected || isPreviewed ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg shadow-indigo-100' 
                           : isTodayLocal ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
                           : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200 hover:text-indigo-600'
                         }`}
                       >
                         <span className={`text-[11px] ${isCalendarMaximized ? 'mb-1 self-start ml-0.5' : ''}`}>{dateObj.getDate()}</span>
-                        
                         {isCalendarMaximized ? (
                           <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
                             {childStatuses.map((s, i) => (
                               <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
                                 <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
-                                <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-500 group-hover:text-inherit'}`}>
+                                <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected || isPreviewed ? 'text-indigo-100' : 'text-slate-500 group-hover:text-inherit'}`}>
                                   {s.name}
                                 </span>
                               </div>
@@ -375,26 +497,159 @@ const ParentDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 lg:gap-12">
-        {filteredChildrenData.map((item) => (
-          <ChildCard 
-            key={item.student.id} 
-            data={item} 
-            onEdit={handleEditStudent} 
-            isSelected={selectedStudentId === item.student.id}
-            onSelect={() => setSelectedStudentId(item.student.id)}
-            currentDate={selectedDate}
-            getBookingStatus={getBookingStatus}
-          />
-        ))}
-      </div>
+      {activeTab === 'attendance' ? (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 lg:gap-12 animate-in fade-in duration-500">
+          {childrenData.map((item) => (
+            <ChildCard 
+              key={item.student.id} 
+              data={{
+                ...item,
+                bookings: item.bookings.filter(b => b.date === selectedDate),
+                attendances: item.attendances.filter(a => a.date === selectedDate)
+              }} 
+              onEdit={handleEditStudent} 
+              isSelected={selectedTimelineInfo?.studentId === item.student.id && selectedTimelineInfo?.date === selectedDate}
+              onSelect={() => {
+                setSelectedTimelineInfo({ studentId: item.student.id, studentName: item.student.name, date: selectedDate });
+                setIsTimelineExpanded(true);
+              }}
+              currentDate={selectedDate}
+              getBookingStatus={getBookingStatus}
+            />
+          ))}
+          {childrenData.length === 0 && !isLoadingMain && (
+             <div className="col-span-full py-20 text-center bg-white border border-slate-200 rounded-[3rem]">
+               <p className="text-slate-400 font-bold italic">{t('attendance.no_students')}</p>
+             </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-8 animate-in fade-in duration-500">
+          {/* Bookings View Specific: Filters, Summary, Table */}
+          <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm p-6 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_student')}</label>
+                <select 
+                  value={filterStudent}
+                  onChange={(e) => setFilterStudent(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 appearance-none"
+                >
+                  <option value="">{t('bookings.all_students')}</option>
+                  {childrenData.map(c => <option key={c.student.id} value={c.student.id}>{c.student.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_course')}</label>
+                <select 
+                  value={filterCourse}
+                  onChange={(e) => setFilterCourse(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 appearance-none"
+                >
+                  <option value="">{t('bookings.all_courses')}</option>
+                  {Array.from(new Set(childrenData.flatMap(c => c.bookings.map(b => b.courses?.name)).filter(Boolean))).map(name => (
+                    <option key={name} value={childrenData.flatMap(c => c.bookings).find(b => b.courses?.name === name)?.course_id}>{name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_status')}</label>
+                <select 
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 appearance-none"
+                >
+                  <option value="">{t('bookings.all_statuses')}</option>
+                  <option value="red">{t('status.missed')}</option>
+                  <option value="green">{t('status.attended')}</option>
+                  <option value="blue">{t('status.future')}</option>
+                </select>
+              </div>
+            </div>
 
-      {selectedStudentId && selectedStudentIdData && (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-4 border-t border-slate-50">
+               <div className="p-4 bg-slate-50 rounded-2xl">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">{t('bookings.total_entries')}</span>
+                  <span className="text-xl font-black text-slate-900">{summaryStats.totalEntries}</span>
+               </div>
+               <div className="p-4 bg-indigo-50/50 rounded-2xl">
+                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-1">{t('bookings.total_time')}</span>
+                  <span className="text-xl font-black text-indigo-600">{summaryStats.totalTime}</span>
+               </div>
+               <div className="p-4 bg-green-50/50 rounded-2xl">
+                  <span className="text-[10px] font-black text-green-500/70 uppercase tracking-widest block mb-1">{t('status.attended')}</span>
+                  <span className="text-xl font-black text-green-600">{summaryStats.attended}</span>
+               </div>
+               <div className="p-4 bg-red-50/50 rounded-2xl">
+                  <span className="text-[10px] font-black text-red-400/70 uppercase tracking-widest block mb-1">{t('status.missed')}</span>
+                  <span className="text-xl font-black text-red-600">{summaryStats.missed}</span>
+               </div>
+               <div className="p-4 bg-blue-50/50 rounded-2xl">
+                  <span className="text-[10px] font-black text-blue-400/70 uppercase tracking-widest block mb-1">{t('status.future')}</span>
+                  <span className="text-xl font-black text-blue-600">{summaryStats.future}</span>
+               </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
+            <div className="overflow-x-auto no-scrollbar">
+              <table className="w-full text-left min-w-[700px]">
+                <thead className="bg-slate-900 border-b border-slate-800">
+                  <tr>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('date'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.date')} {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('time'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.time')} {sortField === 'time' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('student'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.student')} {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('course'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.course')} {sortField === 'course' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800" onClick={() => { setSortField('status'); setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); }}>{t('bookings.status')} {sortField === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {processedAllBookings.map(b => {
+                    const s = b.calculatedStatus;
+                    const isSelected = selectedTimelineInfo?.studentId === b.student_id && selectedTimelineInfo?.date === b.date;
+                    return (
+                      <tr key={b.id} onClick={() => handleRowClick(b)} className={`cursor-pointer transition-colors ${isSelected ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black text-slate-900">{b.date}</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{new Date(b.date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-indigo-600 font-mono font-black">{b.start.slice(0, 5)} - {b.end.slice(0, 5)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-900 font-bold">{b.students?.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-2 px-2 py-1 bg-slate-50 rounded-lg border border-slate-100 w-fit">
+                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: b.courses?.color || '#cbd5e1' }} />
+                            <span className="text-[9px] text-slate-600 font-black uppercase tracking-tight">{b.courses?.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${statusColors[s]}`} />
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${s === 'red' ? 'text-red-500' : s === 'green' ? 'text-green-600' : 'text-blue-500'}`}>
+                              {s === 'red' ? t('status.missed') : s === 'green' ? t('status.attended') : t('status.future')}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {processedAllBookings.length === 0 && (
+                    <tr><td colSpan={5} className="px-6 py-16 text-center text-slate-400 font-bold italic">{t('bookings.no_match')}</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedTimelineInfo && (
         <TimelinePanel 
-          studentName={selectedStudentIdData.student.name} 
-          bookings={selectedStudentIdData.bookings.filter(b => b.date === selectedDate)} 
-          attendances={selectedStudentIdData.attendances.filter(a => a.date === selectedDate)} 
-          date={selectedDate}
+          studentName={selectedTimelineInfo.studentName} 
+          bookings={timelineData.bookings} 
+          attendances={timelineData.attendances} 
+          date={selectedTimelineInfo.date}
           isExpanded={isTimelineExpanded}
           onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}
         />
@@ -413,57 +668,25 @@ const ParentDashboard: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            
             <form onSubmit={handleUpdateStudent} className="p-6 space-y-5">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('students.full_name')}</label>
-                <input 
-                  type="text" 
-                  required
-                  value={editFormData.name}
-                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                  placeholder="Student Name"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium"
-                />
+                <input type="text" required value={editFormData.name} onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
               </div>
-
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('students.sort_level')}</label>
-                <select 
-                  value={editFormData.level}
-                  onChange={(e) => setEditFormData({ ...editFormData, level: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium"
-                >
+                <select value={editFormData.level} onChange={(e) => setEditFormData({ ...editFormData, level: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium">
                   <option value="">{t('students.select')}</option>
                   {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
                 </select>
               </div>
-
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('students.contact')}</label>
-                <input 
-                  type="text" 
-                  required
-                  value={editFormData.contact}
-                  onChange={(e) => setEditFormData({ ...editFormData, contact: e.target.value })}
-                  placeholder="e.g. Phone Number"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium"
-                />
+                <input type="text" required value={editFormData.contact} onChange={(e) => setEditFormData({ ...editFormData, contact: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 font-medium" />
               </div>
-
               <div className="flex items-center justify-end space-x-3 pt-2">
-                <button 
-                  type="button" 
-                  onClick={() => setEditingStudent(null)} 
-                  className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-                >
-                  {t('common.cancel')}
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={isUpdating}
-                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95 text-sm flex items-center"
-                >
+                <button type="button" onClick={() => setEditingStudent(null)} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">{t('common.cancel')}</button>
+                <button type="submit" disabled={isUpdating} className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95 text-sm flex items-center">
                   {isUpdating && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />}
                   {t('common.save_changes')}
                 </button>

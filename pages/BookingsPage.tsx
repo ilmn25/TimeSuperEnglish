@@ -17,6 +17,20 @@ const getHKTNow = () => {
   return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Hong_Kong" }));
 };
 
+const getDatesInRange = (startStr: string, endStr: string) => {
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  const dates = [];
+  const curr = new Date(Math.min(start.getTime(), end.getTime()));
+  const last = new Date(Math.max(start.getTime(), end.getTime()));
+  
+  while (curr <= last) {
+    dates.push(curr.toLocaleDateString('en-CA'));
+    curr.setDate(curr.getDate() + 1);
+  }
+  return dates;
+};
+
 const BookingsPage: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const { t } = useTranslation();
@@ -40,6 +54,11 @@ const BookingsPage: React.FC = () => {
   const [filterStudent, setFilterStudent] = useState('');
   const [filterCourse, setFilterCourse] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('');
+
+  // Dragging State
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<string | null>(null);
+  const [dragEnd, setDragEnd] = useState<string | null>(null);
 
   // Timeline State
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
@@ -152,6 +171,26 @@ const BookingsPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
+  // Drag event lifecycle
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging && dragStart && dragEnd) {
+        if (dragStart === dragEnd) {
+          handleDateClick(dragStart);
+        } else {
+          const range = getDatesInRange(dragStart, dragEnd);
+          setSelectedDates(prev => Array.from(new Set([...prev, ...range])));
+        }
+      }
+      setIsDragging(false);
+      setDragStart(null);
+      setDragEnd(null);
+    };
+
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [isDragging, dragStart, dragEnd]);
+
   // FRONTEND FILTERING & SORTING
   const processedBookings = useMemo(() => {
     let result = monthBookings.filter(b => {
@@ -237,6 +276,26 @@ const BookingsPage: React.FC = () => {
     } else {
       setSelectedDates([...selectedDates, dateStr]);
     }
+  };
+
+  const handleMouseDown = (dateStr: string) => {
+    setIsDragging(true);
+    setDragStart(dateStr);
+    setDragEnd(dateStr);
+  };
+
+  const handleMouseEnter = (dateStr: string) => {
+    if (isDragging) {
+      setDragEnd(dateStr);
+    }
+  };
+
+  const isDateInDragRange = (dateStr: string) => {
+    if (!isDragging || !dragStart || !dragEnd) return false;
+    const d = new Date(dateStr).getTime();
+    const s = new Date(dragStart).getTime();
+    const e = new Date(dragEnd).getTime();
+    return d >= Math.min(s, e) && d <= Math.max(s, e);
   };
 
   const handleSelectWeek = (week: (Date | null)[]) => {
@@ -449,7 +508,7 @@ const BookingsPage: React.FC = () => {
         </div>
 
         {/* Calendar Grid */}
-        <div className="px-6 py-5 bg-white">
+        <div className="px-6 py-5 bg-white select-none">
           <div className="mx-auto">
             <div className="grid grid-cols-[24px_repeat(7,1fr)] gap-1 mb-2">
               <div />
@@ -477,6 +536,7 @@ const BookingsPage: React.FC = () => {
                       if (!dateObj) return <div key={`empty-${dIdx}`} />;
                       const dateStr = dateObj.toLocaleDateString('en-CA');
                       const isSelected = selectedDates.includes(dateStr);
+                      const isPreviewed = isDateInDragRange(dateStr);
                       const isTodayLocal = dateStr === new Date().toLocaleDateString('en-CA');
                       const dayStatus = getDayStatus(dateStr);
                       const studentStatuses = getStudentDetailedStatusesForDay(dateStr);
@@ -484,11 +544,12 @@ const BookingsPage: React.FC = () => {
                       return (
                         <button
                           key={dateStr}
-                          onClick={() => handleDateClick(dateStr)}
+                          onMouseDown={() => handleMouseDown(dateStr)}
+                          onMouseEnter={() => handleMouseEnter(dateStr)}
                           className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${
                             isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'
                           } ${
-                            isSelected 
+                            isPreviewed || isSelected 
                               ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg shadow-indigo-100' 
                               : isTodayLocal 
                                 ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
@@ -502,7 +563,7 @@ const BookingsPage: React.FC = () => {
                               {studentStatuses.map((s, i) => (
                                 <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
                                   <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
-                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-500 group-hover:text-inherit'}`}>
+                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected || isPreviewed ? 'text-indigo-100' : 'text-slate-500 group-hover:text-inherit'}`}>
                                     {s.name}
                                   </span>
                                 </div>
@@ -808,6 +869,17 @@ const BookingsPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+      
+      {selectedTimelineInfo && (
+        <TimelinePanel 
+          studentName={selectedTimelineInfo.studentName} 
+          bookings={timelineData.bookings} 
+          attendances={timelineData.attendances} 
+          date={selectedTimelineInfo.date}
+          isExpanded={isTimelineExpanded}
+          onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}
+        />
       )}
     </div>
   );
