@@ -171,6 +171,15 @@ const BookingsPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
+  const handleDateClick = useCallback((dateStr: string) => {
+    setSelectedDates(prev => {
+      if (prev.includes(dateStr)) {
+        return prev.filter(d => d !== dateStr);
+      }
+      return [...prev, dateStr];
+    });
+  }, []);
+
   // Drag event lifecycle
   useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -189,7 +198,7 @@ const BookingsPage: React.FC = () => {
 
     window.addEventListener('mouseup', handleGlobalMouseUp);
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isDragging, dragStart, dragEnd]);
+  }, [isDragging, dragStart, dragEnd, handleDateClick]);
 
   // FRONTEND FILTERING & SORTING
   const processedBookings = useMemo(() => {
@@ -276,15 +285,10 @@ const BookingsPage: React.FC = () => {
     }
   };
 
-  const handleDateClick = (dateStr: string) => {
-    if (selectedDates.includes(dateStr)) {
-      setSelectedDates(selectedDates.filter(d => d !== dateStr));
-    } else {
-      setSelectedDates([...selectedDates, dateStr]);
+  const handleMouseDown = (dateStr: string, e: React.MouseEvent) => {
+    if (!e.shiftKey) {
+      setSelectedDates([]);
     }
-  };
-
-  const handleMouseDown = (dateStr: string) => {
     setIsDragging(true);
     setDragStart(dateStr);
     setDragEnd(dateStr);
@@ -550,7 +554,7 @@ const BookingsPage: React.FC = () => {
                       return (
                         <button
                           key={dateStr}
-                          onMouseDown={() => handleMouseDown(dateStr)}
+                          onMouseDown={(e) => handleMouseDown(dateStr, e)}
                           onMouseEnter={() => handleMouseEnter(dateStr)}
                           className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${
                             isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'

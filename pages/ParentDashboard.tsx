@@ -191,16 +191,22 @@ const ParentDashboard: React.FC = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  const handleMouseDown = (dateStr: string, e: React.MouseEvent) => {
+    if (activeTab !== 'bookings') return;
+    if (!e.shiftKey) {
+      setSelectedDates([]);
+    }
+    setIsDragging(true);
+    setDragStart(dateStr);
+    setDragEnd(dateStr);
+  };
+
   // Drag event lifecycle for calendar
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging && dragStart && dragEnd) {
         if (dragStart === dragEnd) {
-          if (selectedDates.includes(dragStart)) {
-            setSelectedDates(selectedDates.filter(d => d !== dragStart));
-          } else {
-            setSelectedDates([...selectedDates, dragStart]);
-          }
+          setSelectedDates(prev => prev.includes(dragStart) ? prev.filter(d => d !== dragStart) : [...prev, dragStart]);
         } else {
           const range = getDatesInRange(dragStart, dragEnd);
           setSelectedDates(prev => Array.from(new Set([...prev, ...range])));
@@ -212,7 +218,7 @@ const ParentDashboard: React.FC = () => {
     };
     window.addEventListener('mouseup', handleGlobalMouseUp);
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isDragging, dragStart, dragEnd, selectedDates]);
+  }, [isDragging, dragStart, dragEnd]);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -544,7 +550,7 @@ const ParentDashboard: React.FC = () => {
                         <button
                           key={dateStr}
                           onClick={() => { if (activeTab === 'attendance') setSelectedDate(dateStr); }}
-                          onMouseDown={() => activeTab === 'bookings' && (setIsDragging(true), setDragStart(dateStr), setDragEnd(dateStr))}
+                          onMouseDown={(e) => handleMouseDown(dateStr, e)}
                           onMouseEnter={() => activeTab === 'bookings' && isDragging && setDragEnd(dateStr)}
                           className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${
                             isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'
