@@ -38,8 +38,9 @@ const handleResponse = async (response: Response, errorMessage: string) => {
   if (!text) return null;
   
   try {
-    const data = JSON.parse(text);
-    return Array.isArray(data) && data.length === 1 ? data[0] : data;
+    // Return raw data. Unwrapping single-element arrays here causes issues
+    // for list endpoints that may return one item.
+    return JSON.parse(text);
   } catch (e) {
     return text;
   }
@@ -62,7 +63,9 @@ export const api = {
     const headers = await getHeaders();
     const url = `${SUPABASE_URL}/rest/v1/organizations?id=eq.${encodeURIComponent(id)}&select=*`;
     const response = await fetch(url, { headers });
-    return handleResponse(response, 'Failed to fetch organization');
+    const data = await handleResponse(response, 'Failed to fetch organization');
+    // Supabase select returns an array, we want the first element or undefined.
+    return Array.isArray(data) ? data[0] : null;
   },
 
   async createOrganization(name: string) {
@@ -86,13 +89,13 @@ export const api = {
     return handleResponse(response, 'Failed to update organization');
   },
 
-  async updateOrganizationBackup(id: string, backupId: string | null) {
+  async updateOrganizationBackupTime(id: string, backupTime: string | null) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/organizations?id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, {
       method: 'PATCH',
       headers,
-      body: JSON.stringify({ backup_id: backupId })
+      body: JSON.stringify({ backup_time: backupTime })
     });
     return handleResponse(response, 'Failed to update organization backup point');
   },

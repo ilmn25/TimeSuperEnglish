@@ -35,7 +35,7 @@ export interface Organization {
   name: string;
   owner: string;
   created_at?: string;
-  backup_id?: string | null;
+  backup_time?: string | null;
 }
 
 export interface StudentGroupedData {

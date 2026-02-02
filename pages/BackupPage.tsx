@@ -144,9 +144,10 @@ const BackupPage: React.FC = () => {
   const handleDelete = async (backupId: string) => {
     setConfirmModal(null);
     try {
+      const backupToDelete = backups.find(b => b.id === backupId);
       await api.deleteBackup(backupId);
-      if (organization?.backup_id === backupId) {
-        await api.updateOrganizationBackup(orgId!, null);
+      if (organization?.backup_time && backupToDelete && organization.backup_time === backupToDelete.created_at) {
+        await api.updateOrganizationBackupTime(orgId!, null);
       }
       showToast(t('backup.success_delete'));
       fetchInitialData();
@@ -159,7 +160,12 @@ const BackupPage: React.FC = () => {
   const handleRestore = async (backupId: string) => {
     setConfirmModal(null);
     try {
+      const backupToRestore = backups.find(b => b.id === backupId);
+      if (!backupToRestore) throw new Error('Backup not found');
+      
       await api.restoreBackup(backupId);
+      await api.updateOrganizationBackupTime(orgId!, backupToRestore.created_at);
+      
       showToast(t('backup.success_restore'));
       fetchInitialData();
     } catch (err) {
@@ -273,7 +279,7 @@ const BackupPage: React.FC = () => {
         ) : (
           <div className="space-y-8 md:space-y-12">
             {sortedBackups.map((backup, index) => {
-              const isActive = organization?.backup_id === backup.id;
+              const isActive = organization?.backup_time === backup.created_at;
               const isFirst = index === 0;
               const isUploaded = !!backup.uploaded;
 
