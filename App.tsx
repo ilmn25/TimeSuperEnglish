@@ -8,6 +8,7 @@ import CoursesPage from './pages/CoursesPage';
 import StudentsPage from './pages/StudentsPage';
 import BookingsPage from './pages/BookingsPage';
 import BackupPage from './pages/BackupPage';
+import ImportPage from './pages/ImportPage';
 import AuthPage from './pages/AuthPage';
 import OrgSelectionPage from './pages/OrgSelectionPage';
 import ParentDashboard from './pages/ParentDashboard';
@@ -142,6 +143,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
     if (location.pathname.includes('/courses')) return t('nav.courses');
     if (location.pathname.includes('/students')) return t('nav.students');
     if (location.pathname.includes('/backup')) return t('nav.backup');
+    if (location.pathname.includes('/import')) return t('nav.import');
     if (location.pathname === '/org') return t('nav.organizations');
     return t('app.name');
   };
@@ -216,6 +218,9 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                   </NavLink>
                   <NavLink to={`/org/${orgId}/students`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" /></svg>}>
                     {t('nav.students')}
+                  </NavLink>
+                  <NavLink to={`/org/${orgId}/import`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4v12" /></svg>}>
+                    {t('nav.import')}
                   </NavLink>
                   <NavLink to={`/org/${orgId}/backup`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}>
                     {t('nav.backup')}
@@ -298,6 +303,7 @@ const App: React.FC = () => {
             <Route path="bookings" element={<BookingsPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="students" element={<StudentsPage />} />
+            <Route path="import" element={<ImportPage />} />
             <Route path="backup" element={<BackupPage />} />
           </Route>
 

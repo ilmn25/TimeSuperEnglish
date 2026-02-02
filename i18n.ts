@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -6,7 +7,7 @@ const resources = {
   en: {
     translation: {
       app: { name: "Counter", dashboard: "Counter Dashboard" },
-      nav: { attendance: "Attendance", bookings: "Bookings", courses: "Courses", students: "Students", backup: "Backup", organizations: "Organizations", back: "Back to Dashboard" },
+      nav: { attendance: "Attendance", bookings: "Bookings", courses: "Courses", students: "Students", backup: "Backup", organizations: "Organizations", back: "Back to Dashboard", import: "Import" },
       user: { signed_in: "Signed in as", logout: "Log Out" },
       auth: { signin: "Sign In", register: "Register", email: "Email Address", password: "Password", create_account: "Create Account", continue: "or continue with", google: "Google Account", access: "Dashboard Access", check_email: "Check your email for the confirmation link!" },
       org: { select: "Select Organization", subtitle: "Choose a workspace to manage", new: "New Organization", no_orgs: "No organizations found", start_create: "Create your first workspace to get started", create_new: "Create New Organization", edit: "Edit Organization", details: "Manage workspace details", name: "Organization Name", owner: "Owner", member: "Member", delete_title: "Delete Workspace?", delete_msg: "This action will permanently delete the organization and all its data. Only owners can perform this action." },
@@ -25,7 +26,7 @@ const resources = {
   "zh-CN": {
     translation: {
       app: { name: "计数器", dashboard: "计数器仪表盘" },
-      nav: { attendance: "考勤", bookings: "预约", courses: "课程", students: "学生", backup: "备份", organizations: "机构", back: "返回仪表盘" },
+      nav: { attendance: "考勤", bookings: "预约", courses: "课程", students: "学生", backup: "备份", organizations: "机构", back: "返回仪表盘", import: "导入" },
       user: { signed_in: "登录用户", logout: "登出" },
       auth: { signin: "登录", register: "注册", email: "邮箱地址", password: "密码", create_account: "创建账户", continue: "或继续使用", google: "Google 账户", access: "仪表盘访问", check_email: "请检查您的邮箱以获取确认链接！" },
       org: { select: "选择机构", subtitle: "选择要管理的工作区", new: "新机构", no_orgs: "未找到机构", start_create: "创建您的第一个工作区以开始", create_new: "创建新机构", edit: "编辑机构", details: "管理工作区详情", name: "机构名称", owner: "所有者", member: "成员", delete_title: "删除工作区？", delete_msg: "此操作将永久删除该机构及其所有数据。只有所有者可以执行此操作。" },
@@ -44,7 +45,7 @@ const resources = {
   "zh-TW": {
     translation: {
       app: { name: "計數器", dashboard: "計數器儀表板" },
-      nav: { attendance: "考勤", bookings: "預約", courses: "課程", students: "學生", backup: "備份", organizations: "機構", back: "返回儀表板" },
+      nav: { attendance: "考勤", bookings: "預約", courses: "課程", students: "學生", backup: "備份", organizations: "機構", back: "返回儀表板", import: "匯入" },
       user: { signed_in: "登入身分", logout: "登出" },
       auth: { signin: "登入", register: "註冊", email: "電子郵件", password: "密碼", create_account: "建立帳戶", continue: "或繼續使用", google: "Google 帳戶", access: "儀表板存取", check_email: "請檢查您的電子郵件以取得確認連結！" },
       org: { select: "選擇機構", subtitle: "選擇要管理的工作區", new: "新機構", no_orgs: "未找到機構", start_create: "建立您的第一個工作區以開始", create_new: "建立新機構", edit: "編輯機構", details: "管理工作區詳情", name: "機構名稱", owner: "擁有者", member: "成員", delete_title: "刪除工作區？", delete_msg: "此動作將永久刪除該機構及其所有資料。只有擁有者可以執行此動作。" },
@@ -63,7 +64,7 @@ const resources = {
   "ja": {
     translation: {
       app: { name: "カウンター", dashboard: "カウンターダッシュボード" },
-      nav: { attendance: "出席", bookings: "予約", courses: "コース", students: "学生", backup: "バックアップ", organizations: "組織", back: "ダッシュボードに戻る" },
+      nav: { attendance: "出席", bookings: "予約", courses: "コース", students: "学生", backup: "バックアップ", organizations: "組織", back: "ダッシュボードに戻る", import: "インポート" },
       user: { signed_in: "ログイン中", logout: "ログアウト" },
       auth: { signin: "ログイン", register: "登録", email: "メールアドレス", password: "Password", create_account: "アカウント作成", continue: "または次で続行", google: "Googleアカウント", access: "ダッシュボードアクセス", check_email: "確認リンクをメールで確認してください！" },
       org: { select: "組織を選択", subtitle: "管理するワークスペースを選択", new: "新規組織", no_orgs: "組織が見つかりません", start_create: "最初のワークスペースを作成して始めましょう", create_new: "新規組織を作成", edit: "組織を編集", details: "ワークスペースの詳細を管理", name: "組織名", owner: "所有者", member: "メンバー", delete_title: "ワークスペースを削除？", delete_msg: "この操作により、組織とそのすべてのデータが完全に削除されます。所有者のみが実行できます。" },
@@ -82,7 +83,7 @@ const resources = {
   "ko": {
     translation: {
       app: { name: "카운터", dashboard: "카운터 대시보드" },
-      nav: { attendance: "출석", bookings: "예약", courses: "코스", students: "학생", backup: "백업", organizations: "기관", back: "대시보드로 돌아가기" },
+      nav: { attendance: "출석", bookings: "예약", courses: "코스", students: "학생", backup: "백업", organizations: "기관", back: "대시보드로 돌아가기", import: "가져오기" },
       user: { signed_in: "로그인: ", logout: "로그아웃" },
       auth: { signin: "로그인", register: "등록", email: "이메일 주소", password: "비밀번호", create_account: "계정 생성", continue: "또는 다음으로 계속", google: "Google 계정", access: "대시보드 액세스", check_email: "확인 링크를 이메일에서 확인하세요!" },
       org: { select: "기관 선택", subtitle: "관리할 워크스페이스 선택", new: "새 기관", no_orgs: "기관을 찾을 수 없습니다", start_create: "첫 번째 워크스페이스를 만들어 시작하세요", create_new: "새 기관 만들기", edit: "기관 편집", details: "워크스페이스 세부 정보 관리", name: "기관 이름", owner: "소유자", member: "구성원", delete_title: "워크스페이스 삭제?", delete_msg: "이 작업은 기관과 모든 데이터를 영구적으로 삭제합니다. 소유자만 이 작업을 수행할 수 있습니다." },

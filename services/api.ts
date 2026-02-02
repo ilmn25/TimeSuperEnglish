@@ -21,15 +21,28 @@ const getHeaders = async (isMutation = false) => {
 
 const handleResponse = async (response: Response, errorMessage: string) => {
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.error(`API Error: ${errorMessage}`, {
-      status: response.status,
-      statusText: response.statusText,
-      details: errorData
-    });
-    throw new Error(`${errorMessage}: ${errorData.message || response.statusText}`);
+    let errorDetail = response.statusText;
+    try {
+      const errorData = await response.json();
+      console.error(`API Error Detail [${response.status}]:`, errorData);
+      errorDetail = errorData.message || errorData.details || errorDetail;
+    } catch (e) {
+      // Fallback if not JSON
+      const text = await response.text();
+      if (text) errorDetail = text;
+    }
+    throw new Error(`${errorMessage}: ${errorDetail}`);
   }
-  return response.json();
+
+  const text = await response.text();
+  if (!text) return null;
+  
+  try {
+    const data = JSON.parse(text);
+    return Array.isArray(data) && data.length === 1 ? data[0] : data;
+  } catch (e) {
+    return text;
+  }
 };
 
 export const api = {
@@ -41,15 +54,15 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/user_orgs?user_id=eq.${user.id}&select=organizations(*)`;
     const response = await fetch(url, { headers });
     const data = await handleResponse(response, 'Failed to fetch organizations');
-    return (data || []).map((item: any) => item.organizations).filter((o: any) => o !== null);
+    const orgs = Array.isArray(data) ? data : (data ? [data] : []);
+    return orgs.map((item: any) => item.organizations).filter((o: any) => o !== null);
   },
 
   async getOrganization(id: string) {
     const headers = await getHeaders();
     const url = `${SUPABASE_URL}/rest/v1/organizations?id=eq.${encodeURIComponent(id)}&select=*`;
     const response = await fetch(url, { headers });
-    const data = await handleResponse(response, 'Failed to fetch organization');
-    return Array.isArray(data) ? data[0] : data;
+    return handleResponse(response, 'Failed to fetch organization');
   },
 
   async createOrganization(name: string) {
@@ -59,8 +72,7 @@ export const api = {
       headers,
       body: JSON.stringify({ name })
     });
-    const orgData = await handleResponse(orgResponse, 'Failed to create organization');
-    return Array.isArray(orgData) ? orgData[0] : orgData;
+    return handleResponse(orgResponse, 'Failed to create organization');
   },
 
   async updateOrganization(id: string, name: string) {
@@ -92,8 +104,7 @@ export const api = {
       method: 'DELETE',
       headers
     });
-    if (!response.ok) throw new Error('Failed to delete organization');
-    return true;
+    return handleResponse(response, 'Failed to delete organization');
   },
 
   // BOOKING METHODS
@@ -127,10 +138,12 @@ export const api = {
   async createBooking(orgId: string, data: { student_id: string; course_id: string; date: string; start: string; end: string }) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/bookings`;
+    // Explicitly set the org_id to ensure it matches current workspace
+    const payload = { ...data, org_id: orgId };
     const response = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ ...data, org_id: orgId })
+      body: JSON.stringify(payload)
     });
     return handleResponse(response, 'Failed to create booking');
   },
@@ -150,8 +163,7 @@ export const api = {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/bookings?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
-    if (!response.ok) throw new Error('Failed to delete booking');
-    return true;
+    return handleResponse(response, 'Failed to delete booking');
   },
 
   // ATTENDANCE METHODS
@@ -218,8 +230,7 @@ export const api = {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/attendances?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
-    if (!response.ok) throw new Error('Delete attendance failed');
-    return true;
+    return handleResponse(response, 'Delete attendance failed');
   },
 
   async createAttendanceManual(orgId: string, data: { student_id: string, date: string, start: string, end: string }) {
@@ -267,8 +278,7 @@ export const api = {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/courses?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
-    if (!response.ok) throw new Error('Failed to delete course');
-    return true;
+    return handleResponse(response, 'Failed to delete course');
   },
 
   // STUDENT METHODS
@@ -305,8 +315,7 @@ export const api = {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/students?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
-    if (!response.ok) throw new Error('Failed to delete student');
-    return true;
+    return handleResponse(response, 'Failed to delete student');
   },
 
   // BACKUP METHODS (EDGE FUNCTIONS)
@@ -337,7 +346,6 @@ export const api = {
     const headers: Record<string, string> = {
       'apikey': SUPABASE_KEY,
       'Authorization': `Bearer ${session?.access_token || SUPABASE_KEY}`
-      // Note: Do not set 'Content-Type', browser will set it to 'multipart/form-data' with boundary
     };
     
     const formData = new FormData();
@@ -427,7 +435,8 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/user_students?user_id=eq.${user.id}&select=students(*,organizations(name))`;
     const response = await fetch(url, { headers });
     const data = await handleResponse(response, 'Failed to fetch parent students');
-    return (data || []).map((item: any) => {
+    const items = Array.isArray(data) ? data : (data ? [data] : []);
+    return items.map((item: any) => {
       if (!item.students) return null;
       return {
         ...item.students,
