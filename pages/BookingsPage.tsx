@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
@@ -34,6 +35,7 @@ const BookingsPage: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [viewDate, setViewDate] = useState(new Date()); 
+  const [isCalendarMaximized, setIsCalendarMaximized] = useState(false);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [filterStudent, setFilterStudent] = useState('');
   const [filterCourse, setFilterCourse] = useState('');
@@ -333,6 +335,33 @@ const BookingsPage: React.FC = () => {
     return 'green';
   };
 
+  const getStudentDetailedStatusesForDay = (dateStr: string) => {
+    const dayBookings = monthBookings.filter(b => 
+      b.date === dateStr && 
+      (!filterStudent || b.student_id === filterStudent) && 
+      (!filterCourse || b.course_id === filterCourse)
+    );
+    const dayAttendances = monthAttendances.filter(a => a.date === dateStr);
+    
+    const studentMap = new Map<string, { name: string; status: BookingStatus }>();
+    dayBookings.forEach(b => {
+      const student = b.students as Student;
+      if (!student) return;
+      const current = studentMap.get(student.id);
+      const status = getBookingStatus(b, dayAttendances);
+      
+      if (!current) {
+        studentMap.set(student.id, { name: student.name, status });
+      } else {
+        const priority = { red: 3, yellow: 2, green: 1, blue: 0 };
+        if (priority[status] > priority[current.status]) {
+          studentMap.set(student.id, { name: student.name, status });
+        }
+      }
+    });
+    return Array.from(studentMap.values());
+  };
+
   const statusColors = {
     blue: 'bg-blue-400',
     green: 'bg-green-500',
@@ -381,7 +410,7 @@ const BookingsPage: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden">
+      <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-w-none' : 'max-w-3xl mx-auto'}`}>
         {/* Calendar Navigation */}
         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
            <div className="flex items-center space-x-1">
@@ -397,6 +426,13 @@ const BookingsPage: React.FC = () => {
            </div>
 
            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => setIsCalendarMaximized(!isCalendarMaximized)}
+                className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
+                title={isCalendarMaximized ? "Minimize" : "Maximize"}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+              </button>
               <button 
                 onClick={handleSelectMonth}
                 className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
@@ -414,7 +450,7 @@ const BookingsPage: React.FC = () => {
 
         {/* Calendar Grid */}
         <div className="px-6 py-5 bg-white">
-          <div className="max-w-xl mx-auto">
+          <div className="mx-auto">
             <div className="grid grid-cols-[24px_repeat(7,1fr)] gap-1 mb-2">
               <div />
               {WEEKDAYS.map(day => (
@@ -429,10 +465,10 @@ const BookingsPage: React.FC = () => {
                 const isWeekAllSelected = nonNullWeekDates.length > 0 && nonNullWeekDates.every(d => selectedDates.includes(d));
                 
                 return (
-                  <div key={wIdx} className="grid grid-cols-[24px_repeat(7,1fr)] gap-1 items-center">
+                  <div key={wIdx} className="grid grid-cols-[24px_repeat(7,1fr)] gap-1 items-stretch">
                     <button 
                       onClick={() => handleSelectWeek(week)}
-                      className={`h-7 w-5 rounded-md flex items-center justify-center transition-all ${isWeekAllSelected ? 'text-indigo-600 bg-indigo-50' : 'text-slate-200 hover:text-indigo-400'}`}
+                      className={`h-7 w-5 mt-1 rounded-md flex items-center justify-center transition-all ${isWeekAllSelected ? 'text-indigo-600 bg-indigo-50' : 'text-slate-200 hover:text-indigo-400'}`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                     </button>
@@ -441,24 +477,41 @@ const BookingsPage: React.FC = () => {
                       if (!dateObj) return <div key={`empty-${dIdx}`} />;
                       const dateStr = dateObj.toLocaleDateString('en-CA');
                       const isSelected = selectedDates.includes(dateStr);
-                      const isToday = dateStr === new Date().toLocaleDateString('en-CA');
+                      const isTodayLocal = dateStr === new Date().toLocaleDateString('en-CA');
                       const dayStatus = getDayStatus(dateStr);
+                      const studentStatuses = getStudentDetailedStatusesForDay(dateStr);
                       
                       return (
                         <button
                           key={dateStr}
                           onClick={() => handleDateClick(dateStr)}
-                          className={`flex flex-col items-center justify-center h-10 rounded-lg transition-all border text-[11px] font-black relative ${
+                          className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${
+                            isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'
+                          } ${
                             isSelected 
-                              ? 'bg-indigo-600 border-indigo-600 text-white z-10' 
-                              : isToday 
+                              ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg shadow-indigo-100' 
+                              : isTodayLocal 
                                 ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
                                 : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200 hover:text-indigo-600'
                           }`}
                         >
-                          <span>{dateObj.getDate()}</span>
-                          {dayStatus && (
-                            <div className={`w-1 h-1 rounded-full mt-0.5 ${statusColors[dayStatus]}`} />
+                          <span className={`text-[11px] ${isCalendarMaximized ? 'mb-1 self-start ml-0.5' : ''}`}>{dateObj.getDate()}</span>
+                          
+                          {isCalendarMaximized ? (
+                            <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
+                              {studentStatuses.map((s, i) => (
+                                <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
+                                  <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
+                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-500 group-hover:text-inherit'}`}>
+                                    {s.name}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            dayStatus && (
+                              <div className={`w-1 h-1 rounded-full mt-0.5 ${statusColors[dayStatus]}`} />
+                            )
                           )}
                         </button>
                       );
@@ -658,17 +711,6 @@ const BookingsPage: React.FC = () => {
           </div>
         )}
       </div>
-
-      {selectedTimelineInfo && (
-        <TimelinePanel 
-          studentName={selectedTimelineInfo.studentName}
-          bookings={timelineData.bookings}
-          attendances={timelineData.attendances}
-          date={selectedTimelineInfo.date}
-          isExpanded={isTimelineExpanded}
-          onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}
-        />
-      )}
 
       {/* Booking Form Modal */}
       {isFormOpen && (
