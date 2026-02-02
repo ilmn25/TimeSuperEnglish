@@ -318,6 +318,27 @@ const ParentDashboard: React.FC = () => {
     };
   }, [processedAllBookings]);
 
+  const handleSelectWeek = (week: (Date | null)[]) => {
+    if (activeTab !== 'bookings') return;
+    const validDates = week.filter(d => d !== null).map(d => d!.toLocaleDateString('en-CA'));
+    const allSelected = validDates.every(d => selectedDates.includes(d));
+    if (allSelected) {
+      setSelectedDates(selectedDates.filter(d => !validDates.includes(d)));
+    } else {
+      setSelectedDates(Array.from(new Set([...selectedDates, ...validDates])));
+    }
+  };
+
+  const handleSelectMonth = () => {
+    const allDates = calendarWeeks.flat().filter(d => d !== null).map(d => d!.toLocaleDateString('en-CA'));
+    const alreadySelected = allDates.every(d => selectedDates.includes(d));
+    if (alreadySelected) {
+      setSelectedDates(selectedDates.filter(d => !allDates.includes(d)));
+    } else {
+      setSelectedDates(Array.from(new Set([...selectedDates, ...allDates])));
+    }
+  };
+
   const handleEditStudent = (e: React.MouseEvent, student: Student) => {
     e.stopPropagation();
     setEditingStudent(student);
@@ -459,83 +480,101 @@ const ParentDashboard: React.FC = () => {
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
             </button>
-            <button 
-              onClick={() => { 
-                if (activeTab === 'attendance') setSelectedDate(hktToday);
-                else setSelectedDates([]);
-                setViewDate(new Date()); 
-              }}
-              className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
-            >
-              {t('parent.go_today')}
-            </button>
-            {activeTab === 'bookings' && (
+            {activeTab === 'attendance' && (
               <button 
-                onClick={clearFilters}
-                className="px-3 py-1.5 bg-white text-slate-400 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:bg-red-50 transition-all"
+                onClick={() => { setSelectedDate(hktToday); setViewDate(new Date()); }}
+                className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
               >
-                {t('bookings.reset')}
+                {t('parent.go_today')}
               </button>
+            )}
+            {activeTab === 'bookings' && (
+              <>
+                <button 
+                  onClick={handleSelectMonth}
+                  className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                >
+                  {t('bookings.select_month')}
+                </button>
+                <button 
+                  onClick={clearFilters}
+                  className="px-3 py-1.5 bg-white text-slate-400 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:bg-red-50 transition-all"
+                >
+                  {t('bookings.reset')}
+                </button>
+              </>
             )}
           </div>
         </div>
 
         <div className="px-6 py-5 bg-white select-none">
           <div className="mx-auto">
-            <div className="grid grid-cols-7 gap-1 mb-2">
+            <div className="grid grid-cols-[24px_repeat(7,1fr)] gap-1 mb-2">
+              <div />
               {WEEKDAYS.map(day => (
                 <div key={day} className="text-center text-[8px] font-black text-slate-300 uppercase tracking-widest">{day}</div>
               ))}
             </div>
             <div className="space-y-1">
-              {calendarWeeks.map((week, wIdx) => (
-                <div key={wIdx} className="grid grid-cols-7 gap-1 items-stretch">
-                  {week.map((dateObj, dIdx) => {
-                    if (!dateObj) return <div key={`empty-${dIdx}`} />;
-                    const dateStr = dateObj.toLocaleDateString('en-CA');
-                    const isSelected = activeTab === 'attendance' ? selectedDate === dateStr : selectedDates.includes(dateStr);
-                    const isPreviewed = activeTab === 'bookings' && isDragging && dragStart && dragEnd && (
-                      new Date(dateStr).getTime() >= Math.min(new Date(dragStart).getTime(), new Date(dragEnd).getTime()) &&
-                      new Date(dateStr).getTime() <= Math.max(new Date(dragStart).getTime(), new Date(dragEnd).getTime())
-                    );
-                    const isTodayLocal = dateStr === hktToday;
-                    const dayStatus = getDayStatusOverall(dateStr);
-                    const childStatuses = getChildDetailedStatusesForDay(dateStr);
+              {calendarWeeks.map((week, wIdx) => {
+                const nonNullWeekDates = activeTab === 'bookings' && week.filter(d => d !== null).map(d => d!.toLocaleDateString('en-CA'));
+                const isWeekAllSelected = nonNullWeekDates && nonNullWeekDates.length > 0 && nonNullWeekDates.every(d => selectedDates.includes(d));
 
-                    return (
-                      <button
-                        key={dateStr}
-                        onClick={() => { if (activeTab === 'attendance') setSelectedDate(dateStr); }}
-                        onMouseDown={() => activeTab === 'bookings' && (setIsDragging(true), setDragStart(dateStr), setDragEnd(dateStr))}
-                        onMouseEnter={() => activeTab === 'bookings' && isDragging && setDragEnd(dateStr)}
-                        className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${
-                          isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'
-                        } ${
-                          isSelected || isPreviewed ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg shadow-indigo-100' 
-                          : isTodayLocal ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                          : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200 hover:text-indigo-600'
-                        }`}
-                      >
-                        <span className={`text-[11px] ${isCalendarMaximized ? 'mb-1 self-start ml-0.5' : ''}`}>{dateObj.getDate()}</span>
-                        {isCalendarMaximized ? (
-                          <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
-                            {childStatuses.map((s, i) => (
-                              <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
-                                <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
-                                <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected || isPreviewed ? 'text-indigo-100' : 'text-slate-500 group-hover:text-inherit'}`}>
-                                  {s.name}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          dayStatus && <div className={`w-1 h-1 rounded-full mt-0.5 ${statusColors[dayStatus]}`} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
+                return (
+                  <div key={wIdx} className="grid grid-cols-[24px_repeat(7,1fr)] gap-1 items-stretch">
+                    <button 
+                      onClick={() => handleSelectWeek(week)}
+                      className={`h-7 w-5 mt-1 rounded-md flex items-center justify-center transition-all ${activeTab === 'bookings' ? (isWeekAllSelected ? 'text-indigo-600 bg-indigo-50' : 'text-slate-200 hover:text-indigo-400') : 'cursor-default text-transparent'}`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                    </button>
+                    {week.map((dateObj, dIdx) => {
+                      if (!dateObj) return <div key={`empty-${dIdx}`} />;
+                      const dateStr = dateObj.toLocaleDateString('en-CA');
+                      const isSelected = activeTab === 'attendance' ? selectedDate === dateStr : selectedDates.includes(dateStr);
+                      const isPreviewed = activeTab === 'bookings' && isDragging && dragStart && dragEnd && (
+                        new Date(dateStr).getTime() >= Math.min(new Date(dragStart).getTime(), new Date(dragEnd).getTime()) &&
+                        new Date(dateStr).getTime() <= Math.max(new Date(dragStart).getTime(), new Date(dragEnd).getTime())
+                      );
+                      const isTodayLocal = dateStr === hktToday;
+                      const dayStatus = getDayStatusOverall(dateStr);
+                      const childStatuses = getChildDetailedStatusesForDay(dateStr);
+
+                      return (
+                        <button
+                          key={dateStr}
+                          onClick={() => { if (activeTab === 'attendance') setSelectedDate(dateStr); }}
+                          onMouseDown={() => activeTab === 'bookings' && (setIsDragging(true), setDragStart(dateStr), setDragEnd(dateStr))}
+                          onMouseEnter={() => activeTab === 'bookings' && isDragging && setDragEnd(dateStr)}
+                          className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${
+                            isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'
+                          } ${
+                            isSelected || isPreviewed ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg shadow-indigo-100' 
+                            : isTodayLocal ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                            : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200 hover:text-indigo-600'
+                          }`}
+                        >
+                          <span className={`text-[11px] ${isCalendarMaximized ? 'mb-1 self-start ml-0.5' : ''}`}>{dateObj.getDate()}</span>
+                          {isCalendarMaximized ? (
+                            <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
+                              {childStatuses.map((s, i) => (
+                                <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
+                                  <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
+                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected || isPreviewed ? 'text-indigo-100' : 'text-slate-500 group-hover:text-inherit'}`}>
+                                    {s.name}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            dayStatus && <div className={`w-1 h-1 rounded-full mt-0.5 ${statusColors[dayStatus]}`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
