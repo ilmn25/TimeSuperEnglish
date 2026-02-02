@@ -23,6 +23,14 @@ interface ResolvedBooking {
   end: string;
 }
 
+const EXAMPLE_CSV = `student,date,time,duration,course
+Liam Wong,2026-03-02,14:00,60,Mathematics
+Liam Wong,2026-03-09,14:00,60,Physics
+Maya Tan,2026-03-02,15:30,60,English Writing 
+Noah Lim,2026-03-03,10:00,90,Chemistry
+Noah Lim,2026-03-10,10:00,60,Biology
+Maya Tan,2026-03-09,15:30,60,History`;
+
 const ImportPage: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const { t } = useTranslation();
@@ -53,7 +61,7 @@ const ImportPage: React.FC = () => {
       const text = event.target?.result as string;
       const rows = text.split('\n').filter(r => r.trim());
       if (rows.length < 2) {
-        alert("CSV file must have a header row and at least one data row.");
+        alert(t('import_page.error_file'));
         return;
       }
 
@@ -75,7 +83,7 @@ const ImportPage: React.FC = () => {
       }).filter(r => r.student && r.date && r.time);
 
       if (data.length === 0) {
-        alert("No valid data rows found in CSV.");
+        alert(t('import_page.error_no_data'));
         return;
       }
 
@@ -194,17 +202,20 @@ const ImportPage: React.FC = () => {
     } catch (err: any) {
       alert(`Import process interrupted. Completed ${successCount} of ${resolvedBookings.length} bookings.\n\nError: ${err.message}`);
       console.error(err);
-      // Even on partial failure, we might want to refresh lists or stay on step 3
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const copyExample = () => {
+    navigator.clipboard.writeText(EXAMPLE_CSV);
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500 pb-20 px-4">
       <div className="text-center space-y-2">
         <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('nav.import')}</h2>
-        <p className="text-slate-500 font-medium">Batch upload bookings from CSV files</p>
+        <p className="text-slate-500 font-medium">{t('import_page.subtitle')}</p>
       </div>
 
       <div className="flex items-center justify-center">
@@ -226,13 +237,32 @@ const ImportPage: React.FC = () => {
             <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600">
                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
             </div>
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-black text-slate-900">Upload your CSV</h3>
-              <p className="text-slate-400 text-sm max-w-xs">Headers: <code className="bg-slate-50 px-1 rounded text-[10px]">student, date, time, duration, course</code></p>
+            <div className="text-center space-y-4 w-full flex flex-col items-center">
+              <div className="space-y-1">
+                <h3 className="text-xl font-black text-slate-900">{t('import_page.step1_title')}</h3>
+                <p className="text-slate-400 text-sm">{t('import_page.step1_headers')} <code className="bg-slate-50 px-1 rounded text-[10px]">student, date, time, duration, course</code></p>
+              </div>
+
+              {/* Example Section */}
+              <div className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-5 text-left relative group">
+                <div className="flex items-center justify-between mb-3">
+                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('import_page.example_title')}</span>
+                   <button 
+                    onClick={copyExample}
+                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-sm active:scale-95 transition-all"
+                   >
+                     {t('common.confirm')} (Copy)
+                   </button>
+                </div>
+                <pre className="text-[11px] font-mono text-slate-600 overflow-x-auto no-scrollbar whitespace-pre leading-relaxed">
+                  {EXAMPLE_CSV}
+                </pre>
+              </div>
             </div>
+            
             <label className="cursor-pointer group">
               <div className="bg-indigo-600 group-hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center space-x-3">
-                <span>Select CSV File</span>
+                <span>{t('import_page.select_file')}</span>
               </div>
               <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
             </label>
@@ -245,7 +275,7 @@ const ImportPage: React.FC = () => {
               <section className="space-y-6">
                 <div className="flex items-center space-x-2">
                   <span className="w-1.5 h-4 bg-indigo-600 rounded-full" />
-                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">Map Students</h4>
+                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">{t('import_page.map_students')}</h4>
                 </div>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
                   {uniqueCsvStudents.map(name => (
@@ -256,7 +286,7 @@ const ImportPage: React.FC = () => {
                         onChange={(e) => setStudentMap({...studentMap, [name]: e.target.value})}
                         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-100"
                       >
-                        <option value="create">Create New Student</option>
+                        <option value="create">{t('import_page.create_student')}</option>
                         {existingStudents.map(es => (
                           <option key={es.id} value={es.id}>{es.name}</option>
                         ))}
@@ -269,7 +299,7 @@ const ImportPage: React.FC = () => {
               <section className="space-y-6">
                 <div className="flex items-center space-x-2">
                   <span className="w-1.5 h-4 bg-indigo-600 rounded-full" />
-                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">Map Courses</h4>
+                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">{t('import_page.map_courses')}</h4>
                 </div>
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
                   {uniqueCsvCourses.map(name => (
@@ -280,7 +310,7 @@ const ImportPage: React.FC = () => {
                         onChange={(e) => setCourseMap({...courseMap, [name]: e.target.value})}
                         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-100"
                       >
-                        <option value="create">Create New Course</option>
+                        <option value="create">{t('import_page.create_course')}</option>
                         {existingCourses.map(ec => (
                           <option key={ec.id} value={ec.id}>{ec.name}</option>
                         ))}
@@ -296,7 +326,7 @@ const ImportPage: React.FC = () => {
                  onClick={() => setStep(1)}
                  className="px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
                >
-                 Go Back
+                 {t('import_page.back_to_upload')}
                </button>
                <button 
                  onClick={resolveEntities}
@@ -304,7 +334,7 @@ const ImportPage: React.FC = () => {
                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center"
                >
                  {isProcessing && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />}
-                 Resolve & Review
+                 {t('import_page.resolve_review')}
                </button>
             </div>
           </div>
@@ -314,11 +344,11 @@ const ImportPage: React.FC = () => {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
                <div className="space-y-1">
-                 <h3 className="text-xl font-black text-slate-900">Review Import</h3>
-                 <p className="text-slate-500 text-xs font-medium">Please verify the entries before final import.</p>
+                 <h3 className="text-xl font-black text-slate-900">{t('import_page.review_title')}</h3>
+                 <p className="text-slate-500 text-xs font-medium">{t('import_page.review_subtitle')}</p>
                </div>
                <div className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest">
-                 {resolvedBookings.length} Bookings
+                 {t('import_page.bookings_count', { count: resolvedBookings.length })}
                </div>
             </div>
 
@@ -326,10 +356,10 @@ const ImportPage: React.FC = () => {
               <table className="w-full text-left border-collapse">
                 <thead className="sticky top-0 bg-slate-50 border-b border-slate-100 z-10">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Course</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Time</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.student')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.course')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.date')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.time')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -350,7 +380,7 @@ const ImportPage: React.FC = () => {
                  onClick={() => setStep(2)}
                  className="px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600"
                >
-                 Back to Mapping
+                 {t('import_page.back_to_mapping')}
                </button>
                <button 
                  onClick={handleImportBookings}
@@ -358,7 +388,7 @@ const ImportPage: React.FC = () => {
                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center"
                >
                  {isProcessing && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />}
-                 Confirm & Import All
+                 {t('import_page.confirm_import')}
                </button>
             </div>
           </div>
@@ -370,14 +400,14 @@ const ImportPage: React.FC = () => {
                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
             </div>
             <div className="text-center space-y-2">
-              <h3 className="text-2xl font-black text-slate-900">Import Complete!</h3>
-              <p className="text-slate-500 font-medium">{resolvedBookings.length} bookings successfully synchronized.</p>
+              <h3 className="text-2xl font-black text-slate-900">{t('import_page.complete_title')}</h3>
+              <p className="text-slate-500 font-medium">{t('import_page.complete_subtitle', { count: resolvedBookings.length })}</p>
             </div>
             <button 
               onClick={() => navigate(`/org/${orgId}/bookings`)}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest"
             >
-              View Bookings
+              {t('import_page.view_bookings')}
             </button>
           </div>
         )}

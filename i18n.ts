@@ -20,7 +20,30 @@ const resources = {
       backup: { title: "History", subtitle: "Manage database snapshots and point-in-time restores", snapshots: "Snapshots", quota_full: "Quota Full", upload: "Upload", snapshot: "Snapshot", export: "Export", restore: "Restore", active: "Closest Version", latest: "Latest Snapshot", user_upload: "User Upload", empty: "Empty History", no_snapshots: "No snapshots found for this workspace.", take_first: "Take First Snapshot", restore_point: "Restore Point", delete_snapshot: "Delete Snapshot", restore_msg: "Restore database to state on {{date}}? This will overwrite all current progress.", delete_msg: "Permanently delete snapshot {{id}}?", success_create: "Backup created successfully!", success_upload: "Backup uploaded successfully!", success_delete: "Backup deleted successfully", success_restore: "Database restored successfully!", error_quota: "Quota reached. Please delete an old backup first." },
       parent: { dashboard: "Dashboard", subtitle: "student activity and status", go_today: "Go to Today", edit_profile: "Edit Student Profile", updating: "Updating profile for", unset: "Unset", in_class: "In Class", away: "Away", no_bookings: "No bookings", no_activity: "No activity", session: "Session", live: "Live", now: "Now" },
       card: { todays_schedule: "Today's Schedule", no_bookings: "No bookings found for this day.", log: "Attendance Log", manual: "manual input", no_activity: "No activity yet", check_in: "Check In", check_out: "Check Out" },
-      manual: { title: "Manual Attendance", subtitle: "Enter custom times for", start: "Start Time", end: "End Time" }
+      manual: { title: "Manual Attendance", subtitle: "Enter custom times for", start: "Start Time", end: "End Time" },
+      import_page: {
+        subtitle: "Batch upload bookings from CSV files",
+        step1_title: "Upload your CSV",
+        step1_headers: "Required Headers:",
+        example_title: "Example CSV Content",
+        select_file: "Select CSV File",
+        map_students: "Map Students",
+        map_courses: "Map Courses",
+        create_student: "Create New Student",
+        create_course: "Create New Course",
+        back_to_upload: "Back to Upload",
+        resolve_review: "Resolve & Review",
+        review_title: "Review Import",
+        review_subtitle: "Please verify the entries before final import.",
+        bookings_count: "{{count}} Bookings",
+        back_to_mapping: "Back to Mapping",
+        confirm_import: "Confirm & Import All",
+        complete_title: "Import Complete!",
+        complete_subtitle: "{{count}} bookings successfully synchronized.",
+        view_bookings: "View Bookings",
+        error_file: "CSV file must have a header row and at least one data row.",
+        error_no_data: "No valid data rows found in CSV."
+      }
     }
   },
   "zh-CN": {
@@ -39,7 +62,30 @@ const resources = {
       backup: { title: "历史记录", subtitle: "管理数据库快照和时间点恢复", snapshots: "快照", quota_full: "配额已满", upload: "上传", snapshot: "快照", export: "导出", restore: "恢复", active: "最接近版本", latest: "最新快照", user_upload: "用户上传", empty: "无历史记录", no_snapshots: "此工作区未找到快照。", take_first: "创建第一个快照", restore_point: "恢复点", delete_snapshot: "删除快照", restore_msg: "将数据库恢复到 {{date}} 的状态？这将覆盖当前所有进度。", delete_msg: "永久删除快照 {{id}}？", success_create: "备份创建成功！", success_upload: "备份上传成功！", success_delete: "备份删除成功", success_restore: "数据库恢复成功！", error_quota: "配额已达上限。请先删除旧备份。" },
       parent: { dashboard: "仪表盘", subtitle: "学生活动和状态", go_today: "回到今天", edit_profile: "编辑学生档案", updating: "正在更新档案对象", unset: "未设置", in_class: "上课中", away: "不在校", no_bookings: "无预约", no_activity: "无活动", session: "会话", live: "实时", now: "现在" },
       card: { todays_schedule: "今日日程", no_bookings: "今日无预约。", log: "考勤日志", manual: "手动输入", no_activity: "暂无活动", check_in: "签到", check_out: "签退" },
-      manual: { title: "手动考勤", subtitle: "输入自定义时间对象", start: "开始时间", end: "结束时间" }
+      manual: { title: "手动考勤", subtitle: "输入自定义时间对象", start: "开始时间", end: "结束时间" },
+      import_page: {
+        subtitle: "从 CSV 文件批量上传预约",
+        step1_title: "上传 CSV",
+        step1_headers: "所需表头:",
+        example_title: "示例 CSV 内容",
+        select_file: "选择 CSV 文件",
+        map_students: "匹配学生",
+        map_courses: "匹配课程",
+        create_student: "创建新学生",
+        create_course: "创建新课程",
+        back_to_upload: "返回上传",
+        resolve_review: "解析并预览",
+        review_title: "检查导入内容",
+        review_subtitle: "最终导入前请核对条目。",
+        bookings_count: "{{count}} 条预约",
+        back_to_mapping: "返回匹配",
+        confirm_import: "确认并全部导入",
+        complete_title: "导入完成！",
+        complete_subtitle: "成功同步 {{count}} 条预约。",
+        view_bookings: "查看预约",
+        error_file: "CSV 文件必须包含表头行和至少一个数据行。",
+        error_no_data: "CSV 中未找到有效数据行。"
+      }
     }
   },
   "zh-TW": {
@@ -58,7 +104,30 @@ const resources = {
       backup: { title: "歷史記錄", subtitle: "管理資料庫快照和時間點還原", snapshots: "快照", quota_full: "配額已滿", upload: "上傳", snapshot: "快照", export: "匯出", restore: "還原", active: "最接近版本", latest: "最新快照", user_upload: "用戶上傳", empty: "無歷史記錄", no_snapshots: "此工作區未找到快照。", take_first: "建立第一個快照", restore_point: "還原點", delete_snapshot: "刪除快照", restore_msg: "將資料庫還原到 {{date}} 的狀態？這將覆蓋目前所有進度。", delete_msg: "永久刪除快照 {{id}}？", success_create: "備份建立成功！", success_upload: "備份上傳成功！", success_delete: "備份刪除成功", success_restore: "資料庫還原成功！", error_quota: "配額已達上限。請先刪除舊備份。" },
       parent: { dashboard: "儀表板", subtitle: "學生活動和狀態", go_today: "回到今天", edit_profile: "編輯學生檔案", updating: "正在更新檔案對象", unset: "未設定", in_class: "上課中", away: "不在校", no_bookings: "預約", no_activity: "無活動", session: "工作階段", live: "即時", now: "現在" },
       card: { todays_schedule: "今日日程", no_bookings: "今日無預約。", log: "考勤日誌", manual: "手動輸入", no_activity: "暫無活動", check_in: "簽到", check_out: "簽退" },
-      manual: { title: "手动考勤", subtitle: "输入自定义时间对象", start: "开始时间", end: "结束时间" }
+      manual: { title: "手動考勤", subtitle: "輸入自定義時間對象", start: "開始時間", end: "結束時間" },
+      import_page: {
+        subtitle: "從 CSV 檔案批量上傳預約",
+        step1_title: "上傳 CSV",
+        step1_headers: "所需表頭:",
+        example_title: "示例 CSV 內容",
+        select_file: "選擇 CSV 檔案",
+        map_students: "匹配學生",
+        map_courses: "匹配課程",
+        create_student: "創建新學生",
+        create_course: "創建新課程",
+        back_to_upload: "返回上傳",
+        resolve_review: "解析並預覽",
+        review_title: "檢查匯入內容",
+        review_subtitle: "最終匯入前請核對條目。",
+        bookings_count: "{{count}} 條預約",
+        back_to_mapping: "返回匹配",
+        confirm_import: "確認並全部匯入",
+        complete_title: "匯入完成！",
+        complete_subtitle: "成功同步 {{count}} 條預約。",
+        view_bookings: "查看預約",
+        error_file: "CSV 檔案必須包含表頭行和至少一個數據行。",
+        error_no_data: "CSV 中未找到有效數據行。"
+      }
     }
   },
   "ja": {
@@ -77,7 +146,30 @@ const resources = {
       backup: { title: "履歴", subtitle: "データベースのスナップショットと復元の管理", snapshots: "スナップショット", quota_full: "クォータがいっぱいです", upload: "アップロード", snapshot: "スナップショット", export: "エクスポート", restore: "復元", active: "最も近いバージョン", latest: "最新のスナップショット", user_upload: "ユーザーアップロード", empty: "履歴なし", no_snapshots: "このワークスペースのスナップショットは見つかりませんでした。", take_first: "最初のスナップショットを作成", restore_point: "復元ポイント", delete_snapshot: "スナップショットを削除", restore_msg: "{{date}} の状態にデータベースを復元しますか？これにより現在のすべての進行状況が上書きされます。", delete_msg: "スナップショット {{id}} を完全に削除しますか？", success_create: "バックアップを作成しました！", success_upload: "バックアップをアップロードしました！", success_delete: "バックアップを削除しました", success_restore: "データベースを復元しました！", error_quota: "クォータに達しました。古いバックアップを削除してください。" },
       parent: { dashboard: "ダッシュボード", subtitle: "学生のアクティビティとステータス", go_today: "今日へ移動", edit_profile: "学生プロフィールを編集", updating: "プロフィール更新中: ", unset: "未設定", in_class: "授業中", away: "不在", no_bookings: "予約なし", no_activity: "アクティビティなし", session: "セッション", live: "ライブ", now: "現在" },
       card: { todays_schedule: "今日のスケジュール", no_bookings: "この日の予約はありません。", log: "出席ログ", manual: "手動入力", no_activity: "アクティビティはまだありません", check_in: "チェックイン", check_out: "チェックアウト" },
-      manual: { title: "手動出席", subtitle: "カスタム時間を入力: ", start: "開始時間", end: "結束時間" }
+      manual: { title: "手動出席", subtitle: "カスタム時間を入力: ", start: "開始時間", end: "結束時間" },
+      import_page: {
+        subtitle: "CSVファイルから予約を一括アップロード",
+        step1_title: "CSVをアップロード",
+        step1_headers: "必要なヘッダー:",
+        example_title: "CSV内容の例",
+        select_file: "CSVファイルを選択",
+        map_students: "学生をマッピング",
+        map_courses: "コースをマッピング",
+        create_student: "新規学生を作成",
+        create_course: "新規コースを作成",
+        back_to_upload: "アップロードに戻る",
+        resolve_review: "解析して確認",
+        review_title: "インポート内容の確認",
+        review_subtitle: "最終インポート前にエントリを確認してください。",
+        bookings_count: "{{count}} 件の予約",
+        back_to_mapping: "マッピングに戻る",
+        confirm_import: "確認してすべてインポート",
+        complete_title: "インポート完了！",
+        complete_subtitle: "{{count}} 件の予約が正常に同期されました。",
+        view_bookings: "予約を表示",
+        error_file: "CSVファイルにはヘッダー行と少なくとも1つのデータ行が必要です。",
+        error_no_data: "CSV内に有効なデータ行が見つかりませんでした。"
+      }
     }
   },
   "ko": {
@@ -96,7 +188,30 @@ const resources = {
       backup: { title: "기록", subtitle: "데이터베이스 스냅샷 및 시점 복구 관리", snapshots: "스냅샷", quota_full: "할당량 가득 참", upload: "업로드", snapshot: "스냅샷", export: "내보내기", restore: "복구", active: "가장 가까운 버전", latest: "최신 스냅샷", user_upload: "사용자 업로드", empty: "기록 없음", no_snapshots: "이 워크스페이스에 대한 스냅샷이 없습니다.", take_first: "첫 번째 스냅샷 생성", restore_point: "복구 지점", delete_snapshot: "스냅샷 삭제", restore_msg: "데이터베이스를 {{date}} 상태로 복구하시겠습니까? 현재 모든 진행 상황을 덮어씁니다.", delete_msg: "스냅샷 {{id}}를 영구적으로 삭제하시겠습니까?", success_create: "백업 생성 성공!", success_upload: "백업 업로드 성공!", success_delete: "백업 삭제 성공", success_restore: "데이터베이스 복구 성공!", error_quota: "할당량에 도달했습니다. 이전 백업을 삭제하세요." },
       parent: { dashboard: "대시보드", subtitle: "학생 활동 및 상태", go_today: "오늘로 이동", edit_profile: "학생 프로필 편집", updating: "프로필 업데이트 중: ", unset: "미설정", in_class: "수업 중", away: "부재", no_bookings: "예약 없음", no_activity: "활동 없음", session: "세션", live: "라이브", now: "지금" },
       card: { todays_schedule: "오늘 일정", no_bookings: "오늘 예약이 없습니다.", log: "출석 로그", manual: "수동 입력", no_activity: "아직 활동 없음", check_in: "체크인", check_out: "체크아웃" },
-      manual: { title: "출석 수동 입력", subtitle: "사용자 지정 시간 입력: ", start: "시작 시간", end: "종료 시간" }
+      manual: { title: "출석 수동 입력", subtitle: "사용자 지정 시간 입력: ", start: "시작 시간", end: "結束時間" },
+      import_page: {
+        subtitle: "CSV 파일에서 예약 일괄 업로드",
+        step1_title: "CSV 업로드",
+        step1_headers: "필수 헤더:",
+        example_title: "예시 CSV 내용",
+        select_file: "CSV 파일 선택",
+        map_students: "학생 매핑",
+        map_courses: "코스 매핑",
+        create_student: "새 학생 생성",
+        create_course: "새 코스 생성",
+        back_to_upload: "업로드로 돌아가기",
+        resolve_review: "분석 및 검토",
+        review_title: "가져오기 검토",
+        review_subtitle: "최종 가져오기 전에 항목을 확인하십시오.",
+        bookings_count: "{{count}} 개의 예약",
+        back_to_mapping: "매핑으로 돌아가기",
+        confirm_import: "확인 및 전체 가져오기",
+        complete_title: "가져오기 완료!",
+        complete_subtitle: "{{count}} 개의 예약이 성공적으로 동기화되었습니다.",
+        view_bookings: "예약 보기",
+        error_file: "CSV 파일에는 헤더 행과 최소 하나 이상의 데이터 행이 있어야 합니다.",
+        error_no_data: "CSV에서 유효한 데이터 행을 찾을 수 없습니다."
+      }
     }
   }
 };
