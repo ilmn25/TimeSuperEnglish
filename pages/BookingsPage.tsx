@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Booking, Course, Student, Attendance } from '../types';
 import TimelinePanel from '../components/TimelinePanel';
@@ -33,6 +33,7 @@ const getDatesInRange = (startStr: string, endStr: string) => {
 
 const BookingsPage: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   
   // Raw Data State (Entire Month)
@@ -378,6 +379,17 @@ const BookingsPage: React.FC = () => {
     setFilterStatus('');
   };
 
+  const handleExport = () => {
+    if (!orgId) return;
+    // Pass processed results and the attendances for reference mapping in the export page
+    navigate(`/org/${orgId}/export`, { 
+      state: { 
+        bookings: processedBookings, 
+        attendances: monthAttendances 
+      } 
+    });
+  };
+
   // Status calculation for dots (respecting student/course filters)
   const getDayStatus = (dateStr: string): BookingStatus | null => {
     const dayBookings = monthBookings.filter(b => 
@@ -470,13 +482,22 @@ const BookingsPage: React.FC = () => {
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('bookings.title')}</h2>
           <p className="text-slate-500 text-xs font-medium">{t('bookings.subtitle')}</p>
         </div>
-        <button 
-          onClick={() => setIsFormOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-          {t('bookings.new_entry')}
-        </button>
+        <div className="flex items-center space-x-3">
+          <button 
+            onClick={handleExport}
+            className="flex items-center space-x-2 px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50 transition-all active:scale-95"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+            <span>{t('bookings.export')}</span>
+          </button>
+          <button 
+            onClick={() => setIsFormOpen(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+            {t('bookings.new_entry')}
+          </button>
+        </div>
       </div>
 
       <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-w-none' : 'max-w-3xl mx-auto'}`}>

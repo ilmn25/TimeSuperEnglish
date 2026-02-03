@@ -7,6 +7,7 @@ import AttendancePage from './pages/AttendancePage';
 import CoursesPage from './pages/CoursesPage';
 import StudentsPage from './pages/StudentsPage';
 import BookingsPage from './pages/BookingsPage';
+import ExportPage from './pages/ExportPage';
 import BackupPage from './pages/BackupPage';
 import ImportPage from './pages/ImportPage';
 import AuthPage from './pages/AuthPage';
@@ -162,6 +163,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
     if (isDashboardView) return t('parent.dashboard');
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
+    if (location.pathname.includes('/export')) return t('nav.export');
     if (location.pathname.includes('/courses')) return t('nav.courses');
     if (location.pathname.includes('/students')) return t('nav.students');
     if (location.pathname.includes('/backup')) return t('nav.backup');
@@ -382,6 +384,7 @@ const App: React.FC = () => {
               <Route index element={<Navigate to="attendance" replace />} />
               <Route path="attendance" element={<AttendancePage />} />
               <Route path="bookings" element={<BookingsPage />} />
+              <Route path="export" element={<ExportPage />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="import" element={<ImportPage />} />
