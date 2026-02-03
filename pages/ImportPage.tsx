@@ -9,7 +9,7 @@ import { useImportStatus } from '../App';
 interface CSVRow {
   student: string;
   date: string;
-  time: string;
+  start: string;
   duration: number;
   course: string;
 }
@@ -24,7 +24,7 @@ interface ResolvedBooking {
   end: string;
 }
 
-const EXAMPLE_CSV = `student,date,time,duration,course
+const EXAMPLE_CSV = `student,date,start,duration,course
 Liam Wong,2026-03-02,14:00,60,Mathematics
 Liam Wong,2026-03-09,14:00,60,Physics
 Maya Tan,2026-03-02,15:30,60,English Writing 
@@ -84,11 +84,11 @@ const ImportPage: React.FC = () => {
         return {
           student: obj.student,
           date: obj.date,
-          time: obj.time,
+          start: obj.start,
           duration: parseInt(obj.duration) || 60,
           course: obj.course
         };
-      }).filter(r => r.student && r.date && r.time);
+      }).filter(r => r.student && r.date && r.start);
 
       if (data.length === 0) {
         alert(t('import_page.error_no_data'));
@@ -188,8 +188,8 @@ const ImportPage: React.FC = () => {
         studentId: resolvedStudents[row.student],
         courseId: resolvedCourses[row.course],
         date: row.date,
-        start: `${row.time}:00`,
-        end: calculateEndTime(row.time, row.duration)
+        start: `${row.start}:00`,
+        end: calculateEndTime(row.start, row.duration)
       }));
       setResolvedBookings(resolved);
 
@@ -313,7 +313,7 @@ const ImportPage: React.FC = () => {
             <div className="text-center space-y-4 w-full flex flex-col items-center">
               <div className="space-y-1">
                 <h3 className="text-xl font-black text-slate-900">{t('import_page.step1_title')}</h3>
-                <p className="text-slate-400 text-sm">{t('import_page.step1_headers')} <code className="bg-slate-50 px-1 rounded text-[10px]">student, date, time, duration, course</code></p>
+                <p className="text-slate-400 text-sm">{t('import_page.step1_headers')} <code className="bg-slate-50 px-1 rounded text-[10px]">student, date, start, duration, course</code></p>
               </div>
 
               {/* Example Section */}
@@ -324,7 +324,7 @@ const ImportPage: React.FC = () => {
                     onClick={copyExample}
                     className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-sm active:scale-95 transition-all"
                    >
-                     {t('common.confirm')} (Copy)
+                     {t('common.copy')}
                    </button>
                 </div>
                 <pre className="text-[11px] font-mono text-slate-600 overflow-x-auto no-scrollbar whitespace-pre leading-relaxed">

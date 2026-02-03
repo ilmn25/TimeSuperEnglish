@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-ro
 import { supabase } from './services/supabaseClient';
 import { api } from './services/api';
 import AttendancePage from './pages/AttendancePage';
+import AttendanceExportPage from './pages/AttendanceExportPage';
 import CoursesPage from './pages/CoursesPage';
 import StudentsPage from './pages/StudentsPage';
 import BookingsPage from './pages/BookingsPage';
@@ -161,6 +162,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   // Determine the display name for the header
   const getPageTitle = () => {
     if (isDashboardView) return t('parent.dashboard');
+    if (location.pathname.includes('/attendance/export')) return t('attendance_export_page.title');
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
     if (location.pathname.includes('/export')) return t('nav.export');
@@ -227,7 +229,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
           </div>
           
           {/* Main Control Bar (Only for specific Org) */}
-          {orgId && (
+          {orgId && !location.pathname.includes('/attendance/export') && (
             <div className="pb-3 sm:pb-6 lg:pb-8 overflow-hidden relative">
               <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1 sm:pb-2 mask-linear-right touch-pan-x">
                 <nav className="flex items-center space-x-1 sm:space-x-2 bg-slate-50/50 p-1 sm:p-1.5 rounded-2xl sm:rounded-[2rem] border-2 border-slate-100 min-w-max">
@@ -242,9 +244,6 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                   </NavLink>
                   <NavLink to={`/org/${orgId}/students`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" /></svg>}>
                     {t('nav.students')}
-                  </NavLink>
-                  <NavLink to={`/org/${orgId}/import`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4v12" /></svg>}>
-                    {t('nav.import')}
                   </NavLink>
                   <NavLink to={`/org/${orgId}/backup`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}>
                     {t('nav.backup')}
@@ -383,6 +382,7 @@ const App: React.FC = () => {
             <Route path="/org/:orgId">
               <Route index element={<Navigate to="attendance" replace />} />
               <Route path="attendance" element={<AttendancePage />} />
+              <Route path="attendance/export" element={<AttendanceExportPage />} />
               <Route path="bookings" element={<BookingsPage />} />
               <Route path="export" element={<ExportPage />} />
               <Route path="courses" element={<CoursesPage />} />

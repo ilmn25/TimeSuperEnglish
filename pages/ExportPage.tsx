@@ -72,14 +72,9 @@ const ExportPage: React.FC = () => {
     if (bookings.length === 0) return;
 
     // Header row
-    const csvHeaders: string[] = [];
-    if (selectedColumnIds.has('student')) csvHeaders.push(t('export_page.column_student'));
-    if (selectedColumnIds.has('date')) csvHeaders.push(t('export_page.column_date'));
-    if (selectedColumnIds.has('start')) csvHeaders.push(t('export_page.column_start'));
-    if (selectedColumnIds.has('end')) csvHeaders.push(t('export_page.column_end'));
-    if (selectedColumnIds.has('duration')) csvHeaders.push(t('export_page.column_duration'));
-    if (selectedColumnIds.has('course')) csvHeaders.push(t('export_page.column_course'));
-    if (selectedColumnIds.has('status')) csvHeaders.push(t('export_page.column_status'));
+    const csvHeaders: string[] = columns
+      .filter(c => selectedColumnIds.has(c.id) && c.id !== 'attendance')
+      .map(c => c.id);
     
     if (selectedColumnIds.has('attendance')) {
       for (let i = 1; i <= maxAttendanceCount; i++) {
@@ -89,14 +84,14 @@ const ExportPage: React.FC = () => {
     }
 
     const rows = bookings.map(b => {
-      const rowData: string[] = [];
-      if (selectedColumnIds.has('student')) rowData.push(`"${b.students?.name || ''}"`);
-      if (selectedColumnIds.has('date')) rowData.push(`"${b.date}"`);
-      if (selectedColumnIds.has('start')) rowData.push(`"${b.start.slice(0, 5)}"`);
-      if (selectedColumnIds.has('end')) rowData.push(`"${b.end.slice(0, 5)}"`);
-      if (selectedColumnIds.has('duration')) rowData.push(`"${calculateDurationMinutes(b.start, b.end)}"`);
-      if (selectedColumnIds.has('course')) rowData.push(`"${b.courses?.name || ''}"`);
-      if (selectedColumnIds.has('status')) rowData.push(`"${getStatusLabel(b.calculatedStatus)}"`);
+      const rowData: (string|number)[] = [];
+      if (selectedColumnIds.has('student')) rowData.push(b.students?.name || '');
+      if (selectedColumnIds.has('date')) rowData.push(b.date);
+      if (selectedColumnIds.has('start')) rowData.push(b.start.slice(0, 5));
+      if (selectedColumnIds.has('end')) rowData.push(b.end.slice(0, 5));
+      if (selectedColumnIds.has('duration')) rowData.push(calculateDurationMinutes(b.start, b.end));
+      if (selectedColumnIds.has('course')) rowData.push(b.courses?.name || '');
+      if (selectedColumnIds.has('status')) rowData.push(getStatusLabel(b.calculatedStatus));
 
       if (selectedColumnIds.has('attendance')) {
         const studentDayAtts = attendances
@@ -105,8 +100,8 @@ const ExportPage: React.FC = () => {
 
         for (let i = 0; i < maxAttendanceCount; i++) {
           const att = studentDayAtts[i];
-          rowData.push(att ? `"${att.start.slice(0, 5)}"` : '""');
-          rowData.push(att ? (att.end ? `"${att.end.slice(0, 5)}"` : '"Live"') : '""');
+          rowData.push(att ? att.start.slice(0, 5) : '');
+          rowData.push(att ? (att.end ? att.end.slice(0, 5) : 'Live') : '');
         }
       }
 
