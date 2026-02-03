@@ -5,6 +5,7 @@ import { supabase } from './services/supabaseClient';
 import { api } from './services/api';
 import AttendancePage from './pages/AttendancePage';
 import AttendanceExportPage from './pages/AttendanceExportPage';
+import AttendanceImportPage from './pages/AttendanceImportPage';
 import CoursesPage from './pages/CoursesPage';
 import StudentsPage from './pages/StudentsPage';
 import BookingsPage from './pages/BookingsPage';
@@ -163,6 +164,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   const getPageTitle = () => {
     if (isDashboardView) return t('parent.dashboard');
     if (location.pathname.includes('/attendance/export')) return t('attendance_export_page.title');
+    if (location.pathname.includes('/attendance/import')) return t('attendance_import_page.title');
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
     if (location.pathname.includes('/export')) return t('nav.export');
@@ -383,6 +385,7 @@ const App: React.FC = () => {
               <Route index element={<Navigate to="attendance" replace />} />
               <Route path="attendance" element={<AttendancePage />} />
               <Route path="attendance/export" element={<AttendanceExportPage />} />
+              <Route path="attendance/import" element={<AttendanceImportPage />} />
               <Route path="bookings" element={<BookingsPage />} />
               <Route path="export" element={<ExportPage />} />
               <Route path="courses" element={<CoursesPage />} />
