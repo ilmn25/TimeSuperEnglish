@@ -12,9 +12,15 @@ const SubscriptionsPage: React.FC = () => {
   const fetchSubscription = async () => {
     try {
       const data = await api.getUserSubscription();
-      setSubscription(data);
+      // If subscription is incomplete or canceled, treat it as non-existent to show the plan selection UI.
+      if (data && (data.status === 'active' || data.status === 'past_due' || data.status === 'trialing')) {
+        setSubscription(data);
+      } else {
+        setSubscription(null);
+      }
     } catch (err) {
       console.error('Failed to fetch subscription', err);
+      setSubscription(null);
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +78,7 @@ const SubscriptionsPage: React.FC = () => {
         <p className="text-slate-500 font-medium max-w-xl mx-auto">{t('subscriptions.subtitle')}</p>
       </div>
 
-      {subscription && subscription.status !== 'canceled' && (
+      {subscription && (
         <div className="max-w-3xl mx-auto bg-indigo-600 rounded-[2.5rem] p-8 sm:p-12 text-white shadow-2xl shadow-indigo-200 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
