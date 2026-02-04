@@ -15,6 +15,7 @@ import ImportPage from './pages/ImportPage';
 import AuthPage from './pages/AuthPage';
 import OrgSelectionPage from './pages/OrgSelectionPage';
 import ParentDashboard from './pages/ParentDashboard';
+import SubscriptionsPage from './pages/SubscriptionsPage';
 import { useTranslation } from 'react-i18next';
 import { Organization } from './types';
 
@@ -127,6 +128,18 @@ const UserProfile: React.FC<{ email: string; onLogout: () => void }> = ({ email,
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{t('user.signed_in')}</p>
             <p className="text-sm font-bold text-slate-900 break-all">{email}</p>
           </div>
+          
+          <Link 
+            to="/subscriptions" 
+            className="flex items-center space-x-3 px-6 py-3 text-slate-700 hover:bg-slate-50 transition-colors text-xs font-black uppercase tracking-widest"
+            onClick={() => setIsOpen(false)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            <span>{t('nav.subscriptions')}</span>
+          </Link>
+
           <button 
             onClick={onLogout}
             className="w-full flex items-center space-x-3 px-6 py-4 text-red-500 hover:bg-red-50 transition-colors text-sm font-black uppercase tracking-widest"
@@ -163,6 +176,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   // Determine the display name for the header
   const getPageTitle = () => {
     if (isDashboardView) return t('parent.dashboard');
+    if (location.pathname === '/subscriptions') return t('nav.subscriptions');
     if (location.pathname.includes('/attendance/export')) return t('attendance_export_page.title');
     if (location.pathname.includes('/attendance/import')) return t('attendance_import_page.title');
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
@@ -187,7 +201,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
           <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
             {/* Left Section: Branding & Page Title */}
             <div className="flex items-center space-x-3 sm:space-x-5 min-w-0">
-              {(orgId || location.pathname === '/org') && (
+              {(orgId || location.pathname === '/org' || location.pathname === '/subscriptions') && (
                 <Link 
                   to="/dashboard" 
                   className="p-2 sm:p-3 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-xl sm:rounded-2xl border-2 border-transparent hover:border-indigo-100 transition-all shrink-0 active:scale-90"
@@ -380,6 +394,7 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/dashboard" element={<ParentDashboard />} />
             <Route path="/org" element={<OrgSelectionPage />} />
+            <Route path="/subscriptions" element={<SubscriptionsPage />} />
             
             <Route path="/org/:orgId">
               <Route index element={<Navigate to="attendance" replace />} />

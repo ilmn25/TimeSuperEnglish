@@ -47,6 +47,38 @@ const handleResponse = async (response: Response, errorMessage: string) => {
 };
 
 export const api = {
+  // STRIPE SUBSCRIPTION METHODS
+  async createStripeCheckout(planType: 'monthly' | 'lifetime') {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/functions/v1/stripe-create`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ planType })
+    });
+    return handleResponse(response, 'Failed to create checkout session');
+  },
+
+  async getStripePortal() {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/functions/v1/stripe-portal`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers
+    });
+    return handleResponse(response, 'Failed to get billing portal URL');
+  },
+
+  async getUserSubscription() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/rest/v1/subscriptions?user_id=eq.${user.id}&select=*`;
+    const response = await fetch(url, { headers });
+    const data = await handleResponse(response, 'Failed to fetch subscription');
+    return Array.isArray(data) ? data[0] : null;
+  },
+
   // ORGANIZATION METHODS
   async getOrganizations() {
     const { data: { user } } = await supabase.auth.getUser();

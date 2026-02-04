@@ -7,7 +7,7 @@ const resources = {
   en: {
     translation: {
       app: { name: "Counter", dashboard: "Counter Dashboard" },
-      nav: { attendance: "Attendance", bookings: "Bookings", courses: "Courses", students: "Students", backup: "Backup", organizations: "Organizations", back: "Back to Dashboard", import: "Import", export: "Export" },
+      nav: { attendance: "Attendance", bookings: "Bookings", courses: "Courses", students: "Students", backup: "Backup", organizations: "Organizations", back: "Back to Dashboard", import: "Import", export: "Export", subscriptions: "Billing" },
       user: { signed_in: "Signed in as", logout: "Log Out" },
       auth: { signin: "Sign In", register: "Register", email: "Email Address", password: "Password", create_account: "Create Account", continue: "or continue with", google: "Google Account", access: "Dashboard Access", check_email: "Check your email for the confirmation link!" },
       org: { select: "Select Organization", subtitle: "Choose a workspace to manage", new: "New Organization", no_orgs: "No organizations found", start_create: "Create your first workspace to get started", create_new: "Create New Organization", edit: "Edit Organization", details: "Manage workspace details", name: "Organization Name", owner: "Owner", member: "Member", delete_title: "Delete Workspace?", delete_msg: "This action is irreversible and will permanently delete the workspace. Please type the name of the organization to confirm." },
@@ -21,6 +21,21 @@ const resources = {
       parent: { dashboard: "Dashboard", subtitle: "student activity and status", go_today: "Go to Today", edit_profile: "Edit Student Profile", updating: "Updating profile for", unset: "Unset", in_class: "In Class", away: "Away", no_bookings: "No bookings", no_activity: "No activity", session: "Session", live: "Live", now: "Now" },
       card: { todays_schedule: "Today's Schedule", no_bookings: "No bookings found for this day.", log: "Attendance Log", manual: "manual input", no_activity: "No activity yet", check_in: "Check In", check_out: "Check Out" },
       manual: { title: "Manual Attendance", subtitle: "Enter custom times for", start: "Start Time", end: "End Time" },
+      subscriptions: {
+        title: "Subscription Plans",
+        subtitle: "Unlock professional management tools",
+        monthly_title: "Monthly Pro",
+        monthly_price: "$19/mo",
+        monthly_desc: "Full access for school administrators",
+        lifetime_title: "Lifetime Access",
+        lifetime_price: "$199 once",
+        lifetime_desc: "One-time payment for eternal access",
+        subscribe: "Subscribe Now",
+        portal: "Manage Billing",
+        current_plan: "Current Plan",
+        expires: "Renews/Expires on:",
+        status: "Status:"
+      },
       import_page: {
         subtitle: "Batch upload bookings from CSV files",
         step1_title: "Upload your CSV",
@@ -104,7 +119,7 @@ const resources = {
   "zh-CN": {
     translation: {
       app: { name: "计数器", dashboard: "计数器仪表盘" },
-      nav: { attendance: "考勤", bookings: "预约", courses: "课程", students: "学生", backup: "备份", organizations: "机构", back: "返回仪表盘", import: "导入", export: "导出" },
+      nav: { attendance: "考勤", bookings: "预约", courses: "课程", students: "学生", backup: "备份", organizations: "机构", back: "返回仪表盘", import: "导入", export: "导出", subscriptions: "订阅" },
       user: { signed_in: "登录用户", logout: "登出" },
       auth: { signin: "登录", register: "注册", email: "邮箱地址", password: "密码", create_account: "创建账户", continue: "或继续使用", google: "Google 账户", access: "仪表盘访问", check_email: "请检查您的邮箱以获取确认链接！" },
       org: { select: "选择机构", subtitle: "选择要管理的工作区", new: "新机构", no_orgs: "未找到机构", start_create: "创建您的第一个工作区以开始", create_new: "创建新机构", edit: "编辑机构", details: "管理工作区详情", name: "机构名称", owner: "所有者", member: "成员", delete_title: "删除工作区？", delete_msg: "此操作不可逆，将永久删除该工作区。请输入机构名称以进行确认。" },
@@ -118,6 +133,21 @@ const resources = {
       parent: { dashboard: "仪表盘", subtitle: "学生活动和状态", go_today: "回到今天", edit_profile: "编辑学生档案", updating: "正在更新档案对象", unset: "未设置", in_class: "上课中", away: "不在校", no_bookings: "无预约", no_activity: "无活动", session: "会话", live: "实时", now: "现在" },
       card: { todays_schedule: "今日日程", no_bookings: "今日无预约。", log: "考勤日志", manual: "手动输入", no_activity: "暂无活动", check_in: "签到", check_out: "签退" },
       manual: { title: "手动考勤", subtitle: "输入自定义时间对象", start: "开始时间", end: "结束时间" },
+      subscriptions: {
+        title: "订阅方案",
+        subtitle: "解锁专业管理工具",
+        monthly_title: "按月订阅",
+        monthly_price: "¥128/月",
+        monthly_desc: "完整访问权限，适合学校管理",
+        lifetime_title: "终身买断",
+        lifetime_price: "¥1299 一次性",
+        lifetime_desc: "一次支付，终身使用",
+        subscribe: "立即订阅",
+        portal: "管理账单",
+        current_plan: "当前方案",
+        expires: "续费/过期日期:",
+        status: "状态:"
+      },
       import_page: {
         subtitle: "从 CSV 文件批量上传预约",
         step1_title: "上传 CSV",
@@ -201,7 +231,7 @@ const resources = {
   "zh-TW": {
     translation: {
       app: { name: "計數器", dashboard: "計數器儀表板" },
-      nav: { attendance: "考勤", bookings: "預約", courses: "課程", students: "學生", backup: "備份", organizations: "機構", back: "返回儀表板", import: "匯入", export: "匯出" },
+      nav: { attendance: "考勤", bookings: "預約", courses: "課程", students: "學生", backup: "備份", organizations: "機構", back: "返回儀表板", import: "匯入", export: "匯出", subscriptions: "訂閱" },
       user: { signed_in: "登入身分", logout: "登出" },
       auth: { signin: "登入", register: "註冊", email: "電子郵件", password: "密碼", create_account: "建立帳戶", continue: "或繼續使用", google: "Google 帳戶", access: "儀表板存取", check_email: "請檢查您的電子郵件以取得確認連結！" },
       org: { select: "選擇機構", subtitle: "選擇要管理的工作區", new: "新機構", no_orgs: "未找到機構", start_create: "建立您的第一個工作區以開始", create_new: "建立新機構", edit: "編輯機構", details: "管理工作區詳情", name: "機構名稱", owner: "擁有者", member: "成員", delete_title: "刪除工作區？", delete_msg: "此動作不可逆，將永久刪除該工作區。請輸入機構名稱以进行確認。" },
@@ -215,6 +245,21 @@ const resources = {
       parent: { dashboard: "儀表板", subtitle: "學生活動和狀態", go_today: "回到今天", edit_profile: "編輯學生檔案", updating: "正在更新檔案對象", unset: "未設定", in_class: "上課中", away: "不在校", no_bookings: "預約", no_activity: "無活動", session: "工作階段", live: "即時", now: "現在" },
       card: { todays_schedule: "今日日程", no_bookings: "今日無預約。", log: "考勤日誌", manual: "手動輸入", no_activity: "暫無活動", check_in: "簽到", check_out: "簽退" },
       manual: { title: "手動考勤", subtitle: "輸入自定義時間對象", start: "開始時間", end: "結束時間" },
+      subscriptions: {
+        title: "訂閱方案",
+        subtitle: "解鎖專業管理工具",
+        monthly_title: "每月訂閱",
+        monthly_price: "HK$148/月",
+        monthly_desc: "完整存取權限，適合學校管理",
+        lifetime_title: "終身買斷",
+        lifetime_price: "HK$1,499 一次性",
+        lifetime_desc: "一次支付，終身使用",
+        subscribe: "立即訂閱",
+        portal: "管理帳單",
+        current_plan: "目前方案",
+        expires: "續費/過期日期:",
+        status: "狀態:"
+      },
       import_page: {
         subtitle: "從 CSV 檔案批量上傳預約",
         step1_title: "上傳 CSV",
@@ -298,10 +343,10 @@ const resources = {
   "ja": {
     translation: {
       app: { name: "カウンター", dashboard: "カウンターダッシュボード" },
-      nav: { attendance: "出席", bookings: "予約", courses: "コース", students: "学生", backup: "バックアップ", organizations: "組織", back: "ダッシュボードに戻る", import: "インポート", export: "エクスポート" },
+      nav: { attendance: "出席", bookings: "予約", courses: "コース", students: "学生", backup: "バックアップ", organizations: "組織", back: "ダッシュボードに戻る", import: "インポート", export: "エクスポート", subscriptions: "サブスク" },
       user: { signed_in: "ログイン中", logout: "ログアウト" },
       auth: { signin: "ログイン", register: "登録", email: "メールアドレス", password: "Password", create_account: "アカウント作成", continue: "または次で続行", google: "Googleアカウント", access: "ダッシュボードアクセス", check_email: "確認リンクをメールで確認してください！" },
-      org: { select: "組織を選択", subtitle: "管理するワークスペースを選択", new: "新規組織", no_orgs: "組織が見つかりません", start_create: "最初のワークスペースを作成して始めましょう", create_new: "新規組織を作成", edit: "組織を編集", details: "ワークスペースの詳細を管理", name: "組織名", owner: "所有者", member: "メンバー", delete_title: "ワークスペースを削除？", delete_msg: "この操作は元に戻すことができず、ワークスペースを完全に削除します。確認のために組織名を入力してください。" },
+      org: { select: "組織を選択", subtitle: "管理するワークスペースを選択", new: "新規組織", no_orgs: "組織が見つかりません", start_create: "最初のワークスペースを作成して始めましょう", create_new: "新規組織を作成", edit: "組織を編集", details: "ワークスペースの詳細を管理", name: "组织名", owner: "所有者", member: "メンバー", delete_title: "ワークスペースを削除？", delete_msg: "この操作は元に戻すことができず、ワークスペースを完全に削除します。確認のために組織名を入力してください。" },
       common: { cancel: "キャンセル", confirm: "確認", save: "保存", create: "作成", delete: "削除", edit: "編集", remove: "削除", save_changes: "変更を保存", loading: "読み込み中", processing: "処理中", or: "または", download: "ダウンロード", copy: "コピー" },
       attendance: { summary: "出席概要", booked: "予約済み", arrived: "到着", here: "出席中", today: "今日", error: "エラー", retry: "再試行", no_students: "この日の予約はありません。", remove_title: "記録を削除？", remove_msg: "この出席記録を完全に削除しますか？" },
       bookings: { title: "予約", subtitle: "月間スケジュールの概要", new_entry: "新規エントリ", select_month: "月を選択", reset: "リセット", filter_student: "学生フィルター", filter_course: "コースフィルター", filter_status: "ステータスフィルター", all_students: "すべての学生", all_courses: "すべてのコース", all_statuses: "すべてのステータス", date: "日付", time: "時間", student: "学生", course: "コース", status: "ステータス", actions: "操作", syncing: "同期中", no_match: "条件に一致するエントリはありません。", edit: "予約を編集", new: "新規予約", start: "開始", end: "終了", delete_title: "エントリを削除？", delete_msg: "この記録はデータベースから完全に削除されます。", summary_title: "フィルター済み概要", total_time: "合計時間", total_entries: "予約総数", export: "エクスポート" },
@@ -312,6 +357,21 @@ const resources = {
       parent: { dashboard: "ダッシュボード", subtitle: "学生のアクティビティとステータス", go_today: "今日へ移動", edit_profile: "学生プロフィールを編集", updating: "プロフィール更新中: ", unset: "未設定", in_class: "授業中", away: "不在", no_bookings: "予約なし", no_activity: "アクティビティなし", session: "セッション", live: "ライブ", now: "現在" },
       card: { todays_schedule: "今日のスケジュール", no_bookings: "この日の予約はありません。", log: "出席ログ", manual: "手動入力", no_activity: "アクティビティはまだありません", check_in: "チェックイン", check_out: "チェックアウト" },
       manual: { title: "手動出席", subtitle: "カスタム時間を入力: ", start: "開始時間", end: "結束時間" },
+      subscriptions: {
+        title: "サブスクリプション",
+        subtitle: "プロフェッショナル管理ツールを解放",
+        monthly_title: "月額プラン",
+        monthly_price: "¥2,480/月",
+        monthly_desc: "学校管理者向けのフルアクセス",
+        lifetime_title: "ライフタイム",
+        lifetime_price: "¥24,800 一括",
+        lifetime_desc: "一度の支払いで永久アクセス",
+        subscribe: "今すぐ購読",
+        portal: "お支払い管理",
+        current_plan: "現在のプラン",
+        expires: "更新/期限:",
+        status: "ステータス:"
+      },
       import_page: {
         subtitle: "CSVファイルから予約を一括アップロード",
         step1_title: "CSVをアップロード",
@@ -395,10 +455,10 @@ const resources = {
   "ko": {
     translation: {
       app: { name: "카운터", dashboard: "카운터 대시보드" },
-      nav: { attendance: "출석", bookings: "예약", courses: "코스", students: "학생", backup: "백업", organizations: "기관", back: "대시보드로 돌아가기", import: "가져오기", export: "내보내기" },
+      nav: { attendance: "출석", bookings: "예약", courses: "코스", students: "학생", backup: "백업", organizations: "기관", back: "대시보드로 돌아가기", import: "가져오기", export: "내보내기", subscriptions: "요금제" },
       user: { signed_in: "로그인: ", logout: "로그아웃" },
       auth: { signin: "로그인", register: "등록", email: "이메일 주소", password: "비밀번호", create_account: "계정 생성", continue: "또는 다음으로 계속", google: "Google 계정", access: "대시보드 액세스", check_email: "확인 링크를 이메일에서 확인하세요!" },
-      org: { select: "기관 선택", subtitle: "관리할 워크스페이스 선택", new: "새 기관", no_orgs: "기관을 찾을 수 없습니다", start_create: "첫 번째 워크스페이스를 만들어 시작하세요", create_new: "새 기관 만들기", edit: "기관 편집", details: "워크스페이스 세부 정보 관리", name: "기관 이름", owner: "소유자", member: "구성원", delete_title: "워크스페이스 삭제?", delete_msg: "이 작업은 되돌릴 수 없으며 워크스페이스를 영구적으로 삭제합니다. 확인을 위해 기관 이름을 입력하십시오." },
+      org: { select: "기관 선택", subtitle: "관리할 워크스페이스 선택", new: "새 기관", no_orgs: "기관을 찾을 수 없습니다", start_create: "첫 번째 워크스페이스를 만들어 시작하세요", create_new: "새 기관 만들기", edit: "기관 편집", details: "워크스페이스 세부 정보 관리", name: "机构名称", owner: "소유자", member: "구성원", delete_title: "워크스페이스 삭제?", delete_msg: "이 작업은 되돌릴 수 없으며 워크스페이스를 영구적으로 삭제합니다. 확인을 위해 기관 이름을 입력하십시오." },
       common: { cancel: "취소", confirm: "확인", save: "저장", create: "생성", delete: "삭제", edit: "편집", remove: "제거", save_changes: "변경 사항 저장", loading: "로딩 중", processing: "처리 중", or: "또는", download: "다운로드", copy: "복사" },
       attendance: { summary: "출석 요약", booked: "예약됨", arrived: "도착", here: "출석 중", today: "오늘", error: "오류", retry: "재시도", no_students: "이 날짜에 예약된 학생이 없습니다.", remove_title: "기록 제거?", remove_msg: "이 출석 기록을 영구적으로 제거하시겠습니까?" },
       bookings: { title: "예약", subtitle: "월간 일정 개요", new_entry: "새 항목", select_month: "월 선택", reset: "초기화", filter_student: "학생 필터", filter_course: "코스 필터", filter_status: "상태 필터", all_students: "모든 학생", all_courses: "모든 코스", all_statuses: "모든 상태", date: "날짜", time: "시간", student: "학생", course: "코스", status: "상태", actions: "작업", syncing: "동기화 중", no_match: "검색 기준과 일치하는 항목이 없습니다。", edit: "예약 편집", new: "새 예약", start: "시작", end: "종료", delete_title: "항목 삭제?", delete_msg: "이 기록은 데이터베이스에서 영구적으로 삭제됩니다。", summary_title: "필터링된 요약", total_time: "총 시간", total_entries: "총 예약 수", export: "내보내기" },
@@ -409,6 +469,21 @@ const resources = {
       parent: { dashboard: "대시보드", subtitle: "학생 활동 및 상태", go_today: "오늘로 이동", edit_profile: "학생 프로필 편집", updating: "프로필 업데이트 중: ", unset: "미설정", in_class: "수업 중", away: "부재", no_bookings: "예약 없음", no_activity: "활동 없음", session: "세션", live: "라이브", now: "지금" },
       card: { todays_schedule: "오늘 일정", no_bookings: "오늘 예약이 없습니다.", log: "출석 로그", manual: "수동 입력", no_activity: "아직 활동 없음", check_in: "체크인", check_out: "체크아웃" },
       manual: { title: "출석 수동 입력", subtitle: "사용자 지정 시간 입력: ", start: "시작 시간", end: "結束時間" },
+      subscriptions: {
+        title: "구독 요금제",
+        subtitle: "전문가용 관리 도구 잠금 해제",
+        monthly_title: "월간 프로",
+        monthly_price: "₩22,000/월",
+        monthly_desc: "학교 관리자를 위한 모든 권한",
+        lifetime_title: "평생 소장",
+        lifetime_price: "₩220,000 일회성",
+        lifetime_desc: "한 번의 결제로 영구 사용",
+        subscribe: "지금 구독하기",
+        portal: "결제 관리",
+        current_plan: "현재 요금제",
+        expires: "갱신/만료일:",
+        status: "상태:"
+      },
       import_page: {
         subtitle: "CSV 파일에서 예약 일괄 업로드",
         step1_title: "CSV 업로드",
