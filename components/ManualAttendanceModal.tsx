@@ -1,75 +1,97 @@
-
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ManualAttendanceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (start: string, end: string) => void;
+  onClear: () => void;
   studentName: string;
+  initialStart?: string | null;
+  initialEnd?: string | null;
 }
 
-const ManualAttendanceModal: React.FC<ManualAttendanceModalProps> = ({ isOpen, onClose, onSubmit, studentName }) => {
+const ManualAttendanceModal: React.FC<ManualAttendanceModalProps> = ({ 
+  isOpen, onClose, onSubmit, onClear, studentName, initialStart, initialEnd 
+}) => {
+  const { t } = useTranslation();
   const [start, setStart] = useState('09:00');
   const [end, setEnd] = useState('17:00');
 
-  // Reset defaults when opening for a new student
+  // Helper to extract HH:mm from ISO or simple time string
+  const formatForInput = (timeStr: string | null | undefined, fallback: string) => {
+    if (!timeStr) return fallback;
+    if (timeStr.includes('T')) {
+      return timeStr.split('T')[1].slice(0, 5);
+    }
+    return timeStr.slice(0, 5);
+  };
+
   useEffect(() => {
     if (isOpen) {
-      setStart('09:00');
-      setEnd('17:00');
+      setStart(formatForInput(initialStart, '09:00'));
+      setEnd(formatForInput(initialEnd, '17:00'));
     }
-  }, [isOpen]);
+  }, [isOpen, initialStart, initialEnd]);
 
   if (!isOpen) return null;
 
   return (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClose();
-      }}
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+      onClick={onClose}
     >
       <div 
-        className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200"
+        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
-          <h3 className="text-xl font-bold text-slate-900 mb-2">Manual Attendance</h3>
-          <p className="text-slate-500 text-sm mb-6">Enter custom times for <span className="text-indigo-600 font-semibold">{studentName}</span></p>
+        <div className="p-8">
+          <h3 className="text-2xl font-black text-slate-900 mb-2">{t('manual.title')}</h3>
+          <p className="text-slate-500 text-sm mb-8">{t('manual.subtitle')} <span className="text-indigo-600 font-bold">{studentName}</span></p>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Start Time</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('manual.start')}</label>
               <input 
                 type="time" 
                 value={start}
                 onChange={(e) => setStart(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-slate-700 outline-none"
+                className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 font-black text-slate-900 transition-all"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">End Time</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('manual.end')}</label>
               <input 
                 type="time" 
                 value={end}
                 onChange={(e) => setEnd(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-slate-700 outline-none"
+                className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 font-black text-slate-900 transition-all"
               />
             </div>
           </div>
+
+          {(initialStart || initialEnd) && (
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClear();
+                }}
+                className="w-full py-3 text-[10px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 rounded-xl transition-colors border-2 border-transparent hover:border-red-100"
+              >
+                {t('common.remove')} Attendance
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="p-6 bg-slate-50 flex items-center justify-end space-x-3">
+        <div className="p-8 bg-slate-50 flex items-center justify-end space-x-3">
           <button 
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+            onClick={onClose}
+            className="px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button 
             type="button"
@@ -77,9 +99,9 @@ const ManualAttendanceModal: React.FC<ManualAttendanceModalProps> = ({ isOpen, o
               e.stopPropagation();
               onSubmit(start, end);
             }}
-            className="px-6 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-lg shadow-indigo-200 transition-all"
+            className="px-8 py-4 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 uppercase tracking-widest"
           >
-            Confirm
+            {t('common.confirm')}
           </button>
         </div>
       </div>

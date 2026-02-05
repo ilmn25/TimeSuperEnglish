@@ -36,7 +36,7 @@ const AttendancePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
-  const [manualModalConfig, setManualModalConfig] = useState<{ bookingId: string, name: string } | null>(null);
+  const [manualModalConfig, setManualModalConfig] = useState<{ bookingId: string, name: string, check_in?: string | null, check_out?: string | null } | null>(null);
 
   const isToday = date === hktToday;
   const monthName = viewDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
@@ -183,6 +183,15 @@ const AttendancePage: React.FC = () => {
     } catch (err) { alert('Manual entry error'); }
   };
 
+  const handleClearAttendance = async (bookingId: string) => {
+    if (!orgId) return;
+    try {
+      await api.updateBooking(orgId, bookingId, { check_in: null, check_out: null });
+      setManualModalConfig(null);
+      loadData();
+    } catch (err) { alert('Clear error'); }
+  };
+
   const selectedStudentData = useMemo(() => dailyGroupedData.find(d => d.student.id === selectedStudentId), [dailyGroupedData, selectedStudentId]);
 
   const gridColumnsClass = (selectedStudentData && isTimelineExpanded) 
@@ -321,7 +330,10 @@ const AttendancePage: React.FC = () => {
               data={studentGroup}
               onCheckIn={handleCheckIn}
               onCheckOut={handleCheckOut}
-              onOpenManualModal={(bookingId, name) => setManualModalConfig({ bookingId, name })}
+              onOpenManualModal={(bookingId, name) => {
+                const b = monthBookings.find(x => x.id === bookingId);
+                setManualModalConfig({ bookingId, name, check_in: b?.check_in, check_out: b?.check_out });
+              }}
               isToday={isToday}
               isSelected={selectedStudentId === studentGroup.student.id}
               onSelect={setSelectedStudentId}
@@ -350,8 +362,11 @@ const AttendancePage: React.FC = () => {
         <ManualAttendanceModal 
           isOpen={true} 
           studentName={manualModalConfig.name} 
+          initialStart={manualModalConfig.check_in}
+          initialEnd={manualModalConfig.check_out}
           onClose={() => setManualModalConfig(null)} 
           onSubmit={(start, end) => handleManualAdd(manualModalConfig.bookingId, start, end)} 
+          onClear={() => handleClearAttendance(manualModalConfig.bookingId)}
         />
       )}
     </div>

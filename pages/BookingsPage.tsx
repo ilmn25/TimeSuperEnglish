@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Booking, Course, Student, Attendance } from '../types';
+import { Booking, Course, Student } from '../types';
 import TimelinePanel from '../components/TimelinePanel';
 import { useTranslation } from 'react-i18next';
 
@@ -38,7 +37,6 @@ const BookingsPage: React.FC = () => {
   
   // Raw Data State (Entire Month)
   const [monthBookings, setMonthBookings] = useState<Booking[]>([]);
-  const [monthAttendances, setMonthAttendances] = useState<Attendance[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   
@@ -103,40 +101,18 @@ const BookingsPage: React.FC = () => {
   }, [viewDate]);
 
   // Status Calculation Helper
-  const getBookingStatus = useCallback((booking: Booking, dayAttendances: Attendance[]): BookingStatus => {
+  const getBookingStatus = useCallback((booking: Booking): BookingStatus => {
+    if (booking.check_in) return 'green';
+    
     const hktNow = getHKTNow();
     const bookingDate = new Date(booking.date);
     const [bStartH, bStartM] = booking.start.split(':').map(Number);
-    const [bEndH, bEndM] = booking.end.split(':').map(Number);
     
     const startDateTime = new Date(bookingDate);
     startDateTime.setHours(bStartH, bStartM, 0, 0);
     
-    const endDateTime = new Date(bookingDate);
-    endDateTime.setHours(bEndH, bEndM, 0, 0);
-
     if (startDateTime > hktNow) return 'blue';
-
-    const hasOverlap = dayAttendances.some(att => {
-      if (att.student_id !== booking.student_id) return false;
-      
-      const [aStartH, aStartM] = att.start.split(':').map(Number);
-      const aStart = new Date(bookingDate);
-      aStart.setHours(aStartH, aStartM, 0, 0);
-
-      let aEnd: Date;
-      if (att.end) {
-        const [aEndH, aEndM] = att.end.split(':').map(Number);
-        aEnd = new Date(bookingDate);
-        aEnd.setHours(aEndH, aEndM, 0, 0);
-      } else {
-        const isAttToday = att.date === hktNow.toLocaleDateString('en-CA');
-        aEnd = isAttToday ? hktNow : new Date(aStart.getTime() + 24 * 60 * 60 * 1000); 
-      }
-      return aStart < endDateTime && aEnd > startDateTime;
-    });
-
-    return hasOverlap ? 'green' : 'red';
+    return 'red';
   }, []);
 
   // Fetch all records for the month
@@ -149,15 +125,13 @@ const BookingsPage: React.FC = () => {
       const startDate = new Date(year, month, 1).toLocaleDateString('en-CA');
       const endDate = new Date(year, month + 1, 0).toLocaleDateString('en-CA');
 
-      const [bookingsData, attendancesData, coursesData, studentsData] = await Promise.all([
+      const [bookingsData, coursesData, studentsData] = await Promise.all([
         api.getAllBookings(orgId, { startDate, endDate }),
-        api.getAllAttendances(orgId, { startDate, endDate }),
         api.getCourses(orgId),
         api.getStudents(orgId)
       ]);
 
       setMonthBookings(bookingsData);
-      setMonthAttendances(attendancesData);
       setCourses(coursesData);
       setStudents(studentsData);
     } catch (err) {
@@ -209,8 +183,7 @@ const BookingsPage: React.FC = () => {
       const matchesDate = selectedDates.length === 0 || selectedDates.includes(b.date);
       return matchesStudent && matchesCourse && matchesDate;
     }).map(b => {
-      const dayAttendances = monthAttendances.filter(a => a.date === b.date && a.student_id === b.student_id);
-      return { ...b, calculatedStatus: getBookingStatus(b, dayAttendances) };
+      return { ...b, calculatedStatus: getBookingStatus(b) };
     });
 
     if (filterStatus) {
@@ -245,7 +218,7 @@ const BookingsPage: React.FC = () => {
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [monthBookings, monthAttendances, filterStudent, filterCourse, selectedDates, filterStatus, sortField, sortOrder, getBookingStatus]);
+  }, [monthBookings, filterStudent, filterCourse, selectedDates, filterStatus, sortField, sortOrder, getBookingStatus]);
 
   const summaryStats = useMemo(() => {
     let totalMinutes = 0;
@@ -381,16 +354,14 @@ const BookingsPage: React.FC = () => {
 
   const handleExport = () => {
     if (!orgId) return;
-    // Pass processed results and the attendances for reference mapping in the export page
     navigate(`/org/${orgId}/export`, { 
       state: { 
         bookings: processedBookings, 
-        attendances: monthAttendances 
+        attendances: [] // Removed separate attendances list
       } 
     });
   };
 
-  // Status calculation for dots (respecting student/course filters)
   const getDayStatus = (dateStr: string): BookingStatus | null => {
     const dayBookings = monthBookings.filter(b => 
       b.date === dateStr && 
@@ -399,12 +370,9 @@ const BookingsPage: React.FC = () => {
     );
     
     if (dayBookings.length === 0) return null;
-
-    const dayAttendances = monthAttendances.filter(a => a.date === dateStr);
-    const statuses = dayBookings.map(b => getBookingStatus(b, dayAttendances));
+    const statuses = dayBookings.map(b => getBookingStatus(b));
 
     if (statuses.every(s => s === 'blue')) return 'blue';
-    
     const pastStatuses = statuses.filter(s => s !== 'blue');
     if (pastStatuses.length === 0) return 'blue';
 
@@ -422,14 +390,13 @@ const BookingsPage: React.FC = () => {
       (!filterStudent || b.student_id === filterStudent) && 
       (!filterCourse || b.course_id === filterCourse)
     );
-    const dayAttendances = monthAttendances.filter(a => a.date === dateStr);
     
     const studentMap = new Map<string, { name: string; status: BookingStatus }>();
     dayBookings.forEach(b => {
       const student = b.students as Student;
       if (!student) return;
       const current = studentMap.get(student.id);
-      const status = getBookingStatus(b, dayAttendances);
+      const status = getBookingStatus(b);
       
       if (!current) {
         studentMap.set(student.id, { name: student.name, status });
@@ -465,13 +432,12 @@ const BookingsPage: React.FC = () => {
   };
 
   const timelineData = useMemo(() => {
-    if (!selectedTimelineInfo) return { bookings: [], attendances: [] };
+    if (!selectedTimelineInfo) return { bookings: [] };
     const { studentId, date } = selectedTimelineInfo;
     return {
-      bookings: monthBookings.filter(b => b.student_id === studentId && b.date === date),
-      attendances: monthAttendances.filter(a => a.student_id === studentId && a.date === date)
+      bookings: monthBookings.filter(b => b.student_id === studentId && b.date === date)
     };
-  }, [selectedTimelineInfo, monthBookings, monthAttendances]);
+  }, [selectedTimelineInfo, monthBookings]);
 
   const layoutPaddingClass = (selectedTimelineInfo && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0';
 
@@ -487,7 +453,7 @@ const BookingsPage: React.FC = () => {
             onClick={() => navigate(`/org/${orgId}/import`)}
             className="flex items-center space-x-2 px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50 transition-all active:scale-95"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4v12" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0l-4-4m4 4v12" /></svg>
             <span>{t('nav.import')}</span>
           </button>
           <button 
@@ -935,7 +901,7 @@ const BookingsPage: React.FC = () => {
         <TimelinePanel 
           studentName={selectedTimelineInfo.studentName} 
           bookings={timelineData.bookings} 
-          attendances={timelineData.attendances} 
+          attendances={[]} // No longer needed
           date={selectedTimelineInfo.date}
           isExpanded={isTimelineExpanded}
           onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}

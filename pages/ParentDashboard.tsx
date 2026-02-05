@@ -62,7 +62,7 @@ const ParentDashboard: React.FC = () => {
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
   const [selectedTimelineInfo, setSelectedTimelineInfo] = useState<{ studentId: string; studentName: string; date: string } | null>(null);
-  const [manualModalConfig, setManualModalConfig] = useState<{ bookingId: string, name: string } | null>(null);
+  const [manualModalConfig, setManualModalConfig] = useState<{ bookingId: string, name: string, check_in?: string | null, check_out?: string | null } | null>(null);
   const [isCalendarMaximized, setIsCalendarMaximized] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [editFormData, setEditFormData] = useState({ name: '', contact: '', level: '' });
@@ -171,6 +171,16 @@ const ParentDashboard: React.FC = () => {
       setManualModalConfig(null);
       fetchDashboardData();
     } catch (err) { alert('Manual entry error'); }
+  };
+
+  const handleClearAttendance = async (bookingId: string) => {
+    const child = childrenData.find(c => c.bookings.some(b => b.id === bookingId));
+    if (!child?.student.org_id) return;
+    try {
+      await api.updateBooking(child.student.org_id, bookingId, { check_in: null, check_out: null });
+      setManualModalConfig(null);
+      fetchDashboardData();
+    } catch (err) { alert('Clear error'); }
   };
 
   const processedAllBookings = useMemo(() => {
@@ -283,7 +293,10 @@ const ParentDashboard: React.FC = () => {
               currentDate={selectedDate}
               onCheckIn={handleCheckIn}
               onCheckOut={handleCheckOut}
-              onOpenManual={(id) => setManualModalConfig({ bookingId: id, name: item.student.name })}
+              onOpenManual={(id) => {
+                const b = item.bookings.find(x => x.id === id);
+                setManualModalConfig({ bookingId: id, name: item.student.name, check_in: b?.check_in, check_out: b?.check_out });
+              }}
             />
           ))}
         </div>
@@ -315,7 +328,17 @@ const ParentDashboard: React.FC = () => {
       )}
 
       {selectedTimelineInfo && <TimelinePanel studentName={selectedTimelineInfo.studentName} bookings={timelineData.bookings} attendances={[]} date={selectedTimelineInfo.date} isExpanded={isTimelineExpanded} onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)} />}
-      {manualModalConfig && <ManualAttendanceModal isOpen={true} studentName={manualModalConfig.name} onClose={() => setManualModalConfig(null)} onSubmit={(start, end) => handleManualAdd(manualModalConfig.bookingId, start, end)} />}
+      {manualModalConfig && (
+        <ManualAttendanceModal 
+          isOpen={true} 
+          studentName={manualModalConfig.name} 
+          initialStart={manualModalConfig.check_in}
+          initialEnd={manualModalConfig.check_out}
+          onClose={() => setManualModalConfig(null)} 
+          onSubmit={(start, end) => handleManualAdd(manualModalConfig.bookingId, start, end)} 
+          onClear={() => handleClearAttendance(manualModalConfig.bookingId)}
+        />
+      )}
     </div>
   );
 };
