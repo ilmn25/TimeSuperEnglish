@@ -95,8 +95,6 @@ const ParentDashboard: React.FC = () => {
     if (booking.check_in) return 'green';
     const hktNow = getHKTNow();
     const bookingDate = new Date(booking.date);
-    const [bStartH, bStartH_val, bStartM] = booking.start.split(':').map(Number);
-    // Note: split can result in different counts depending on format, using map directly
     const [startH, startM] = booking.start.split(':').map(Number);
     const startDateTime = new Date(bookingDate);
     startDateTime.setHours(startH, startM, 0, 0);
@@ -109,6 +107,9 @@ const ParentDashboard: React.FC = () => {
     setError(null);
     try {
       const students = await api.getParentStudents();
+      // Always sort students by name alphabetically
+      students.sort((a: Student, b: Student) => a.name.localeCompare(b.name));
+      
       const year = viewDate.getFullYear();
       const month = viewDate.getMonth();
       const startDate = new Date(year, month, 1).toLocaleDateString('en-CA');
@@ -330,7 +331,6 @@ const ParentDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Fixed the TimelinePanel usage by removing the non-existent attendances prop to resolve TypeScript error */}
       {selectedTimelineInfo && <TimelinePanel studentName={selectedTimelineInfo.studentName} bookings={timelineData.bookings} date={selectedTimelineInfo.date} isExpanded={isTimelineExpanded} onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)} />}
       {manualModalConfig && (
         <ManualAttendanceModal 

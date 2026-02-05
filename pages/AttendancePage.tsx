@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -101,7 +102,9 @@ const AttendancePage: React.FC = () => {
       studentMap.get(student.id)!.bookings.push(b);
     });
 
-    return Array.from(studentMap.values());
+    return Array.from(studentMap.values()).sort((a, b) => 
+      a.student.name.localeCompare(b.student.name)
+    );
   }, [date, monthBookings]);
 
   const stats = useMemo(() => {

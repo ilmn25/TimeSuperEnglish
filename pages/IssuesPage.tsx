@@ -40,35 +40,38 @@ const IssuesPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // Detected Problems: Bookings without an associated issue record yet
+  // Detected Problems based on financial discrepancies
   const problems = useMemo(() => {
     const hktNow = getHKTNow();
     const existingIssueBookingIds = new Set(issues.map(i => i.booking_id));
     
     return bookings.filter(b => {
-      // Don't show if already an active issue
+      // Skip if already tracked as an issue
       if (existingIssueBookingIds.has(b.id)) return false;
 
-      // Rule for Missed: past booking, no check-in
       const bDate = new Date(b.date);
-      const [sH, sM] = b.start.split(':').map(Number);
-      const startDateTime = new Date(bDate);
-      startDateTime.setHours(sH, sM, 0, 0);
+      const [startH, startM] = b.start.split(':').map(Number);
+      const [endH, endM] = b.end.split(':').map(Number);
       
-      const isMissed = startDateTime < hktNow && !b.check_in;
-      const isAdhoc = !b.invoice_id; // Simple adhoc: no invoice linked yet
+      const startDateTime = new Date(bDate);
+      startDateTime.setHours(startH, startM, 0, 0);
+
+      const endDateTime = new Date(bDate);
+      endDateTime.setHours(endH, endM, 0, 0);
+      
+      // Rule 1: Attended but no invoice (Ad-hoc / Unbilled)
+      const isAdhoc = !!b.check_in && !b.invoice_id;
+
+      // Rule 2: Missed but has invoice (Billed Absence)
+      // Only flag as missed if the scheduled time has fully passed
+      const isMissed = hktNow > endDateTime && !b.check_in && !!b.invoice_id;
 
       return isMissed || isAdhoc;
     }).map(b => {
-       const bDate = new Date(b.date);
-       const [sH, sM] = b.start.split(':').map(Number);
-       const startDateTime = new Date(bDate);
-       startDateTime.setHours(sH, sM, 0, 0);
-       const isMissed = startDateTime < hktNow && !b.check_in;
-       
+       const isAdhoc = !!b.check_in && !b.invoice_id;
        return {
          booking: b,
-         type: isMissed ? 'missed_booking' : 'adhoc_booking' as 'missed_booking' | 'adhoc_booking'
+         type: isAdhoc ? 'adhoc_booking' : 'missed_booking' as 'missed_booking' | 'adhoc_booking'
        };
     });
   }, [bookings, issues]);
@@ -143,17 +146,22 @@ const IssuesPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {problems.map(({ booking, type }) => (
-            <div key={booking.id} className="bg-white border-2 border-slate-100 rounded-[2rem] p-6 hover:border-indigo-500 transition-all group">
-              <div className="flex items-start justify-between mb-4">
-                <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${type === 'missed_booking' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
-                  {type === 'missed_booking' ? t('issues.missed_booking') : t('issues.adhoc_booking')}
+            <div key={booking.id} className="bg-white border-2 border-slate-100 rounded-[2rem] p-6 hover:border-indigo-500 transition-all group flex flex-col justify-between">
+              <div>
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${type === 'missed_booking' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
+                    {type === 'missed_booking' ? t('issues.missed_booking') : t('issues.adhoc_booking')}
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-slate-400">{booking.date}</span>
                 </div>
-                <span className="text-[10px] font-mono font-bold text-slate-400">{booking.date}</span>
-              </div>
-              
-              <div className="space-y-1 mb-6">
-                <h4 className="text-lg font-black text-slate-900 truncate">{booking.students?.name}</h4>
-                <p className="text-xs font-bold text-slate-500">{booking.courses?.name} • <span className="font-mono">{booking.start.slice(0, 5)}-{booking.end.slice(0, 5)}</span></p>
+                
+                <div className="space-y-1 mb-6">
+                  <h4 className="text-lg font-black text-slate-900 truncate">{booking.students?.name}</h4>
+                  <p className="text-xs font-bold text-slate-500">{booking.courses?.name} • <span className="font-mono">{booking.start.slice(0, 5)}-{booking.end.slice(0, 5)}</span></p>
+                  <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase italic">
+                    {type === 'adhoc_booking' ? '✓ Attended (Unbilled)' : '✗ Absent (Already Billed)'}
+                  </p>
+                </div>
               </div>
 
               <button 
