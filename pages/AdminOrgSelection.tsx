@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { Organization } from '../types';
 import { useTranslation } from 'react-i18next';
 
-const OrgSelectionPage: React.FC = () => {
+const AdminOrgSelection: React.FC = () => {
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -280,7 +280,7 @@ const OrgSelectionPage: React.FC = () => {
                 disabled={isProcessing || deleteConfirmationInput !== orgToDelete.name} 
                 className="flex-1 px-6 py-3 text-sm font-bold text-white rounded-2xl bg-red-600 hover:bg-red-700 transition-all flex items-center justify-center disabled:bg-red-300 disabled:cursor-not-allowed"
               >
-                {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : t('common.delete')}
+                {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" /> : t('common.delete')}
               </button>
             </div>
           </div>
@@ -290,4 +290,4 @@ const OrgSelectionPage: React.FC = () => {
   );
 };
 
-export default OrgSelectionPage;
+export default AdminOrgSelection;

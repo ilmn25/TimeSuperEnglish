@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -32,7 +31,7 @@ Noah Lim,2026-03-03,10:00,90,Chemistry
 Noah Lim,2026-03-10,10:00,60,Biology
 Maya Tan,2026-03-09,15:30,60,History`;
 
-const ImportPage: React.FC = () => {
+const AdminImport: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -580,4 +579,4 @@ const ImportPage: React.FC = () => {
   );
 };
 
-export default ImportPage;
+export default AdminImport;

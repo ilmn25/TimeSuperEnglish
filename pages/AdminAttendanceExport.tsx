@@ -62,7 +62,7 @@ const getPresetDates = (preset: Preset): [string, string] => {
   return [formatDate(start), formatDate(end)];
 };
 
-const AttendanceExportPage: React.FC = () => {
+const AdminAttendanceExport: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const { t } = useTranslation();
 
@@ -249,4 +249,4 @@ const AttendanceExportPage: React.FC = () => {
   );
 };
 
-export default AttendanceExportPage;
+export default AdminAttendanceExport;

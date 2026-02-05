@@ -18,7 +18,7 @@ const getHKTNowStrings = () => {
   return { dateStr, timeStr };
 };
 
-const IssuesPage: React.FC = () => {
+const AdminIssues: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const { t } = useTranslation();
   
@@ -263,4 +263,4 @@ const IssuesPage: React.FC = () => {
   );
 };
 
-export default IssuesPage;
+export default AdminIssues;

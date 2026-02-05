@@ -3,18 +3,18 @@ import React, { useEffect, useState, useRef, createContext, useContext } from 'r
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from './services/supabaseClient';
 import { api } from './services/api';
-import AttendancePage from './pages/AttendancePage';
-import CoursesPage from './pages/CoursesPage';
-import StudentsPage from './pages/StudentsPage';
-import BookingsPage from './pages/BookingsPage';
-import IssuesPage from './pages/IssuesPage';
-import ExportPage from './pages/ExportPage';
-import BackupPage from './pages/BackupPage';
-import ImportPage from './pages/ImportPage';
+import AdminAttendance from './pages/AdminAttendance';
+import AdminCourses from './pages/AdminCourses';
+import AdminStudents from './pages/AdminStudents';
+import AdminBookings from './pages/AdminBookings';
+import AdminIssues from './pages/AdminIssues';
+import AdminExport from './pages/AdminExport';
+import AdminBackup from './pages/AdminBackup';
+import AdminImport from './pages/AdminImport';
+import AdminOrgSelection from './pages/AdminOrgSelection';
+import AdminSubscriptions from './pages/AdminSubscriptions';
+import ParentPortal from './pages/ParentPortal';
 import AuthPage from './pages/AuthPage';
-import OrgSelectionPage from './pages/OrgSelectionPage';
-import ParentDashboard from './pages/ParentDashboard';
-import SubscriptionsPage from './pages/SubscriptionsPage';
 import { useTranslation } from 'react-i18next';
 import { Organization } from './types';
 
@@ -53,7 +53,7 @@ const NavLink: React.FC<{ to: string; icon: React.ReactNode; children: React.Rea
     >
       <span className={`shrink-0 transition-all duration-300 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`}>
         {React.cloneElement(icon as React.ReactElement<any>, { 
-          className: `h-4 w-4 sm:h-5 sm:w-5 stroke-[2.5]` 
+          className: `h-4 w-4 sm:h-5 w-5 stroke-[2.5]` 
         })}
       </span>
       {isActive && (
@@ -139,7 +139,6 @@ const UserProfile: React.FC<{ email: string; onLogout: () => void }> = ({ email,
             <span>{t('nav.subscriptions')}</span>
           </Link>
 
-          {/* Fixed the missing handleLogout reference by correctly using the onLogout prop */}
           <button 
             onClick={onLogout}
             className="w-full flex items-center space-x-3 px-6 py-4 text-red-500 hover:bg-red-50 transition-colors text-sm font-black uppercase tracking-widest"
@@ -394,20 +393,20 @@ const App: React.FC = () => {
       <HashRouter>
         <Layout userEmail={session?.user?.email}>
           <Routes>
-            <Route path="/dashboard" element={<ParentDashboard />} />
-            <Route path="/org" element={<OrgSelectionPage />} />
-            <Route path="/subscriptions" element={<SubscriptionsPage />} />
+            <Route path="/dashboard" element={<ParentPortal />} />
+            <Route path="/org" element={<AdminOrgSelection />} />
+            <Route path="/subscriptions" element={<AdminSubscriptions />} />
             
             <Route path="/org/:orgId">
               <Route index element={<Navigate to="attendance" replace />} />
-              <Route path="attendance" element={<AttendancePage />} />
-              <Route path="bookings" element={<BookingsPage />} />
-              <Route path="issues" element={<IssuesPage />} />
-              <Route path="export" element={<ExportPage />} />
-              <Route path="courses" element={<CoursesPage />} />
-              <Route path="students" element={<StudentsPage />} />
-              <Route path="import" element={<ImportPage />} />
-              <Route path="backup" element={<BackupPage />} />
+              <Route path="attendance" element={<AdminAttendance />} />
+              <Route path="bookings" element={<AdminBookings />} />
+              <Route path="issues" element={<AdminIssues />} />
+              <Route path="export" element={<AdminExport />} />
+              <Route path="courses" element={<AdminCourses />} />
+              <Route path="students" element={<AdminStudents />} />
+              <Route path="import" element={<AdminImport />} />
+              <Route path="backup" element={<AdminBackup />} />
             </Route>
 
             <Route path="/login" element={<Navigate to="/dashboard" replace />} />

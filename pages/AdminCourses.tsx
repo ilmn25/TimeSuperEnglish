@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { Course } from '../types';
 import { useTranslation } from 'react-i18next';
 
-const CoursesPage: React.FC = () => {
+const AdminCourses: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -272,4 +273,4 @@ const CoursesPage: React.FC = () => {
   );
 };
 
-export default CoursesPage;
+export default AdminCourses;

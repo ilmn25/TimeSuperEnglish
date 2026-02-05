@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { Student, Booking, Course } from '../types';
@@ -39,7 +40,7 @@ interface StudentDetailedData {
   isLoading: boolean;
 }
 
-const ParentDashboard: React.FC = () => {
+const ParentPortal: React.FC = () => {
   const hktToday = getHKTDateString();
   const { t } = useTranslation();
 
@@ -759,4 +760,4 @@ const DashboardStudentCard: React.FC<{
   );
 };
 
-export default ParentDashboard;
+export default ParentPortal;

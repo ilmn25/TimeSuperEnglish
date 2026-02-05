@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Booking } from '../types';
@@ -9,13 +10,13 @@ interface ExportColumn {
   default: boolean;
 }
 
-const ExportPage: React.FC = () => {
+const AdminExport: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   
-  // Data passed from BookingsPage
+  // Data passed from AdminBookings
   const bookings: (Booking & { calculatedStatus: string })[] = location.state?.bookings || [];
 
   const columns: ExportColumn[] = [
@@ -201,4 +202,4 @@ const ExportPage: React.FC = () => {
   );
 };
 
-export default ExportPage;
+export default AdminExport;

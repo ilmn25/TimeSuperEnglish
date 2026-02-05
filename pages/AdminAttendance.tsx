@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -22,7 +23,7 @@ const getHKTDateString = (baseDate: Date = new Date()) => {
 
 type BookingStatus = 'blue' | 'green' | 'yellow' | 'red';
 
-const AttendancePage: React.FC = () => {
+const AdminAttendance: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
   const hktToday = getHKTDateString();
@@ -374,4 +375,4 @@ const AttendancePage: React.FC = () => {
   );
 };
 
-export default AttendancePage;
+export default AdminAttendance;

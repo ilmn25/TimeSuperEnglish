@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 type SortOrder = 'asc' | 'desc';
 const MAX_BACKUPS = 10;
 
-const BackupPage: React.FC = () => {
+const AdminBackup: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const [backups, setBackups] = useState<BackupFile[]>([]);
   const [organization, setOrganization] = useState<Organization | null>(null);
@@ -431,4 +431,4 @@ const BackupPage: React.FC = () => {
   );
 };
 
-export default BackupPage;
+export default AdminBackup;

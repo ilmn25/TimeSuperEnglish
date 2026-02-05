@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useTranslation } from 'react-i18next';
 
-const SubscriptionsPage: React.FC = () => {
+const AdminSubscriptions: React.FC = () => {
   const { t } = useTranslation();
   const [subscription, setSubscription] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -181,4 +181,4 @@ const SubscriptionsPage: React.FC = () => {
   );
 };
 
-export default SubscriptionsPage;
+export default AdminSubscriptions;

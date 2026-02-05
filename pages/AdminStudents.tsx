@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
@@ -6,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 const LEVELS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6'];
 
-const StudentsPage: React.FC = () => {
+const AdminStudents: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -448,7 +449,7 @@ const StudentsPage: React.FC = () => {
       {/* Confirmation Modals */}
       {confirmUnlinkEmail && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={() => setConfirmUnlinkEmail(null)}>
-          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden p-8 sm:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-sm overflow-hidden p-8 sm:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-2">{t('students.unlink_title')}</h3>
             <p className="text-slate-500 text-xs sm:text-sm mb-8 sm:mb-10 leading-relaxed">{t('students.unlink_msg')}<br/><span className="font-bold text-slate-900">{confirmUnlinkEmail}</span>?</p>
             <div className="flex space-x-3">
@@ -463,7 +464,7 @@ const StudentsPage: React.FC = () => {
 
       {confirmDeleteId && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
-          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden p-8 sm:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-sm overflow-hidden p-8 sm:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-2">{t('students.delete_title')}</h3>
             <p className="text-slate-500 text-xs sm:text-sm mb-8 sm:mb-10 leading-relaxed">{t('students.delete_msg')}</p>
             <div className="flex space-x-3">
@@ -479,4 +480,4 @@ const StudentsPage: React.FC = () => {
   );
 };
 
-export default StudentsPage;
+export default AdminStudents;

@@ -26,7 +26,7 @@ Liam Wong,2026-03-02,14:00,15:00
 Maya Tan,2026-03-02,15:30,16:30
 Noah Lim,2026-03-03,10:00,11:30`;
 
-const AttendanceImportPage: React.FC = () => {
+const AdminAttendanceImport: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -392,7 +392,7 @@ const AttendanceImportPage: React.FC = () => {
 
         {showBackupModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={handleCancelBackupDialog}>
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-lg overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <div className="px-10 py-8 border-b border-amber-100 bg-amber-50/30 shrink-0 flex items-start space-x-6">
                     <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -464,4 +464,4 @@ const AttendanceImportPage: React.FC = () => {
   );
 };
 
-export default AttendanceImportPage;
+export default AdminAttendanceImport;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -30,7 +31,7 @@ const getDatesInRange = (startStr: string, endStr: string) => {
   return dates;
 };
 
-const BookingsPage: React.FC = () => {
+const AdminBookings: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -909,4 +910,4 @@ const BookingsPage: React.FC = () => {
   );
 };
 
-export default BookingsPage;
+export default AdminBookings;
