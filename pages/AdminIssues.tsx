@@ -92,8 +92,9 @@ const AdminIssues: React.FC = () => {
   const handleUpdateResolution = async (issueId: string, resolution: string) => {
     setIsProcessing(true);
     try {
-      const resolvedAt = (resolution !== 'pending') ? new Date().toISOString() : null;
-      await api.updateIssue(issueId, { resolution, resolved_at: resolvedAt });
+      // Per requirements, frontend only sets resolution. 
+      // The backend handles resolved_at automatically.
+      await api.updateIssue(issueId, { resolution });
       await fetchData();
     } catch (err) {
       alert('Failed to update resolution');
