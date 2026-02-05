@@ -1,8 +1,8 @@
 
 import { supabase } from './supabaseClient';
 
-const SUPABASE_URL = 'https://udmmawerngcgaqexndek.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_mQ-8-pm7g2P7McLodeJbOw_ZnfpWupW';
+const SUPABASE_URL = 'https://cxjkcrpapxlrceelzshu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_27zWxhCOkv7vnnXEOA8qmQ_e2tp76FD';
 
 const getHeaders = async (isMutation = false) => {
   const { data: { session } } = await supabase.auth.getSession();
