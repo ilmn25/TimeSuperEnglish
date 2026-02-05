@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -37,7 +36,14 @@ const AttendancePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
-  const [manualModalConfig, setManualModalConfig] = useState<{ bookingId: string, name: string, check_in?: string | null, check_out?: string | null } | null>(null);
+  const [manualModalConfig, setManualModalConfig] = useState<{ 
+    bookingId: string, 
+    name: string, 
+    check_in?: string | null, 
+    check_out?: string | null,
+    scheduledStart?: string,
+    scheduledEnd?: string
+  } | null>(null);
 
   const isToday = date === hktToday;
   const monthName = viewDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
@@ -319,7 +325,14 @@ const AttendancePage: React.FC = () => {
               onCheckOut={handleCheckOut}
               onOpenManualModal={(bookingId, name) => {
                 const b = monthBookings.find(x => x.id === bookingId);
-                setManualModalConfig({ bookingId, name, check_in: b?.check_in, check_out: b?.check_out });
+                setManualModalConfig({ 
+                  bookingId, 
+                  name, 
+                  check_in: b?.check_in, 
+                  check_out: b?.check_out,
+                  scheduledStart: b?.start,
+                  scheduledEnd: b?.end
+                });
               }}
               isToday={isToday}
               isSelected={selectedStudentId === studentGroup.student.id}
@@ -350,6 +363,8 @@ const AttendancePage: React.FC = () => {
           studentName={manualModalConfig.name} 
           initialStart={manualModalConfig.check_in}
           initialEnd={manualModalConfig.check_out}
+          scheduledStart={manualModalConfig.scheduledStart}
+          scheduledEnd={manualModalConfig.scheduledEnd}
           onClose={() => setManualModalConfig(null)} 
           onSubmit={(start, end) => handleManualAdd(manualModalConfig.bookingId, start, end)} 
           onClear={() => handleClearAttendance(manualModalConfig.bookingId)}

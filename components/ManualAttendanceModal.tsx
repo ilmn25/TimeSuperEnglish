@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,10 +9,12 @@ interface ManualAttendanceModalProps {
   studentName: string;
   initialStart?: string | null;
   initialEnd?: string | null;
+  scheduledStart?: string;
+  scheduledEnd?: string;
 }
 
 const ManualAttendanceModal: React.FC<ManualAttendanceModalProps> = ({ 
-  isOpen, onClose, onSubmit, onClear, studentName, initialStart, initialEnd 
+  isOpen, onClose, onSubmit, onClear, studentName, initialStart, initialEnd, scheduledStart, scheduledEnd
 }) => {
   const { t } = useTranslation();
   const [start, setStart] = useState('09:00');
@@ -30,10 +31,14 @@ const ManualAttendanceModal: React.FC<ManualAttendanceModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setStart(formatForInput(initialStart, '09:00'));
-      setEnd(formatForInput(initialEnd, '17:00'));
+      // Use existing attendance if available, otherwise use scheduled times as placeholders/defaults
+      const defaultStart = formatForInput(scheduledStart, '09:00');
+      const defaultEnd = formatForInput(scheduledEnd, '17:00');
+      
+      setStart(formatForInput(initialStart, defaultStart));
+      setEnd(formatForInput(initialEnd, defaultEnd));
     }
-  }, [isOpen, initialStart, initialEnd]);
+  }, [isOpen, initialStart, initialEnd, scheduledStart, scheduledEnd]);
 
   if (!isOpen) return null;
 
