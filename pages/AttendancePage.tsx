@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Booking, Attendance, StudentGroupedData, Student } from '../types';
+import { Booking, StudentGroupedData, Student } from '../types';
 import StudentCard from '../components/StudentCard';
 import TimelinePanel from '../components/TimelinePanel';
 import ManualAttendanceModal from '../components/ManualAttendanceModal';
@@ -29,27 +28,19 @@ const AttendancePage: React.FC = () => {
   const hktToday = getHKTDateString();
   const { t } = useTranslation();
   
-  // Date and Monthly View State
   const [date, setDate] = useState<string>(hktToday);
   const [viewDate, setViewDate] = useState(new Date());
   const [isCalendarMaximized, setIsCalendarMaximized] = useState(false);
-  
-  // Month-wide data
   const [monthBookings, setMonthBookings] = useState<Booking[]>([]);
-  const [monthAttendances, setMonthAttendances] = useState<Attendance[]>([]);
-  
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
-  const [manualModalConfig, setManualModalConfig] = useState<{ id: string, name: string } | null>(null);
+  const [manualModalConfig, setManualModalConfig] = useState<{ bookingId: string, name: string } | null>(null);
 
   const isToday = date === hktToday;
   const monthName = viewDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
 
-  // Calendar Grid Generation
   const calendarWeeks = useMemo(() => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -70,40 +61,6 @@ const AttendancePage: React.FC = () => {
     return weeks;
   }, [viewDate]);
 
-  // Status logic for a single booking
-  const getBookingStatus = useCallback((booking: Booking, dayAttendances: Attendance[]): BookingStatus => {
-    const hktNow = getHKTNow();
-    const bookingDate = new Date(booking.date);
-    const [bStartH, bStartM] = booking.start.split(':').map(Number);
-    const [bEndH, bEndM] = booking.end.split(':').map(Number);
-    
-    const startDateTime = new Date(bookingDate);
-    startDateTime.setHours(bStartH, bStartM, 0, 0);
-    const endDateTime = new Date(bookingDate);
-    endDateTime.setHours(bEndH, bEndM, 0, 0);
-
-    if (startDateTime > hktNow) return 'blue';
-
-    const hasOverlap = dayAttendances.some(att => {
-      if (att.student_id !== booking.student_id) return false;
-      const [aStartH, aStartM] = att.start.split(':').map(Number);
-      const aStart = new Date(bookingDate);
-      aStart.setHours(aStartH, aStartM, 0, 0);
-      let aEnd: Date;
-      if (att.end) {
-        const [aEndH, aEndM] = att.end.split(':').map(Number);
-        aEnd = new Date(bookingDate);
-        aEnd.setHours(aEndH, aEndM, 0, 0);
-      } else {
-        const isAttToday = att.date === hktNow.toLocaleDateString('en-CA');
-        aEnd = isAttToday ? hktNow : new Date(aStart.getTime() + 24 * 60 * 60 * 1000); 
-      }
-      return aStart < endDateTime && aEnd > startDateTime;
-    });
-
-    return hasOverlap ? 'green' : 'red';
-  }, []);
-
   const loadData = useCallback(async () => {
     if (!orgId) return;
     setIsLoading(true);
@@ -114,24 +71,7 @@ const AttendancePage: React.FC = () => {
       const startDate = new Date(year, month, 1).toLocaleDateString('en-CA');
       const endDate = new Date(year, month + 1, 0).toLocaleDateString('en-CA');
 
-      const [bookings, attendances] = await Promise.all([
-        api.getAllBookings(orgId, { startDate, endDate }),
-        api.getAllAttendances(orgId, { startDate, endDate })
-      ]);
-
-      const todayString = getHKTDateString();
-      const staleAttendances = attendances.filter((a: Attendance) => !a.end && a.date < todayString);
-      
-      if (staleAttendances.length > 0) {
-        await Promise.all(staleAttendances.map((a: Attendance) => 
-          api.updateAttendance(orgId, a.id, { end: '23:59:59' })
-        ));
-        const updatedAttendances = await api.getAllAttendances(orgId, { startDate, endDate });
-        setMonthAttendances(updatedAttendances);
-      } else {
-        setMonthAttendances(attendances);
-      }
-      
+      const bookings = await api.getAllBookings(orgId, { startDate, endDate });
       setMonthBookings(bookings);
     } catch (err: any) {
       setError(err.message || 'Could not load data.');
@@ -148,7 +88,6 @@ const AttendancePage: React.FC = () => {
   const dailyGroupedData = useMemo(() => {
     const studentMap = new Map<string, StudentGroupedData>();
     const dayBookings = monthBookings.filter(b => b.date === date);
-    const dayAttendances = monthAttendances.filter(a => a.date === date);
 
     dayBookings.forEach((b) => {
       const student = b.students as Student;
@@ -156,25 +95,18 @@ const AttendancePage: React.FC = () => {
       if (!studentMap.has(student.id)) {
         studentMap.set(student.id, {
           student,
-          bookings: [],
-          attendances: []
+          bookings: []
         });
       }
       studentMap.get(student.id)!.bookings.push(b);
     });
 
-    dayAttendances.forEach((a) => {
-      if (studentMap.has(a.student_id)) {
-        studentMap.get(a.student_id)!.attendances.push(a);
-      }
-    });
-
     return Array.from(studentMap.values());
-  }, [date, monthBookings, monthAttendances]);
+  }, [date, monthBookings]);
 
   const stats = useMemo(() => {
     const total = dailyGroupedData.length;
-    const currentlyIn = dailyGroupedData.filter(d => d.attendances.some(a => !a.end)).length;
+    const currentlyIn = dailyGroupedData.filter(d => d.bookings.some(b => b.check_in && !b.check_out)).length;
     return { total, currentlyIn };
   }, [dailyGroupedData]);
 
@@ -184,80 +116,83 @@ const AttendancePage: React.FC = () => {
     setViewDate(next);
   };
 
+  const getBookingStatus = useCallback((booking: Booking): BookingStatus => {
+    if (booking.check_in) return 'green';
+    const hktNow = getHKTNow();
+    const bookingDate = new Date(booking.date);
+    const [bStartH, bStartM] = booking.start.split(':').map(Number);
+    const startDateTime = new Date(bookingDate);
+    startDateTime.setHours(bStartH, bStartM, 0, 0);
+
+    if (startDateTime > hktNow) return 'blue';
+    return 'red';
+  }, []);
+
   const getDayStatus = (dateStr: string): BookingStatus | null => {
     const dayBookings = monthBookings.filter(b => b.date === dateStr);
     if (dayBookings.length === 0) return null;
-    const dayAttendances = monthAttendances.filter(a => a.date === dateStr);
-    const statuses = dayBookings.map(b => getBookingStatus(b, dayAttendances));
+    const statuses = dayBookings.map(b => getBookingStatus(b));
     if (statuses.every(s => s === 'blue')) return 'blue';
-    const pastStatuses = statuses.filter(s => s !== 'blue');
-    if (pastStatuses.length === 0) return 'blue';
-    const hasMissed = pastStatuses.some(s => s === 'red');
-    const hasAttended = pastStatuses.some(s => s === 'green');
-    if (hasMissed && hasAttended) return 'yellow';
-    if (hasMissed) return 'red';
+    if (statuses.some(s => s === 'red')) return 'red';
     return 'green';
   };
 
   const getStudentDetailedStatusesForDay = (dateStr: string) => {
     const dayBookings = monthBookings.filter(b => b.date === dateStr);
-    const dayAttendances = monthAttendances.filter(a => a.date === dateStr);
-    
     const studentMap = new Map<string, { name: string; status: BookingStatus }>();
     dayBookings.forEach(b => {
       const student = b.students as Student;
       if (!student) return;
       const current = studentMap.get(student.id);
-      const status = getBookingStatus(b, dayAttendances);
-      
-      if (!current) {
+      const status = getBookingStatus(b);
+      if (!current || (status === 'red' && current.status !== 'red')) {
         studentMap.set(student.id, { name: student.name, status });
-      } else {
-        const priority = { red: 3, yellow: 2, green: 1, blue: 0 };
-        if (priority[status] > priority[current.status]) {
-          studentMap.set(student.id, { name: student.name, status });
-        }
       }
     });
     return Array.from(studentMap.values());
   };
 
-  const statusColors = { blue: 'bg-blue-400', green: 'bg-green-500', yellow: 'bg-yellow-400', red: 'bg-red-500' };
-
-  const handleCheckIn = async (studentId: string) => {
-    if (!orgId) return;
-    try { await api.checkIn(orgId, studentId, date); loadData(); } catch (err) { alert('Check-in error'); }
-  };
-
-  const handleCheckOut = async (studentId: string) => {
-    if (!orgId) return;
-    try { await api.checkOut(orgId, studentId, date); loadData(); } catch (err) { alert('Check-out error'); }
-  };
-
-  const handleManualAdd = async (studentId: string, start: string, end: string) => {
+  const handleCheckIn = async (bookingId: string) => {
     if (!orgId) return;
     try {
-      await api.createAttendanceManual(orgId, { student_id: studentId, date, start, end });
+      const now = new Date().toISOString();
+      await api.updateBooking(orgId, bookingId, { check_in: now });
+      loadData();
+    } catch (err) { alert('Check-in error'); }
+  };
+
+  const handleCheckOut = async (bookingId: string) => {
+    if (!orgId) return;
+    try {
+      const now = new Date().toISOString();
+      await api.updateBooking(orgId, bookingId, { check_out: now });
+      loadData();
+    } catch (err) { alert('Check-out error'); }
+  };
+
+  const handleManualAdd = async (bookingId: string, start: string, end: string) => {
+    if (!orgId) return;
+    try {
+      const booking = monthBookings.find(b => b.id === bookingId);
+      if (!booking) return;
+      const check_in = `${booking.date}T${start}:00Z`;
+      const check_out = `${booking.date}T${end}:00Z`;
+      await api.updateBooking(orgId, bookingId, { check_in, check_out });
       setManualModalConfig(null);
       loadData();
     } catch (err) { alert('Manual entry error'); }
   };
 
-  const handleRemoveAttendance = async () => {
-    if (!confirmDelete || !orgId) return;
-    setIsProcessing(true);
-    try { await api.deleteAttendance(orgId, confirmDelete); setConfirmDelete(null); loadData(); } catch (err) { alert('Removal error'); } finally { setIsProcessing(false); }
-  };
-
   const selectedStudentData = useMemo(() => dailyGroupedData.find(d => d.student.id === selectedStudentId), [dailyGroupedData, selectedStudentId]);
 
-  const layoutPaddingClass = (selectedStudentData && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0';
   const gridColumnsClass = (selectedStudentData && isTimelineExpanded) 
     ? 'grid-cols-1 md:grid-cols-2 2xl:grid-cols-3' 
     : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5';
 
+  const statusColors = { blue: 'bg-blue-400', green: 'bg-green-500', yellow: 'bg-yellow-400', red: 'bg-red-500' };
+
   return (
-    <div className={`space-y-6 pb-20 transition-all duration-500 ease-in-out ${layoutPaddingClass}`}> 
+    <div className={`space-y-6 pb-20 transition-all duration-500 ease-in-out ${(selectedStudentData && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0'}`}> 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('nav.attendance')}</h2>
@@ -282,7 +217,6 @@ const AttendancePage: React.FC = () => {
       </div>
       
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        {/* Monthly Calendar Navigation Grid */}
         <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 w-full ${isCalendarMaximized ? 'lg:w-full' : 'lg:max-w-xl'}`}>
           <div className="px-5 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between bg-white gap-y-3">
             <div className="flex items-center space-x-1">
@@ -296,15 +230,12 @@ const AttendancePage: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
               </button>
             </div>
-
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={() => { setDate(hktToday); setViewDate(new Date()); }}
-                className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
-              >
-                {t('attendance.today')}
-              </button>
-            </div>
+            <button 
+              onClick={() => { setDate(hktToday); setViewDate(new Date()); }}
+              className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+            >
+              {t('attendance.today')}
+            </button>
           </div>
 
           <div className="px-6 py-5 bg-white">
@@ -338,13 +269,12 @@ const AttendancePage: React.FC = () => {
                           }`}
                         >
                           <span className={`text-[11px] ${isCalendarMaximized ? 'mb-1 self-start ml-0.5' : ''}`}>{dateObj.getDate()}</span>
-                          
                           {isCalendarMaximized ? (
                             <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
                               {studentStatuses.map((s, i) => (
                                 <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
                                   <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
-                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-500 group-hover:text-inherit'}`}>
+                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-500'}`}>
                                     {s.name}
                                   </span>
                                 </div>
@@ -363,7 +293,6 @@ const AttendancePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Minimal Live Status Indicators */}
         <div className="flex items-center space-x-4 bg-white border border-slate-200 rounded-[2rem] px-6 py-4 shadow-sm self-start">
           <div className="flex flex-col">
             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{t('attendance.booked')}</span>
@@ -380,14 +309,6 @@ const AttendancePage: React.FC = () => {
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-100 p-4 rounded-2xl text-red-700 text-sm font-medium flex items-center space-x-2 shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <div className="flex-1"><span className="font-bold">{t('attendance.error')}:</span> {error}</div>
-          <button onClick={() => loadData()} className="text-xs font-black uppercase underline tracking-widest">{t('attendance.retry')}</button>
-        </div>
-      )}
-
       {isLoading ? (
         <div className={`grid ${gridColumnsClass} gap-6 sm:gap-8`}>
           {[1, 2, 3, 4, 5].map(i => <div key={i} className="bg-white border border-slate-200 rounded-3xl h-[450px] animate-pulse" />)}
@@ -400,8 +321,7 @@ const AttendancePage: React.FC = () => {
               data={studentGroup}
               onCheckIn={handleCheckIn}
               onCheckOut={handleCheckOut}
-              onOpenManualModal={(id, name) => setManualModalConfig({ id, name })}
-              onRemoveAttendance={setConfirmDelete}
+              onOpenManualModal={(bookingId, name) => setManualModalConfig({ bookingId, name })}
               isToday={isToday}
               isSelected={selectedStudentId === studentGroup.student.id}
               onSelect={setSelectedStudentId}
@@ -419,28 +339,20 @@ const AttendancePage: React.FC = () => {
         <TimelinePanel 
           studentName={selectedStudentData.student.name} 
           bookings={selectedStudentData.bookings} 
-          attendances={selectedStudentData.attendances} 
+          attendances={[]} // Legacy attendances removed
           date={date}
           isExpanded={isTimelineExpanded}
           onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}
         />
       )}
       
-      {manualModalConfig && <ManualAttendanceModal isOpen={true} studentName={manualModalConfig.name} onClose={() => setManualModalConfig(null)} onSubmit={(start, end) => handleManualAdd(manualModalConfig.id, start, end)} />}
-      
-      {confirmDelete && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmDelete(null)}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">{t('attendance.remove_title')}</h3>
-            <p className="text-slate-500 text-sm mb-8">{t('attendance.remove_msg')}</p>
-            <div className="flex space-x-4">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 px-6 py-3 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-colors">{t('common.cancel')}</button>
-              <button onClick={handleRemoveAttendance} className="flex-1 px-6 py-3 text-sm font-bold text-white rounded-2xl bg-red-600 hover:bg-red-700 transition-all flex items-center justify-center">
-                {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : t('common.remove')}
-              </button>
-            </div>
-          </div>
-        </div>
+      {manualModalConfig && (
+        <ManualAttendanceModal 
+          isOpen={true} 
+          studentName={manualModalConfig.name} 
+          onClose={() => setManualModalConfig(null)} 
+          onSubmit={(start, end) => handleManualAdd(manualModalConfig.bookingId, start, end)} 
+        />
       )}
     </div>
   );

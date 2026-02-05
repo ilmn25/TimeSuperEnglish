@@ -27,7 +27,6 @@ const handleResponse = async (response: Response, errorMessage: string) => {
       console.error(`API Error Detail [${response.status}]:`, errorData);
       errorDetail = errorData.message || errorData.details || errorDetail;
     } catch (e) {
-      // Fallback if not JSON
       const text = await response.text();
       if (text) errorDetail = text;
     }
@@ -38,8 +37,6 @@ const handleResponse = async (response: Response, errorMessage: string) => {
   if (!text) return null;
   
   try {
-    // Return raw data. Unwrapping single-element arrays here causes issues
-    // for list endpoints that may return one item.
     return JSON.parse(text);
   } catch (e) {
     return text;
@@ -96,7 +93,6 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/organizations?id=eq.${encodeURIComponent(id)}&select=*`;
     const response = await fetch(url, { headers });
     const data = await handleResponse(response, 'Failed to fetch organization');
-    // Supabase select returns an array, we want the first element or undefined.
     return Array.isArray(data) ? data[0] : null;
   },
 
@@ -145,14 +141,14 @@ export const api = {
   // BOOKING METHODS
   async getBookings(orgId: string, date: string) {
     const headers = await getHeaders();
-    const url = `${SUPABASE_URL}/rest/v1/bookings?org_id=eq.${encodeURIComponent(orgId)}&date=eq.${encodeURIComponent(date)}&select=id,date,start,end,student_id,students(name,contact,id,level),courses(name,color)`;
+    const url = `${SUPABASE_URL}/rest/v1/bookings?org_id=eq.${encodeURIComponent(orgId)}&date=eq.${encodeURIComponent(date)}&select=id,date,start,end,check_in,check_out,student_id,students(name,contact,id,level),courses(name,color)`;
     const response = await fetch(url, { headers });
     return handleResponse(response, 'Failed to fetch bookings');
   },
 
   async getAllBookings(orgId: string, filters?: { dates?: string[]; student_id?: string; course_id?: string; startDate?: string; endDate?: string }) {
     const headers = await getHeaders();
-    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=id,date,start,end,student_id,course_id,students(name,contact,id,level),courses(name,color)&order=date.desc,start.asc`;
+    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=id,date,start,end,check_in,check_out,student_id,course_id,students(name,contact,id,level,org_id),courses(name,color)&order=date.desc,start.asc`;
     
     if (filters?.dates && filters.dates.length > 0) {
       const dateList = filters.dates.map(d => `"${d}"`).join(',');
@@ -173,7 +169,6 @@ export const api = {
   async createBooking(orgId: string, data: { student_id: string; course_id: string; date: string; start: string; end: string }) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/bookings`;
-    // Explicitly set the org_id to ensure it matches current workspace
     const payload = { ...data, org_id: orgId };
     const response = await fetch(url, {
       method: 'POST',
@@ -183,7 +178,7 @@ export const api = {
     return handleResponse(response, 'Failed to create booking');
   },
 
-  async updateBooking(orgId: string, id: string, data: Partial<{ student_id: string; course_id: string; date: string; start: string; end: string }>) {
+  async updateBooking(orgId: string, id: string, data: Partial<{ student_id: string; course_id: string; date: string; start: string; end: string; check_in: string | null; check_out: string | null }>) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/bookings?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, {
@@ -199,84 +194,6 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/bookings?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
     return handleResponse(response, 'Failed to delete booking');
-  },
-
-  // ATTENDANCE METHODS
-  async getAttendances(orgId: string, date: string) {
-    const headers = await getHeaders();
-    const url = `${SUPABASE_URL}/rest/v1/attendances?org_id=eq.${encodeURIComponent(orgId)}&date=eq.${encodeURIComponent(date)}&select=*`;
-    const response = await fetch(url, { headers });
-    return handleResponse(response, 'Failed to fetch attendances');
-  },
-
-  async getAllAttendances(orgId: string, filters?: { dates?: string[]; student_id?: string; startDate?: string; endDate?: string }) {
-    const headers = await getHeaders();
-    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=*&order=date.desc,start.asc`;
-    
-    if (filters?.dates && filters.dates.length > 0) {
-      const dateList = filters.dates.map(d => `"${d}"`).join(',');
-      query += `&date=in.(${dateList})`;
-    } else {
-      if (filters?.startDate) query += `&date=gte.${encodeURIComponent(filters.startDate)}`;
-      if (filters?.endDate) query += `&date=lte.${encodeURIComponent(filters.endDate)}`;
-    }
-    
-    if (filters?.student_id) query += `&student_id=eq.${encodeURIComponent(filters.student_id)}`;
-    
-    const url = `${SUPABASE_URL}/rest/v1/attendances?${query}`;
-    const response = await fetch(url, { headers });
-    return handleResponse(response, 'Failed to fetch attendances list');
-  },
-
-  async updateAttendance(orgId: string, id: string, data: Partial<{ start: string; end: string | null; date: string }>) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/attendances?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response, 'Failed to update attendance');
-  },
-
-  async checkIn(orgId: string, studentId: string, date: string) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/rpc/attendance_check_in`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ p_student: studentId, p_date: date })
-    });
-    return handleResponse(response, 'Check-in failed');
-  },
-
-  async checkOut(orgId: string, studentId: string, date: string) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/rpc/attendance_check_out`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ p_student: studentId, p_date: date })
-    });
-    return handleResponse(response, 'Check-out failed');
-  },
-
-  async deleteAttendance(orgId: string, id: string) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/attendances?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
-    const response = await fetch(url, { method: 'DELETE', headers });
-    return handleResponse(response, 'Delete attendance failed');
-  },
-
-  async createAttendanceManual(orgId: string, data: { student_id: string, date: string, start: string, end: string }) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/attendances`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ ...data, org_id: orgId })
-    });
-    return handleResponse(response, 'Manual check-in failed');
   },
 
   // COURSE METHODS
@@ -351,6 +268,30 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/students?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
     return handleResponse(response, 'Failed to delete student');
+  },
+
+  // ATTENDANCE METHODS
+  async getAllAttendances(orgId: string, filters?: { startDate?: string; endDate?: string }) {
+    const headers = await getHeaders();
+    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=*&order=date.desc,start.asc`;
+    if (filters?.startDate) query += `&date=gte.${encodeURIComponent(filters.startDate)}`;
+    if (filters?.endDate) query += `&date=lte.${encodeURIComponent(filters.endDate)}`;
+    
+    const url = `${SUPABASE_URL}/rest/v1/attendance?${query}`;
+    const response = await fetch(url, { headers });
+    return handleResponse(response, 'Failed to fetch attendance list');
+  },
+
+  async createAttendanceManual(orgId: string, data: { student_id: string; date: string; start: string; end: string }) {
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/attendance`;
+    const payload = { ...data, org_id: orgId };
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+    return handleResponse(response, 'Failed to create attendance record');
   },
 
   // BACKUP METHODS (EDGE FUNCTIONS)
@@ -482,7 +423,7 @@ export const api = {
 
   async getStudentBookings(studentId: string, filters?: { date?: string; startDate?: string; endDate?: string }) {
     const headers = await getHeaders();
-    let query = `student_id=eq.${encodeURIComponent(studentId)}&select=id,date,start,end,student_id,course_id,courses(name,color)&order=date.desc,start.asc`;
+    let query = `student_id=eq.${encodeURIComponent(studentId)}&select=id,date,start,end,check_in,check_out,student_id,course_id,courses(name,color)&order=date.desc,start.asc`;
     if (filters?.date) {
       query += `&date=eq.${encodeURIComponent(filters.date)}`;
     } else {
@@ -492,19 +433,5 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/bookings?${query}`;
     const response = await fetch(url, { headers });
     return handleResponse(response, 'Failed to fetch student bookings');
-  },
-
-  async getStudentAttendances(studentId: string, filters?: { date?: string; startDate?: string; endDate?: string }) {
-    const headers = await getHeaders();
-    let query = `student_id=eq.${encodeURIComponent(studentId)}&select=*&order=date.desc,start.desc`;
-    if (filters?.date) {
-      query += `&date=eq.${encodeURIComponent(filters.date)}`;
-    } else {
-      if (filters?.startDate) query += `&date=gte.${encodeURIComponent(filters.startDate)}`;
-      if (filters?.endDate) query += `&date=lte.${encodeURIComponent(filters.endDate)}`;
-    }
-    const url = `${SUPABASE_URL}/rest/v1/attendances?${query}`;
-    const response = await fetch(url, { headers });
-    return handleResponse(response, 'Failed to fetch student attendances');
   }
 };

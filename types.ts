@@ -1,8 +1,10 @@
+
 export interface Student {
   id: string;
   name: string;
   contact: string;
   level?: string;
+  org_id?: string;
 }
 
 export interface Course {
@@ -18,16 +20,10 @@ export interface Booking {
   date: string;
   start: string;
   end: string;
+  check_in?: string | null;
+  check_out?: string | null;
   students?: Student;
   courses?: Course;
-}
-
-export interface Attendance {
-  id: string;
-  student_id: string;
-  date: string;
-  start: string;
-  end: string | null;
 }
 
 export interface Organization {
@@ -41,7 +37,6 @@ export interface Organization {
 export interface StudentGroupedData {
   student: Student;
   bookings: Booking[];
-  attendances: Attendance[];
 }
 
 export interface BackupFile {
@@ -53,4 +48,15 @@ export interface BackupFile {
     size: number;
     mimetype: string;
   };
+}
+
+// Define the Attendance interface used by export/import and manual logs
+export interface Attendance {
+  id: string;
+  student_id: string;
+  date: string;
+  start: string;
+  end: string | null;
+  org_id?: string;
+  created_at?: string;
 }
