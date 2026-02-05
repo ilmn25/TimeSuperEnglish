@@ -268,6 +268,24 @@ export const api = {
     return handleResponse(response, 'Failed to create course schedule');
   },
 
+  async updateCourseSchedule(id: string, data: Partial<{
+    start_time: string;
+    end_time: string;
+    date: string | null;
+    days_of_week: number[] | null;
+    starts_on: string | null;
+    biweekly: boolean;
+  }>) {
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/course_schedule?id=eq.${encodeURIComponent(id)}`;
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response, 'Failed to update course schedule');
+  },
+
   async deleteCourseSchedule(id: string) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/course_schedule?id=eq.${encodeURIComponent(id)}`;

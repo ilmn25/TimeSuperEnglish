@@ -35,6 +35,7 @@ const AdminCourseSchedule: React.FC = () => {
   // Form State
   const [scheduleType, setScheduleType] = useState<'recurring' | 'one-off'>('recurring');
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     start_time: '09:00',
     end_time: '10:00',
@@ -47,6 +48,9 @@ const AdminCourseSchedule: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<string | null>(null);
   const [dragEnd, setDragEnd] = useState<string | null>(null);
+
+  // Daily Timeline State
+  const [selectedTimelineDate, setSelectedTimelineDate] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!orgId || !courseId) return;
@@ -96,11 +100,8 @@ const AdminCourseSchedule: React.FC = () => {
   };
 
   const handleMouseDown = (dateStr: string, e: React.MouseEvent) => {
+    setSelectedTimelineDate(dateStr);
     if (scheduleType !== 'one-off') return;
-    if (!e.shiftKey) {
-      // If clicking a date that's not already in the list, we might want to start fresh or keep adding
-      // For now, let's keep adding to feel like a selection tool
-    }
     setIsDragging(true);
     setDragStart(dateStr);
     setDragEnd(dateStr);
@@ -125,7 +126,19 @@ const AdminCourseSchedule: React.FC = () => {
     if (!courseId) return;
     setIsProcessing(true);
     try {
-      if (scheduleType === 'one-off') {
+      if (editingId) {
+        // Handle Update
+        await api.updateCourseSchedule(editingId, {
+          start_time: formData.start_time,
+          end_time: formData.end_time,
+          date: scheduleType === 'one-off' ? (selectedDates[0] || null) : null,
+          days_of_week: scheduleType === 'recurring' ? formData.days_of_week : null,
+          starts_on: scheduleType === 'recurring' ? formData.starts_on : null,
+          biweekly: scheduleType === 'recurring' ? formData.biweekly : false
+        });
+        setEditingId(null);
+        setSelectedDates([]);
+      } else if (scheduleType === 'one-off') {
         // Batch creation for one-off dates
         for (const date of selectedDates) {
           await api.createCourseSchedule({
@@ -140,6 +153,7 @@ const AdminCourseSchedule: React.FC = () => {
         }
         setSelectedDates([]);
       } else {
+        // Single recurring creation
         await api.createCourseSchedule({
           course_id: courseId,
           start_time: formData.start_time,
@@ -153,16 +167,44 @@ const AdminCourseSchedule: React.FC = () => {
       }
       fetchData();
     } catch (err) {
-      alert('Failed to add open hours.');
+      alert('Failed to save open hours.');
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleEdit = (schedule: CourseSchedule) => {
+    setEditingId(schedule.id);
+    setScheduleType(schedule.date ? 'one-off' : 'recurring');
+    setFormData({
+      start_time: schedule.start_time.slice(0, 5),
+      end_time: schedule.end_time.slice(0, 5),
+      days_of_week: schedule.days_of_week || [],
+      starts_on: schedule.starts_on || new Date().toISOString().split('T')[0],
+      biweekly: schedule.biweekly
+    });
+    if (schedule.date) setSelectedDates([schedule.date]);
+    else setSelectedDates([]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setFormData({
+      start_time: '09:00',
+      end_time: '10:00',
+      days_of_week: [],
+      starts_on: new Date().toISOString().split('T')[0],
+      biweekly: false
+    });
+    setSelectedDates([]);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to remove these open hours?')) return;
     try {
       await api.deleteCourseSchedule(id);
+      if (editingId === id) cancelEdit();
       fetchData();
     } catch (err) {
       alert('Failed to delete.');
@@ -241,6 +283,20 @@ const AdminCourseSchedule: React.FC = () => {
     setViewDate(next);
   };
 
+  const timelineProjections = useMemo(() => {
+    if (!selectedTimelineDate) return [];
+    return getProjectionsForMonth[selectedTimelineDate] || [];
+  }, [selectedTimelineDate, getProjectionsForMonth]);
+
+  const timeToPercent = (timeStr: string) => {
+    const [h, m] = timeStr.split(':').map(Number);
+    const totalMinutes = h * 60 + (m || 0);
+    const startMinutes = 8 * 60; // Start timeline at 8:00
+    const endMinutes = 22 * 60;  // End timeline at 22:00
+    const percent = ((totalMinutes - startMinutes) / (endMinutes - startMinutes)) * 100;
+    return Math.max(0, Math.min(100, percent));
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
@@ -250,7 +306,7 @@ const AdminCourseSchedule: React.FC = () => {
   }
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-500 pb-20">
+    <div className={`space-y-10 animate-in fade-in duration-500 pb-20 transition-all ${selectedTimelineDate ? 'xl:pr-80' : ''}`}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center space-x-5">
            <button onClick={() => navigate(`/org/${orgId}/courses`)} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90">
@@ -266,26 +322,31 @@ const AdminCourseSchedule: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* Left: Schedule Builder */}
         <div className="lg:col-span-4 space-y-8">
-           <section className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm">
-             <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
-               <div className="w-1.5 h-4 bg-indigo-600 rounded-full" />
-               New Open Hours
-             </h3>
+           <section className={`bg-white border-2 rounded-[2.5rem] p-8 shadow-sm transition-colors ${editingId ? 'border-indigo-500 bg-indigo-50/10' : 'border-slate-100'}`}>
+             <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                  <div className={`w-1.5 h-4 rounded-full ${editingId ? 'bg-indigo-600 animate-pulse' : 'bg-indigo-600'}`} />
+                  {editingId ? 'Edit Open Hours' : 'New Open Hours'}
+                </h3>
+                {editingId && (
+                  <button onClick={cancelEdit} className="text-[10px] font-black text-indigo-600 hover:underline uppercase tracking-widest">Cancel Edit</button>
+                )}
+             </div>
              
              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex p-1 bg-slate-100 rounded-2xl">
-                  <button type="button" onClick={() => setScheduleType('recurring')} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${scheduleType === 'recurring' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>Weekly</button>
-                  <button type="button" onClick={() => setScheduleType('one-off')} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${scheduleType === 'one-off' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>One-off</button>
+                  <button type="button" onClick={() => { if (!editingId) setScheduleType('recurring'); }} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${scheduleType === 'recurring' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${editingId ? 'cursor-not-allowed' : ''}`}>Weekly</button>
+                  <button type="button" onClick={() => { if (!editingId) setScheduleType('one-off'); }} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${scheduleType === 'one-off' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${editingId ? 'cursor-not-allowed' : ''}`}>One-off</button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Start Time</label>
-                    <input type="time" required value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black font-mono text-slate-900" />
+                    <input type="time" required value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-black font-mono text-slate-900 focus:ring-4 focus:ring-indigo-100 outline-none" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">End Time</label>
-                    <input type="time" required value={formData.end_time} onChange={e => setFormData({...formData, end_time: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black font-mono text-slate-900" />
+                    <input type="time" required value={formData.end_time} onChange={e => setFormData({...formData, end_time: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-black font-mono text-slate-900 focus:ring-4 focus:ring-indigo-100 outline-none" />
                   </div>
                 </div>
 
@@ -295,7 +356,7 @@ const AdminCourseSchedule: React.FC = () => {
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Repeat Days</label>
                       <div className="flex flex-wrap gap-2">
                         {WEEKDAYS.map((day, idx) => (
-                          <button key={day} type="button" onClick={() => toggleDay(idx)} className={`w-9 h-9 rounded-xl text-[10px] font-black transition-all ${formData.days_of_week.includes(idx) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:border-indigo-200'}`}>
+                          <button key={day} type="button" onClick={() => toggleDay(idx)} className={`w-9 h-9 rounded-xl text-[10px] font-black transition-all ${formData.days_of_week.includes(idx) ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-white text-slate-400 border border-slate-200 hover:border-indigo-200'}`}>
                             {day.charAt(0)}
                           </button>
                         ))}
@@ -303,7 +364,7 @@ const AdminCourseSchedule: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Starts On</label>
-                      <input type="date" value={formData.starts_on} onChange={e => setFormData({...formData, starts_on: e.target.value})} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900" />
+                      <input type="date" value={formData.starts_on} onChange={e => setFormData({...formData, starts_on: e.target.value})} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900" />
                     </div>
                     <label className="flex items-center space-x-3 cursor-pointer group">
                       <input type="checkbox" checked={formData.biweekly} onChange={e => setFormData({...formData, biweekly: e.target.checked})} className="w-5 h-5 rounded border-2 border-slate-200 text-indigo-600 focus:ring-indigo-500" />
@@ -313,8 +374,8 @@ const AdminCourseSchedule: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Selected Dates</label>
-                      {selectedDates.length > 0 && (
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{editingId ? 'Selected Date' : 'Selected Dates'}</label>
+                      {!editingId && selectedDates.length > 0 && (
                         <button type="button" onClick={() => setSelectedDates([])} className="text-[10px] font-bold text-red-500 hover:underline">Clear All</button>
                       )}
                     </div>
@@ -322,9 +383,11 @@ const AdminCourseSchedule: React.FC = () => {
                       {selectedDates.sort().map(d => (
                         <div key={d} className="px-2.5 py-1 bg-indigo-100 text-indigo-700 text-[10px] font-black rounded-lg flex items-center gap-1.5 shadow-sm">
                           {d}
-                          <button type="button" onClick={() => setSelectedDates(prev => prev.filter(x => x !== d))} className="hover:text-indigo-900 transition-colors">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
+                          {!editingId && (
+                            <button type="button" onClick={() => setSelectedDates(prev => prev.filter(x => x !== d))} className="hover:text-indigo-900 transition-colors">
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                          )}
                         </div>
                       ))}
                       {selectedDates.length === 0 && <span className="text-[10px] text-slate-400 italic py-2 px-1">Click or drag on the calendar to select dates</span>}
@@ -335,9 +398,9 @@ const AdminCourseSchedule: React.FC = () => {
                 <button 
                   type="submit" 
                   disabled={isProcessing || (scheduleType === 'recurring' && formData.days_of_week.length === 0) || (scheduleType === 'one-off' && selectedDates.length === 0)} 
-                  className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-[0.2em] disabled:opacity-50"
+                  className={`w-full py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 text-xs uppercase tracking-[0.2em] disabled:opacity-50 ${editingId ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'}`}
                 >
-                   {isProcessing ? 'Processing...' : 'Add Open Hours'}
+                   {isProcessing ? 'Processing...' : editingId ? 'Update Open Hours' : 'Add Open Hours'}
                 </button>
              </form>
            </section>
@@ -347,19 +410,24 @@ const AdminCourseSchedule: React.FC = () => {
               <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-6 relative z-10">Active Open Hours</h3>
               <div className="space-y-3 relative z-10 max-h-[400px] overflow-y-auto no-scrollbar">
                 {schedules.map((s) => (
-                  <div key={s.id} className="bg-slate-800/50 border border-slate-700/50 p-4 rounded-2xl flex items-center justify-between group/item hover:border-indigo-500/50 transition-all">
-                    <div>
+                  <div key={s.id} className={`bg-slate-800/50 border p-4 rounded-2xl flex items-center justify-between group/item transition-all ${editingId === s.id ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-slate-700/50 hover:border-indigo-500/50'}`}>
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <span className="text-[10px] font-mono font-black text-white">{s.start_time.slice(0,5)}—{s.end_time.slice(0,5)}</span>
                         {s.biweekly && <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 text-[8px] font-black uppercase rounded">2w</span>}
                       </div>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[150px]">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">
                         {s.date ? s.date : s.days_of_week?.map(d => WEEKDAYS[d]).join(', ')}
                       </p>
                     </div>
-                    <button onClick={() => handleDelete(s.id)} className="p-2 text-slate-600 hover:text-red-400 transition-all opacity-0 group-hover/item:opacity-100">
-                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                    <div className="flex items-center space-x-1 shrink-0 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                      <button onClick={() => handleEdit(s)} className="p-2 text-slate-400 hover:text-indigo-400 transition-all">
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                      </button>
+                      <button onClick={() => handleDelete(s.id)} className="p-2 text-slate-400 hover:text-red-400 transition-all">
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {schedules.length === 0 && <p className="text-[10px] text-slate-500 font-bold italic text-center py-6">No hours defined.</p>}
@@ -368,7 +436,7 @@ const AdminCourseSchedule: React.FC = () => {
         </div>
 
         {/* Right: Visualization Calendar */}
-        <div className="lg:col-span-8 bg-white border border-slate-200 rounded-[2.5rem] shadow-sm overflow-hidden flex flex-col">
+        <div className="lg:col-span-8 bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden flex flex-col">
            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">
@@ -407,6 +475,7 @@ const AdminCourseSchedule: React.FC = () => {
                        const isToday = dateStr === new Date().toLocaleDateString('en-CA');
                        const isSelected = selectedDates.includes(dateStr);
                        const isPreviewed = isDateInDragRange(dateStr);
+                       const isInspecting = selectedTimelineDate === dateStr;
 
                        return (
                          <div 
@@ -414,18 +483,26 @@ const AdminCourseSchedule: React.FC = () => {
                            onMouseDown={(e) => handleMouseDown(dateStr, e)}
                            onMouseEnter={() => handleMouseEnter(dateStr)}
                            className={`relative p-3 rounded-[1.75rem] border transition-all cursor-pointer ${
+                             isInspecting ? 'ring-2 ring-indigo-500 ring-offset-2' : ''
+                           } ${
                              isSelected || isPreviewed 
                                ? 'border-indigo-500 bg-indigo-50 shadow-inner scale-[0.98]' 
                                : isToday ? 'bg-slate-50 border-indigo-200' : 'bg-white border-slate-100 hover:border-slate-300'
                            }`}
                          >
-                           <span className={`text-xs font-black ${isToday ? 'text-indigo-600' : (isSelected || isPreviewed) ? 'text-indigo-700' : 'text-slate-400'}`}>{dateObj.getDate()}</span>
-                           <div className="mt-2 space-y-1 overflow-y-auto no-scrollbar max-h-[4.5rem]">
-                             {daySchedules.map((s, idx) => (
+                           <div className="flex items-center justify-between mb-2">
+                             <span className={`text-xs font-black ${isToday ? 'text-indigo-600' : (isSelected || isPreviewed) ? 'text-indigo-700' : 'text-slate-400'}`}>{dateObj.getDate()}</span>
+                             {daySchedules.length > 0 && <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: course?.color }} />}
+                           </div>
+                           <div className="space-y-1 overflow-y-auto no-scrollbar max-h-[4.5rem]">
+                             {daySchedules.slice(0, 3).map((s, idx) => (
                                <div key={idx} className="px-2 py-1 rounded-lg text-[8px] font-black text-white shadow-sm flex flex-col" style={{ backgroundColor: course?.color || '#6366f1' }}>
-                                 <span className="leading-tight opacity-80 uppercase tracking-tighter">{s.start_time.slice(0,5)} — {s.end_time.slice(0,5)}</span>
+                                 <span className="leading-tight opacity-80 uppercase tracking-tighter truncate">{s.start_time.slice(0,5)}</span>
                                </div>
                              ))}
+                             {daySchedules.length > 3 && (
+                               <div className="text-[7px] font-black text-slate-400 uppercase text-center">+{daySchedules.length - 3} more</div>
+                             )}
                              {(isSelected || isPreviewed) && (
                                <div className="px-2 py-1 rounded-lg text-[8px] font-black text-indigo-500 border border-indigo-300 border-dashed flex flex-col items-center justify-center min-h-[1.5rem]">
                                  <span>{formData.start_time}-{formData.end_time}</span>
@@ -441,6 +518,84 @@ const AdminCourseSchedule: React.FC = () => {
            </div>
         </div>
       </div>
+
+      {/* Daily Timeline Sidebar */}
+      {selectedTimelineDate && (
+        <div className="fixed right-0 top-0 bottom-0 w-80 bg-slate-900 text-white shadow-2xl z-50 transform transition-transform animate-in slide-in-from-right duration-500 flex flex-col border-l border-slate-800">
+           <div className="p-8 border-b border-slate-800 shrink-0">
+              <div className="flex items-center justify-between mb-4">
+                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Daily Timeline</span>
+                 <button onClick={() => setSelectedTimelineDate(null)} className="p-2 hover:bg-slate-800 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                 </button>
+              </div>
+              <h4 className="text-2xl font-black tracking-tight">{selectedTimelineDate}</h4>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Open Hours for {course?.name}</p>
+           </div>
+
+           <div className="flex-1 overflow-y-auto no-scrollbar bg-[#0f172a] relative p-8">
+              {/* Hour Lines */}
+              <div className="absolute inset-x-8 top-8 bottom-8 flex flex-col justify-between">
+                {Array.from({ length: 15 }, (_, i) => 8 + i).map(hour => (
+                  <div key={hour} className="relative h-0">
+                    <div className="absolute -top-3 -left-12 text-[10px] font-mono font-black text-slate-600">
+                      {hour.toString().padStart(2, '0')}:00
+                    </div>
+                    <div className="w-full border-t border-slate-800" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Projection Blocks */}
+              <div className="relative h-full mx-auto w-full">
+                 {timelineProjections.map((s, idx) => {
+                   const top = timeToPercent(s.start_time);
+                   const bottom = timeToPercent(s.end_time);
+                   const height = bottom - top;
+                   
+                   return (
+                     <div 
+                       key={idx} 
+                       className="absolute left-2 right-2 rounded-xl border-l-4 shadow-2xl transition-all group"
+                       style={{ 
+                         top: `${top}%`, 
+                         height: `${height}%`,
+                         backgroundColor: `${course?.color}20`, // 20% opacity
+                         borderLeftColor: course?.color,
+                         borderTopColor: `${course?.color}40`,
+                         borderRightColor: `${course?.color}40`,
+                         borderBottomColor: `${course?.color}40`,
+                         borderWidth: '1px',
+                         borderLeftWidth: '4px'
+                       }}
+                     >
+                       <div className="p-3">
+                         <span className="block text-[8px] font-black uppercase tracking-widest text-white/50 mb-1">{course?.name}</span>
+                         <span className="block text-xs font-mono font-black text-white">{s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}</span>
+                       </div>
+                     </div>
+                   );
+                 })}
+
+                 {timelineProjections.length === 0 && (
+                   <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">No Hours Scheduled</p>
+                   </div>
+                 )}
+              </div>
+           </div>
+
+           <div className="p-8 border-t border-slate-800 bg-slate-900 shrink-0">
+             <div className="flex items-center space-x-3">
+               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: course?.color }} />
+               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{timelineProjections.length} active slots</span>
+             </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
