@@ -228,6 +228,17 @@ const ParentDashboard: React.FC = () => {
     };
   }, [processedAllBookings]);
 
+  // Attendance stats for selected date
+  const attendanceDayStats = useMemo(() => {
+    const dayBookings = childrenData.flatMap(child => child.bookings.filter(b => b.date === selectedDate));
+    const studentIds = new Set(dayBookings.map(b => b.student_id));
+    const arrivedCount = dayBookings.filter(b => b.check_in && !b.check_out).length;
+    return {
+      totalBooked: studentIds.size,
+      currentlyHere: arrivedCount
+    };
+  }, [childrenData, selectedDate]);
+
   const getDayStatusOverall = (dateStr: string): BookingStatus | null => {
     const dayBookings = childrenData.flatMap(child => child.bookings.filter(b => b.date === dateStr));
     if (dayBookings.length === 0) return null;
@@ -238,6 +249,21 @@ const ParentDashboard: React.FC = () => {
     if (pastStatuses.some(s => s === 'red') && pastStatuses.some(s => s === 'green')) return 'yellow';
     if (pastStatuses.some(s => s === 'red')) return 'red';
     return 'green';
+  };
+
+  const getStudentDetailedStatusesForDay = (dateStr: string) => {
+    const dayBookings = childrenData.flatMap(child => child.bookings.filter(b => b.date === dateStr));
+    const studentMap = new Map<string, { name: string; status: BookingStatus }>();
+    dayBookings.forEach(b => {
+      const student = childrenData.find(c => c.student.id === b.student_id)?.student;
+      if (!student) return;
+      const current = studentMap.get(student.id);
+      const status = getBookingStatus(b);
+      if (!current || (status === 'red' && current.status !== 'red')) {
+        studentMap.set(student.id, { name: student.name, status });
+      }
+    });
+    return Array.from(studentMap.values());
   };
 
   const calendarWeeks = useMemo(() => {
@@ -329,88 +355,114 @@ const ParentDashboard: React.FC = () => {
         <button onClick={() => setActiveTab('bookings')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'bookings' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-indigo-600'}`}>{t('nav.bookings')}</button>
       </div>
 
-      <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-w-none' : 'max-w-3xl mx-auto'}`}>
-        <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
-          <div className="flex items-center space-x-1">
-            <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg></button>
-            <div className="px-2"><span className="text-sm font-black text-slate-800 uppercase tracking-tighter block w-20 text-center">{monthName}</span></div>
-            <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg></button>
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 w-full ${isCalendarMaximized ? 'lg:w-full' : 'lg:max-w-xl'}`}>
+          <div className="px-5 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between bg-white gap-y-3">
+            <div className="flex items-center space-x-1">
+              <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <div className="px-2">
+                <span className="text-sm font-black text-slate-800 uppercase tracking-tighter text-center block w-20">{monthName}</span>
+              </div>
+              <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => setIsCalendarMaximized(!isCalendarMaximized)}
+                className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+              </button>
+              <button 
+                onClick={() => { setSelectedDate(hktToday); setSelectedDates([]); setViewDate(new Date()); }}
+                className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+              >
+                {t('parent.go_today')}
+              </button>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={() => setIsCalendarMaximized(!isCalendarMaximized)}
-              className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
-            </button>
-            <button onClick={() => { setSelectedDate(hktToday); setSelectedDates([]); setViewDate(new Date()); }} className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase border border-slate-200">{t('parent.go_today')}</button>
+
+          <div className="px-6 py-5 bg-white select-none">
+            <div className="mx-auto">
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {WEEKDAYS.map(day => (
+                  <div key={day} className="text-center text-[8px] font-black text-slate-300 uppercase tracking-widest">{day}</div>
+                ))}
+              </div>
+              <div className="space-y-1">
+                {calendarWeeks.map((week, wIdx) => (
+                  <div key={wIdx} className="grid grid-cols-7 gap-1 items-stretch">
+                    {week.map((dateObj, dIdx) => {
+                      if (!dateObj) return <div key={`empty-${dIdx}`} />;
+                      const dateStr = dateObj.toLocaleDateString('en-CA');
+                      const isSelected = activeTab === 'attendance' ? selectedDate === dateStr : selectedDates.includes(dateStr);
+                      const isPreviewed = isDateInDragRange(dateStr);
+                      const isTodayLocal = dateStr === hktToday;
+                      const dayStatus = getDayStatusOverall(dateStr);
+                      const studentStatuses = getStudentDetailedStatusesForDay(dateStr);
+
+                      return (
+                        <button
+                          key={dateStr}
+                          onMouseDown={(e) => handleMouseDown(dateStr, e)}
+                          onMouseEnter={() => handleMouseEnter(dateStr)}
+                          className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${
+                            isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'
+                          } ${
+                            isSelected || isPreviewed 
+                            ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg' 
+                            : isTodayLocal ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                            : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200 hover:text-indigo-600'
+                          }`}
+                        >
+                          <span className={`text-[11px] ${isCalendarMaximized ? 'mb-1 self-start ml-0.5' : ''}`}>{dateObj.getDate()}</span>
+                          {isCalendarMaximized ? (
+                            <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
+                              {studentStatuses.map((s, i) => (
+                                <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
+                                  <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
+                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-500'}`}>
+                                    {s.name}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            dayStatus && <div className={`w-1 h-1 rounded-full mt-0.5 ${statusColors[dayStatus]}`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="px-6 py-5 bg-white select-none">
-          <div className="mx-auto">
-            <div className="grid grid-cols-[24px_repeat(7,1fr)] gap-1 mb-2">
-              <div />{WEEKDAYS.map(day => (<div key={day} className="text-center text-[8px] font-black text-slate-300 uppercase tracking-widest">{day}</div>))}
+        {activeTab === 'attendance' && (
+          <div className="flex items-center space-x-4 bg-white border border-slate-200 rounded-[2rem] px-6 py-4 shadow-sm self-start">
+            <div className="flex flex-col">
+              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{t('attendance.booked')}</span>
+              <span className="text-xl font-black text-slate-900 leading-none">{attendanceDayStats.totalBooked}</span>
             </div>
-            <div className="space-y-1">
-              {calendarWeeks.map((week, wIdx) => (
-                <div key={wIdx} className="grid grid-cols-[24px_repeat(7,1fr)] gap-1 items-stretch">
-                  <div className="h-7 w-5" />
-                  {week.map((dateObj, dIdx) => {
-                    if (!dateObj) return <div key={`empty-${dIdx}`} />;
-                    const dateStr = dateObj.toLocaleDateString('en-CA');
-                    const isSelected = activeTab === 'attendance' ? selectedDate === dateStr : selectedDates.includes(dateStr);
-                    const isPreviewed = isDateInDragRange(dateStr);
-                    const dayStatus = getDayStatusOverall(dateStr);
-                    return (
-                      <button 
-                        key={dateStr} 
-                        onMouseDown={(e) => handleMouseDown(dateStr, e)}
-                        onMouseEnter={() => handleMouseEnter(dateStr)}
-                        className={`flex flex-col items-center justify-start p-1.5 rounded-lg border font-black transition-all ${isSelected || isPreviewed ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg' : dateStr === hktToday ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-100 text-slate-500'}`}
-                      >
-                        <span className="text-[11px]">{dateObj.getDate()}</span>
-                        {dayStatus && <div className={`w-1 h-1 rounded-full mt-0.5 ${statusColors[dayStatus]}`} />}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        
-        {activeTab === 'bookings' && (
-          <div className="px-6 py-4 bg-slate-50/40 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_student')}</label>
-              <select value={filterStudent} onChange={e => setFilterStudent(e.target.value)} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-xs font-bold text-slate-700 appearance-none cursor-pointer">
-                <option value="">{t('bookings.all_students')}</option>
-                {childrenData.map(c => <option key={c.student.id} value={c.student.id}>{c.student.name}</option>)}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_course')}</label>
-              <select value={filterCourse} onChange={e => setFilterCourse(e.target.value)} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-xs font-bold text-slate-700 appearance-none cursor-pointer">
-                <option value="">{t('bookings.all_courses')}</option>
-                {uniqueCourses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_status')}</label>
-              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none text-xs font-bold text-slate-700 appearance-none cursor-pointer">
-                <option value="">{t('bookings.all_statuses')}</option>
-                <option value="red">{t('status.missed')}</option>
-                <option value="green">{t('status.attended')}</option>
-                <option value="blue">{t('status.future')}</option>
-              </select>
+            <div className="w-px h-6 bg-slate-100" />
+            <div className="flex flex-col">
+              <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">{t('attendance.here')}</span>
+              <div className="flex items-center space-x-2">
+                <span className="text-xl font-black text-emerald-600 leading-none">{attendanceDayStats.currentlyHere}</span>
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shrink-0" />
+              </div>
             </div>
           </div>
         )}
       </div>
 
       {activeTab === 'attendance' ? (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 lg:gap-12 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8 lg:gap-12 animate-in fade-in duration-500">
           {childrenData.map((item) => (
             <ChildCard 
               key={item.student.id} 
@@ -427,6 +479,11 @@ const ParentDashboard: React.FC = () => {
               }}
             />
           ))}
+          {childrenData.length === 0 && !isLoadingMain && (
+             <div className="col-span-full py-20 text-center bg-white border border-slate-200 rounded-[3rem]">
+               <p className="text-slate-400 font-bold italic">{t('attendance.no_students')}</p>
+             </div>
+          )}
         </div>
       ) : (
         <div className="space-y-8 animate-in fade-in duration-500">
