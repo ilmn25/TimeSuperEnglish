@@ -4,8 +4,6 @@ import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-ro
 import { supabase } from './services/supabaseClient';
 import { api } from './services/api';
 import AttendancePage from './pages/AttendancePage';
-import AttendanceExportPage from './pages/AttendanceExportPage';
-import AttendanceImportPage from './pages/AttendanceImportPage';
 import CoursesPage from './pages/CoursesPage';
 import StudentsPage from './pages/StudentsPage';
 import BookingsPage from './pages/BookingsPage';
@@ -140,6 +138,7 @@ const UserProfile: React.FC<{ email: string; onLogout: () => void }> = ({ email,
             <span>{t('nav.subscriptions')}</span>
           </Link>
 
+          {/* Fixed the missing handleLogout reference by correctly using the onLogout prop */}
           <button 
             onClick={onLogout}
             className="w-full flex items-center space-x-3 px-6 py-4 text-red-500 hover:bg-red-50 transition-colors text-sm font-black uppercase tracking-widest"
@@ -177,8 +176,6 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   const getPageTitle = () => {
     if (isDashboardView) return t('parent.dashboard');
     if (location.pathname === '/subscriptions') return t('nav.subscriptions');
-    if (location.pathname.includes('/attendance/export')) return t('attendance_export_page.title');
-    if (location.pathname.includes('/attendance/import')) return t('attendance_import_page.title');
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
     if (location.pathname.includes('/export')) return t('nav.export');
@@ -230,7 +227,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                   className="flex items-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 bg-slate-900 text-white rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 active:scale-95"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2-2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                   <span className="hidden xs:inline">{t('nav.organizations')}</span>
                 </Link>
@@ -245,7 +242,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
           </div>
           
           {/* Main Control Bar (Only for specific Org) */}
-          {orgId && !location.pathname.includes('/attendance/export') && (
+          {orgId && (
             <div className="pb-3 sm:pb-6 lg:pb-8 overflow-hidden relative">
               <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1 sm:pb-2 mask-linear-right touch-pan-x">
                 <nav className="flex items-center space-x-1 sm:space-x-2 bg-slate-50/50 p-1 sm:p-1.5 rounded-2xl sm:rounded-[2rem] border-2 border-slate-100 min-w-max">
@@ -276,7 +273,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
       </main>
       
       {isImporting && (
-        <div className="fixed bottom-6 right-6 z-[200] bg-white border-2 border-slate-100 rounded-2xl shadow-2xl p-5 w-full max-w-sm animate-in fade-in slide-in-from-bottom-5 duration-300">
+        <div className="fixed bottom-6 right-6 z-[200] bg-white border-2 border-slate-100 rounded-2xl shadow-2xl p-5 w-full max-sm animate-in fade-in slide-in-from-bottom-5 duration-300">
             <div className="flex items-start space-x-4">
                 <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin shrink-0 mt-1" />
                 <div>
@@ -399,8 +396,6 @@ const App: React.FC = () => {
             <Route path="/org/:orgId">
               <Route index element={<Navigate to="attendance" replace />} />
               <Route path="attendance" element={<AttendancePage />} />
-              <Route path="attendance/export" element={<AttendanceExportPage />} />
-              <Route path="attendance/import" element={<AttendanceImportPage />} />
               <Route path="bookings" element={<BookingsPage />} />
               <Route path="export" element={<ExportPage />} />
               <Route path="courses" element={<CoursesPage />} />

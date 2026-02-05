@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { Student, Booking, Course } from '../types';
@@ -94,9 +95,11 @@ const ParentDashboard: React.FC = () => {
     if (booking.check_in) return 'green';
     const hktNow = getHKTNow();
     const bookingDate = new Date(booking.date);
-    const [bStartH, bStartM] = booking.start.split(':').map(Number);
+    const [bStartH, bStartH_val, bStartM] = booking.start.split(':').map(Number);
+    // Note: split can result in different counts depending on format, using map directly
+    const [startH, startM] = booking.start.split(':').map(Number);
     const startDateTime = new Date(bookingDate);
-    startDateTime.setHours(bStartH, bStartM, 0, 0);
+    startDateTime.setHours(startH, startM, 0, 0);
     if (startDateTime > hktNow) return 'blue';
     return 'red';
   }, []);
@@ -327,7 +330,8 @@ const ParentDashboard: React.FC = () => {
         </div>
       )}
 
-      {selectedTimelineInfo && <TimelinePanel studentName={selectedTimelineInfo.studentName} bookings={timelineData.bookings} attendances={[]} date={selectedTimelineInfo.date} isExpanded={isTimelineExpanded} onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)} />}
+      {/* Fixed the TimelinePanel usage by removing the non-existent attendances prop to resolve TypeScript error */}
+      {selectedTimelineInfo && <TimelinePanel studentName={selectedTimelineInfo.studentName} bookings={timelineData.bookings} date={selectedTimelineInfo.date} isExpanded={isTimelineExpanded} onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)} />}
       {manualModalConfig && (
         <ManualAttendanceModal 
           isOpen={true} 

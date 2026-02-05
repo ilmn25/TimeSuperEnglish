@@ -1,4 +1,3 @@
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -83,36 +82,7 @@ const resources = {
         column_duration: "Duration (Mins)",
         column_course: "Course",
         column_status: "Status",
-        column_attendance: "Attendance History",
         empty_state: "No data available to export. Please return to Bookings and filter your results."
-      },
-      attendance_export_page: {
-        title: "Export Attendance",
-        subtitle: "Select a date range to download attendance records as a CSV file.",
-        start_date: "Start Date",
-        end_date: "End Date",
-        download_btn: "Export to CSV",
-        presets: {
-          title: "Presets",
-          today: "Today",
-          yesterday: "Yesterday",
-          this_week: "This Week",
-          last_week: "Last Week",
-          this_month: "This Month",
-          last_month: "Last Month",
-          this_year: "This Year",
-          last_year: "Last Year",
-          all: "All Time"
-        },
-        custom_range: "Custom Range"
-      },
-      attendance_import_page: {
-        title: "Import Attendance",
-        subtitle: "Batch upload attendance records from CSV files",
-        step1_headers: "Required Headers:",
-        records_count: "{{count}} Records",
-        complete_subtitle: "{{count}} records successfully synchronized.",
-        view_attendances: "View Attendances"
       }
     }
   },
@@ -195,36 +165,7 @@ const resources = {
         column_duration: "时长 (分钟)",
         column_course: "课程",
         column_status: "状态",
-        column_attendance: "考勤历史",
         empty_state: "无可用导出数据。请返回预约页面并过滤结果。"
-      },
-      attendance_export_page: {
-        title: "导出考勤记录",
-        subtitle: "选择日期范围以下载考勤记录为 CSV 文件。",
-        start_date: "开始日期",
-        end_date: "结束日期",
-        download_btn: "导出 CSV",
-        presets: {
-          title: "预设",
-          today: "今天",
-          yesterday: "昨天",
-          this_week: "本周",
-          last_week: "上周",
-          this_month: "本月",
-          last_month: "上月",
-          this_year: "今年",
-          last_year: "去年",
-          all: "全部时间"
-        },
-        custom_range: "自定义范围"
-      },
-      attendance_import_page: {
-        title: "导入考勤",
-        subtitle: "从 CSV 文件批量上传考勤记录",
-        step1_headers: "所需表头:",
-        records_count: "{{count}} 条记录",
-        complete_subtitle: "成功同步 {{count}} 条记录。",
-        view_attendances: "查看考勤"
       }
     }
   },
@@ -239,7 +180,7 @@ const resources = {
       attendance: { summary: "考勤摘要", booked: "已預約", arrived: "已到達", here: "在校", today: "今天", error: "錯誤", retry: "重試", no_students: "此日期無學生預約。", remove_title: "移除記錄？", remove_msg: "永久移除此考勤記錄？" },
       bookings: { title: "預約", subtitle: "月度日程概覽", new_entry: "新條目", select_month: "選擇月份", reset: "重置", filter_student: "學生篩選", filter_course: "課程篩選", filter_status: "狀態篩選", all_students: "所有學生", all_courses: "所有課程", all_statuses: "所有狀態", date: "日期", time: "時間", student: "學生", course: "課程", status: "狀態", actions: "動作", syncing: "同步中", no_match: "沒有符合條件的條目。", edit: "編輯預約", new: "新預約", start: "開始", end: "結束", delete_title: "刪除條目？", delete_msg: "此記錄將從資料庫中永久刪除。", summary_title: "過濾摘要", total_time: "總時長", total_entries: "預約總數", export: "匯出" },
       status: { missed: "缺席", partial: "部分", attended: "出席", future: "未來" },
-      courses: { title: "課程", subtitle: "課程和科目管理", add: "新增課程", no_courses: "未找到課程", start_building: "新增您的第一門課程以建構課程體系。", add_now: "立即新增課程", edit_title: "編輯課程", create_title: "建立課程", workspace_details: "工作區詳情", subject_name: "科目名稱", label_color: "標籤顏色", hex_code: "十六進位代碼", delete_title: "刪除課程？", delete_msg: "確定嗎？這將刪除該課程，並可能影響歷史預約資料的視覺化。" },
+      courses: { title: "課程", subtitle: "課程和科目管理", 新增課程: "新增課程", no_courses: "未找到課程", start_building: "新增您的第一門課程以建構課程體系。", add_now: "立即新增課程", edit_title: "編輯課程", create_title: "建立課程", workspace_details: "工作區詳情", subject_name: "科目名稱", label_color: "標籤顏色", hex_code: "十六進位代碼", delete_title: "刪除課程？", delete_msg: "確定嗎？這將刪除該課程，並可能影響歷史預約資料的視覺化。" },
       students: { title: "學生名錄", subtitle: "管理學生檔案和儀表板存取", register: "註冊學生", search: "按姓名、年級或聯絡方式搜尋...", sort_name: "姓名", sort_level: "年級", no_contact: "無聯絡資訊", access: "存取權限", no_match: "未找到相符的學生", adjust_query: "嘗試調整搜尋詞或註冊新學生。", clear_filters: "清除篩選", edit_profile: "編輯檔案", registration: "註冊", student_data: "學生資料", full_name: "全名", grade_level: "年級", select: "選擇", contact: "聯絡方式", register_now: "立即註冊", dashboard_access: "儀表板存取", manage_links: "管理連結對象", authorized_parents: "授權家長帳戶", no_accounts: "暫無關聯帳戶", invite: "邀請家長存取儀表板", link: "連結", unlink_title: "取消連結家長？", unlink_msg: "移除儀表板存取權限對象", unlink: "取消連結", delete_title: "刪除檔案？", delete_msg: "永久刪除此學生？這將清除所有考勤歷史和關聯的家長帳戶。" },
       backup: { title: "歷史記錄", subtitle: "管理資料庫快照和時間點還原", snapshots: "快照", quota_full: "配額已滿", upload: "上傳", snapshot: "快照", export: "匯出", restore: "還原", active: "最接近版本", latest: "最新快照", user_upload: "用戶上傳", empty: "無歷史記錄", no_snapshots: "此工作區未找到快照。", take_first: "建立第一個快照", restore_point: "還原點", delete_snapshot: "刪除快照", restore_msg: "將資料庫還原到 {{date}} 的狀態？這將覆蓋目前所有進度。", delete_msg: "永久刪除快照 {{id}}？", success_create: "備份建立成功！", success_upload: "備份上傳成功！", success_delete: "備份刪除成功", success_restore: "資料庫還原成功！", error_quota: "配額已達上限。請先刪除舊備份。" },
       parent: { dashboard: "儀表板", subtitle: "學生活動和狀態", go_today: "回到今天", edit_profile: "編輯學生檔案", updating: "正在更新檔案對象", unset: "未設定", in_class: "上課中", away: "不在校", no_bookings: "預約", no_activity: "無活動", session: "工作階段", live: "即時", now: "現在" },
@@ -307,260 +248,7 @@ const resources = {
         column_duration: "時長 (分鐘)",
         column_course: "課程",
         column_status: "狀態",
-        column_attendance: "考勤歷史",
         empty_state: "無可用匯出資料。請返回預約頁面並過濾結果。"
-      },
-      attendance_export_page: {
-        title: "匯出考勤記錄",
-        subtitle: "選擇日期範圍以下載考勤記錄為 CSV 檔案。",
-        start_date: "開始日期",
-        end_date: "結束日期",
-        download_btn: "匯出 CSV",
-        presets: {
-          title: "預設",
-          today: "今天",
-          yesterday: "昨天",
-          this_week: "本週",
-          last_week: "上週",
-          this_month: "本月",
-          last_month: "上月",
-          this_year: "今年",
-          last_year: "去年",
-          all: "全部時間"
-        },
-        custom_range: "自訂範圍"
-      },
-      attendance_import_page: {
-        title: "匯入考勤",
-        subtitle: "從 CSV 檔案批量上傳考勤記錄",
-        step1_headers: "所需表頭:",
-        records_count: "{{count}} 筆記錄",
-        complete_subtitle: "成功同步 {{count}} 筆記錄。",
-        view_attendances: "查看考勤"
-      }
-    }
-  },
-  "ja": {
-    translation: {
-      app: { name: "カウンター", dashboard: "カウンターダッシュボード" },
-      nav: { attendance: "出席", bookings: "予約", courses: "コース", students: "学生", backup: "バックアップ", organizations: "組織", back: "ダッシュボードに戻る", import: "インポート", export: "エクスポート", subscriptions: "サブスク" },
-      user: { signed_in: "ログイン中", logout: "ログアウト" },
-      auth: { signin: "ログイン", register: "登録", email: "メールアドレス", password: "Password", create_account: "アカウント作成", continue: "または次で続行", google: "Googleアカウント", access: "ダッシュボードアクセス", check_email: "確認リンクをメールで確認してください！" },
-      org: { select: "組織を選択", subtitle: "管理するワークスペースを選択", new: "新規組織", no_orgs: "組織が見つかりません", start_create: "最初のワークスペースを作成して始めましょう", create_new: "新規組織を作成", edit: "組織を編集", details: "ワークスペースの詳細を管理", name: "组织名", owner: "所有者", member: "メンバー", delete_title: "ワークスペースを削除？", delete_msg: "この操作は元に戻すことができず、ワークスペースを完全に削除します。確認のために組織名を入力してください。" },
-      common: { cancel: "キャンセル", confirm: "確認", save: "保存", create: "作成", delete: "削除", edit: "編集", remove: "削除", save_changes: "変更を保存", loading: "読み込み中", processing: "処理中", or: "または", download: "ダウンロード", copy: "コピー" },
-      attendance: { summary: "出席概要", booked: "予約済み", arrived: "到着", here: "出席中", today: "今日", error: "エラー", retry: "再試行", no_students: "この日の予約はありません。", remove_title: "記録を削除？", remove_msg: "この出席記録を完全に削除しますか？" },
-      bookings: { title: "予約", subtitle: "月間スケジュールの概要", new_entry: "新規エントリ", select_month: "月を選択", reset: "リセット", filter_student: "学生フィルター", filter_course: "コースフィルター", filter_status: "ステータスフィルター", all_students: "すべての学生", all_courses: "すべてのコース", all_statuses: "すべてのステータス", date: "日付", time: "時間", student: "学生", course: "コース", status: "ステータス", actions: "操作", syncing: "同期中", no_match: "条件に一致するエントリはありません。", edit: "予約を編集", new: "新規予約", start: "開始", end: "終了", delete_title: "エントリを削除？", delete_msg: "この記録はデータベースから完全に削除されます。", summary_title: "フィルター済み概要", total_time: "合計時間", total_entries: "予約総数", export: "エクスポート" },
-      status: { missed: "欠席", partial: "部分的", attended: "出席", future: "予定" },
-      courses: { title: "コース", subtitle: "カリキュラムと科目の管理", add: "コースを追加", no_courses: "コースが見つかりません", start_building: "最初のコースを追加してカリキュラムを作成しましょう。", add_now: "今すぐコースを追加", edit_title: "コースを編集", create_title: "コースを作成", workspace_details: "ワークスペースの詳細", subject_name: "科目名", label_color: "ラベルの色", hex_code: "16進コード", delete_title: "コースを削除？", delete_msg: "よろしいですか？これによりコースが削除され、過去の予約データの表示に影響する可能性があります。" },
-      students: { title: "学生名簿", subtitle: "学生プロフィールとダッシュボードアクセスの管理", register: "学生を登録", search: "名前、学年、連絡先で検索...", sort_name: "名前", sort_level: "学年", no_contact: "連絡先なし", access: "アクセス", no_match: "一致する学生がいません", adjust_query: "検索語を変更するか、新しい学生を登録してください。", clear_filters: "フィルターをクリア", edit_profile: "プロフィールを編集", registration: "登録", student_data: "学生数据", full_name: "氏名", grade_level: "学年", select: "選択", contact: "連絡先", register_now: "今すぐ登録", dashboard_access: "ダッシュボードアクセス", manage_links: "リンク管理: ", authorized_parents: "承認された保護者アカウント", no_accounts: "リンクされたアカウントはありません", invite: "保護者を招待", link: "リンク", unlink_title: "保護者のリンクを解除？", unlink_msg: "ダッシュボードへのアクセス権を削除: ", unlink: "リンク解除", delete_title: "プロフィールを削除？", delete_msg: "この学生を完全に削除しますか？すべての出席履歴とリンクされた保護者アカウントが消去されます。" },
-      backup: { title: "履歴", subtitle: "データベースのスナップショットと復元の管理", snapshots: "スナップショット", quota_full: "クォータがいっぱいです", upload: "アップロード", snapshot: "スナップショット", export: "エクスポート", restore: "復元", active: "最も近いバージョン", latest: "最新のスナップショット", user_upload: "ユーザーアップロード", empty: "履歴なし", no_snapshots: "このワークスペースのスナップショットは見つかりませんでした。", take_first: "最初のスナップショットを作成", restore_point: "復元ポイント", delete_snapshot: "スナップショットを削除", restore_msg: "{{date}} の状態にデータベースを復元しますか？これにより現在のすべての進行状況が上書きされます。", delete_msg: "スナップショット {{id}} を完全に削除しますか？", success_create: "バックアップを作成しました！", success_upload: "バックアップをアップロードしました！", success_delete: "バックアップを削除しました", success_restore: "データベースを復元しました！", error_quota: "クォータに達しました。古いバックアップを削除してください。" },
-      parent: { dashboard: "ダッシュボード", subtitle: "学生のアクティビティとステータス", go_today: "今日へ移動", edit_profile: "学生プロフィールを編集", updating: "プロフィール更新中: ", unset: "未設定", in_class: "授業中", away: "不在", no_bookings: "予約なし", no_activity: "アクティビティなし", session: "セッション", live: "ライブ", now: "現在" },
-      card: { todays_schedule: "今日のスケジュール", no_bookings: "この日の予約はありません。", log: "出席ログ", manual: "手動入力", no_activity: "アクティビティはまだありません", check_in: "チェックイン", check_out: "チェックアウト" },
-      manual: { title: "手動出席", subtitle: "カスタム時間を入力: ", start: "開始時間", end: "結束時間" },
-      subscriptions: {
-        title: "サブスクリプション",
-        subtitle: "プロフェッショナル管理ツールを解放",
-        monthly_title: "月額プラン",
-        monthly_price: "HK$79/月",
-        monthly_desc: "学校管理者向けのフルアクセス",
-        lifetime_title: "ライフタイム",
-        lifetime_price: "HK$799 一括",
-        lifetime_desc: "一度の支払いで永久アクセス",
-        subscribe: "今すぐ購読",
-        portal: "お支払い管理",
-        current_plan: "現在のプラン",
-        expires: "更新/期限:",
-        status: "ステータス:"
-      },
-      import_page: {
-        subtitle: "CSVファイルから予約を一括アップロード",
-        step1_title: "CSVをアップロード",
-        step1_headers: "必要なヘッダー:",
-        example_title: "CSV内容の例",
-        select_file: "CSVファイルを選択",
-        map_students: "学生をマッピング",
-        map_courses: "コースをマッピング",
-        create_student: "新規学生を作成",
-        create_course: "新規コースを作成",
-        back_to_upload: "アップロードに戻る",
-        resolve_review: "解析して確認",
-        review_title: "インポート内容の確認",
-        review_subtitle: "最終インポート前にエントリを確認してください。",
-        bookings_count: "{{count}} 件の予約",
-        back_to_mapping: "マッピングに戻る",
-        confirm_import: "確認してすべてインポート",
-        complete_title: "インポート完了！",
-        complete_subtitle: "{{count}} 件の予約が正常に同期されました。",
-        view_bookings: "予約を表示",
-        error_file: "CSVファイルにはヘッダー行と少なくとも1つのデータ行が必要です。",
-        error_no_data: "CSV内に有効なデータ行が見つかりませんでした。",
-        in_progress_title: "インポート中",
-        warning_refresh: "処理が完了するまで、このページを更新したり閉じたりしないでください。",
-        duplicate_title: "重複が検出されました",
-        duplicate_subtitle: "{{count}}件の予約が既に存在するようです。どのように処理しますか？",
-        import_all: "すべてインポート",
-        skip_duplicates: "重複をスキップ",
-        cancel_import: "インポートをキャンセル",
-        backup_title: "バックアップを推奨",
-        backup_subtitle: "新しいデータをインポートする前に、偶発的なデータ損失を防ぐために、現在のワークスペースのバックアップを作成することをお勧めします。",
-        continue_anyway: "バックアップせずに続行",
-        go_to_backup: "バックアップページへ移動"
-      },
-      export_page: {
-        title: "予約をエクスポート",
-        subtitle: "フィルタリングされた結果を設定して CSV ファイルとしてダウンロードします。",
-        columns_title: "列を選択",
-        preview_title: "データプレビュー",
-        download_btn: "CSV をエクスポート",
-        column_student: "学生名",
-        column_date: "日付",
-        column_start: "開始時間",
-        column_end: "終了時間",
-        column_duration: "期間 (分)",
-        column_course: "コース",
-        column_status: "ステータス",
-        column_attendance: "出席履歴",
-        empty_state: "エクスポート可能なデータがありません。予約画面に戻って結果をフィルタリングしてください。"
-      },
-      attendance_export_page: {
-        title: "出席記録のエクスポート",
-        subtitle: "日付範囲を選択して、出席記録をCSVファイルとしてダウンロードします。",
-        start_date: "開始日",
-        end_date: "終了日",
-        download_btn: "CSVをエクスポート",
-        presets: {
-          title: "プリセット",
-          today: "今日",
-          yesterday: "昨日",
-          this_week: "今週",
-          last_week: "先週",
-          this_month: "今月",
-          last_month: "先月",
-          this_year: "今年",
-          last_year: "昨年",
-          all: "全期間"
-        },
-        custom_range: "カスタム範囲"
-      },
-      attendance_import_page: {
-        title: "出席のインポート",
-        subtitle: "CSVファイルから出席記録を一括アップロード",
-        step1_headers: "必要なヘッダー:",
-        records_count: "{{count}} 件の記録",
-        complete_subtitle: "{{count}} 件の記録が正常に同期されました。",
-        view_attendances: "出席を表示"
-      }
-    }
-  },
-  "ko": {
-    translation: {
-      app: { name: "카운터", dashboard: "카운터 대시보드" },
-      nav: { attendance: "출석", bookings: "예약", courses: "코스", students: "학생", backup: "백업", organizations: "기관", back: "대시보드로 돌아가기", import: "가져오기", export: "내보내기", subscriptions: "요금제" },
-      user: { signed_in: "로그인: ", logout: "로그아웃" },
-      auth: { signin: "로그인", register: "등록", email: "이메일 주소", password: "비밀번호", create_account: "계정 생성", continue: "또는 다음으로 계속", google: "Google 계정", access: "대시보드 액세스", check_email: "확인 링크를 이메일에서 확인하세요!" },
-      org: { select: "기관 선택", subtitle: "관리할 워크스페이스 선택", new: "새 기관", no_orgs: "기관을 찾을 수 없습니다", start_create: "첫 번째 워크스페이스를 만들어 시작하세요", create_new: "새 기관 만들기", edit: "기관 편집", details: "워크스페이스 세부 정보 관리", name: "机构名称", owner: "소유자", member: "구성원", delete_title: "워크스페이스 삭제?", delete_msg: "이 작업은 되돌릴 수 없으며 워크스페이스를 영구적으로 삭제합니다. 확인을 위해 기관 이름을 입력하십시오." },
-      common: { cancel: "취소", confirm: "확인", save: "저장", create: "생성", delete: "삭제", edit: "편집", remove: "제거", save_changes: "변경 사항 저장", loading: "로딩 중", processing: "처리 중", or: "또는", download: "다운로드", copy: "복사" },
-      attendance: { summary: "출석 요약", booked: "예약됨", arrived: "도착", here: "출석 중", today: "오늘", error: "오류", retry: "재시도", no_students: "이 날짜에 예약된 학생이 없습니다.", remove_title: "기록 제거?", remove_msg: "이 출석 기록을 영구적으로 제거하시겠습니까?" },
-      bookings: { title: "예약", subtitle: "월간 일정 개요", new_entry: "새 항목", select_month: "월 선택", reset: "초기화", filter_student: "학생 필터", filter_course: "코스 필터", filter_status: "상태 필터", all_students: "모든 학생", all_courses: "모든 코스", all_statuses: "모든 상태", date: "날짜", time: "시간", student: "학생", course: "코스", status: "상태", actions: "작업", syncing: "동기화 중", no_match: "검색 기준과 일치하는 항목이 없습니다。", edit: "예약 편집", new: "새 예약", start: "시작", end: "종료", delete_title: "항목 삭제?", delete_msg: "이 기록은 데이터베이스에서 영구적으로 삭제됩니다。", summary_title: "필터링된 요약", total_time: "총 시간", total_entries: "총 예약 수", export: "내보내기" },
-      status: { missed: "결석", partial: "부분", attended: "출석", future: "예정" },
-      courses: { title: "코스", subtitle: "커리큘럼 및 과목 관리", add: "코스 추가", no_courses: "코스를 찾을 수 없습니다", start_building: "첫 번째 코스를 추가하여 커리큘럼을 구축하세요.", add_now: "지금 코스 추가", edit_title: "코스 편집", create_title: "코스 생성", workspace_details: "워크스페이스 세부 정보", subject_name: "과목 이름", label_color: "라벨 색상", hex_code: "16진수 코드", delete_title: "코스 삭제?", delete_msg: "확실합니까? 이 작업은 코스를 제거하며 과거 예약 데이터 시각화에 영향을 줄 수 있습니다." },
-      students: { title: "학생 명부", subtitle: "학생 프로필 및 대시보드 액세스 관리", register: "학생 등록", search: "이름, 학년 또는 연락처로 검색...", sort_name: "이름", sort_level: "학년", no_contact: "연락처 정보 없음", access: "액세스", no_match: "일치하는 학생 없음", adjust_query: "검색어를 조정하거나 새 학생을 등록하세요。", clear_filters: "필터 지우기", edit_profile: "프로필 편집", registration: "등록", student_data: "학생 데이터", full_name: "전체 이름", grade_level: "학년", select: "선택", contact: "연락처", register_now: "지금 등록", dashboard_access: "대시보드 액세스", manage_links: "링크 관리: ", authorized_parents: "승인된 학부모 계정", no_accounts: "연결된 계정 없음", invite: "학부모 초대", link: "연결", unlink_title: "학부모 연결 해제?", unlink_msg: "대시보드 액세스 권한 제거: ", unlink: "연결 해제", delete_title: "프로필 삭제?", delete_msg: "이 학생을 영구적으로 삭제하시겠습니까? 모든 출석 기록과 연결된 학부모 계정이 지워집니다." },
-      backup: { title: "기록", subtitle: "데이터베이스 스냅샷 및 시점 복구 관리", snapshots: "스냅샷", quota_full: "할당량 가득 참", upload: "업로드", snapshot: "스냅샷", export: "내보내기", restore: "복구", active: "가장 가까운 버전", latest: "최신 스냅샷", user_upload: "사용자 업로드", empty: "기록 없음", no_snapshots: "이 워크스페이스에 대한 스냅샷이 없습니다.", take_first: "첫 번째 스냅샷 생성", restore_point: "복구 지점", delete_snapshot: "스냅샷 삭제", restore_msg: "데이터베이스를 {{date}} 상태로 복구하시겠습니까? 현재 모든 진행 상황을 덮어씁니다.", delete_msg: "스냅샷 {{id}}를 영구적으로 삭제하시겠습니까?", success_create: "백업 생성 성공!", success_upload: "백업 업로드 성공!", success_delete: "백업 삭제 성공", success_restore: "데이터베이스 복구 성공!", error_quota: "할당량에 도달했습니다. 이전 백업을 삭제하세요." },
-      parent: { dashboard: "대시보드", subtitle: "학생 활동 및 상태", go_today: "오늘로 이동", edit_profile: "학생 프로필 편집", updating: "프로필 업데이트 중: ", unset: "미설정", in_class: "수업 중", away: "부재", no_bookings: "예약 없음", no_activity: "활동 없음", session: "세션", live: "라이브", now: "지금" },
-      card: { todays_schedule: "오늘 일정", no_bookings: "오늘 예약이 없습니다.", log: "출석 로그", manual: "수동 입력", no_activity: "아직 활동 없음", check_in: "체크인", check_out: "체크아웃" },
-      manual: { title: "출석 수동 입력", subtitle: "사용자 지정 시간 입력: ", start: "시작 시간", end: "結束時間" },
-      subscriptions: {
-        title: "구독 요금제",
-        subtitle: "전문가용 관리 도구 잠금 해제",
-        monthly_title: "월간 프로",
-        monthly_price: "HK$79/월",
-        monthly_desc: "학교 관리자를 위한 모든 권한",
-        lifetime_title: "평생 소장",
-        lifetime_price: "HK$799 일회성",
-        lifetime_desc: "한 번의 결제로 영구 사용",
-        subscribe: "지금 구독하기",
-        portal: "결제 관리",
-        current_plan: "현재 요금제",
-        expires: "갱신/만료일:",
-        status: "상태:"
-      },
-      import_page: {
-        subtitle: "CSV 파일에서 예약 일괄 업로드",
-        step1_title: "CSV 업로드",
-        step1_headers: "필수 헤더:",
-        example_title: "예시 CSV 내용",
-        select_file: "CSV 파일 선택",
-        map_students: "학생 매핑",
-        map_courses: "코스 매핑",
-        create_student: "새 학생 생성",
-        create_course: "새 코스 생성",
-        back_to_upload: "업로드로 돌아가기",
-        resolve_review: "분석 및 검토",
-        review_title: "가져오기 검토",
-        review_subtitle: "최종 가져오기 전에 항목을 확인하십시오.",
-        bookings_count: "{{count}} 개의 예약",
-        back_to_mapping: "매핑으로 돌아가기",
-        confirm_import: "확인 및 전체 가져오기",
-        complete_title: "가져오기 완료!",
-        complete_subtitle: "{{count}} 개의 예약이 성공적으로 동기화되었습니다.",
-        view_bookings: "예약 보기",
-        error_file: "CSV 파일에는 헤더 행과 최소 하나 이상의 데이터 행이 있어야 합니다.",
-        error_no_data: "CSV에서 유효한 데이터 행을 찾을 수 없습니다。",
-        in_progress_title: "가져오는 중",
-        warning_refresh: "프로세스가 완료될 때까지 이 페이지를 새로 고치거나 닫지 마십시오.",
-        duplicate_title: "중복 항목 감지됨",
-        duplicate_subtitle: "{{count}}개의 예약이 이미 존재하는 것 같습니다. 어떻게 진행하시겠습니까?",
-        import_all: "모두 가져오기",
-        skip_duplicates: "중복 항목 건너뛰기",
-        cancel_import: "가져오기 취소",
-        backup_title: "백업 권장",
-        backup_subtitle: "새 데이터를 가져오기 전에 현재 작업 공간의 백업을 만들어 예기치 않은 데이터 손실을 방지하는 것이 좋습니다.",
-        continue_anyway: "백업 없이 계속",
-        go_to_backup: "백업 페이지로 이동"
-      },
-      export_page: {
-        title: "예약 내보내기",
-        subtitle: "필터링된 결과를 구성하고 CSV 파일로 다운로드합니다.",
-        columns_title: "열 선택",
-        preview_title: "데이터 미리보기",
-        download_btn: "CSV로 내보내기",
-        column_student: "학생 이름",
-        column_date: "날짜",
-        column_start: "시작 시간",
-        column_end: "종료 시간",
-        column_duration: "기간 (분)",
-        column_course: "코스",
-        column_status: "상태",
-        column_attendance: "출석 기록",
-        empty_state: "내보낼 데이터가 없습니다. 예약으로 돌아가서 결과를 필터링하십시오."
-      },
-      attendance_export_page: {
-        title: "출석 기록 내보내기",
-        subtitle: "날짜 범위를 선택하여 출석 기록을 CSV 파일로 다운로드합니다.",
-        start_date: "시작 날짜",
-        end_date: "종료 날짜",
-        download_btn: "CSV로 내보내기",
-        presets: {
-          title: "프리셋",
-          today: "오늘",
-          yesterday: "어제",
-          this_week: "이번 주",
-          last_week: "지난 주",
-          this_month: "이번 달",
-          last_month: "지난 달",
-          this_year: "올해",
-          last_year: "작년",
-          all: "전체 기간"
-        },
-        custom_range: "사용자 지정 범위"
-      },
-      attendance_import_page: {
-        title: "출석 가져오기",
-        subtitle: "CSV 파일에서 출석 기록 일괄 업로드",
-        step1_headers: "필수 헤더:",
-        records_count: "{{count}}개 기록",
-        complete_subtitle: "{{count}}개 기록이 성공적으로 동기화되었습니다.",
-        view_attendances: "출석 보기"
       }
     }
   }

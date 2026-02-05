@@ -26,6 +26,16 @@ export interface Booking {
   courses?: Course;
 }
 
+// Added Attendance interface to fix build errors in components and pages
+export interface Attendance {
+  id: string;
+  student_id: string;
+  org_id: string;
+  date: string;
+  start: string;
+  end: string | null;
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -48,15 +58,4 @@ export interface BackupFile {
     size: number;
     mimetype: string;
   };
-}
-
-// Define the Attendance interface used by export/import and manual logs
-export interface Attendance {
-  id: string;
-  student_id: string;
-  date: string;
-  start: string;
-  end: string | null;
-  org_id?: string;
-  created_at?: string;
 }

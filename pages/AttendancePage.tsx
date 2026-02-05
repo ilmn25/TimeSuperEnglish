@@ -207,22 +207,6 @@ const AttendancePage: React.FC = () => {
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('nav.attendance')}</h2>
           <p className="text-slate-500 text-xs font-medium">{t('attendance.summary')}</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <button 
-            onClick={() => navigate(`/org/${orgId}/attendance/import`)}
-            className="flex items-center space-x-2 px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50 transition-all active:scale-95"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            <span>{t('nav.import')}</span>
-          </button>
-          <button 
-            onClick={() => navigate(`/org/${orgId}/attendance/export`)}
-            className="flex items-center space-x-2 px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50 transition-all active:scale-95"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4v12" /></svg>
-            <span>{t('nav.export')}</span>
-          </button>
-        </div>
       </div>
       
       <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -351,7 +335,6 @@ const AttendancePage: React.FC = () => {
         <TimelinePanel 
           studentName={selectedStudentData.student.name} 
           bookings={selectedStudentData.bookings} 
-          attendances={[]} // Legacy attendances removed
           date={date}
           isExpanded={isTimelineExpanded}
           onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}

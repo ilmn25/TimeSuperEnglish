@@ -270,30 +270,6 @@ export const api = {
     return handleResponse(response, 'Failed to delete student');
   },
 
-  // ATTENDANCE METHODS
-  async getAllAttendances(orgId: string, filters?: { startDate?: string; endDate?: string }) {
-    const headers = await getHeaders();
-    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=*&order=date.desc,start.asc`;
-    if (filters?.startDate) query += `&date=gte.${encodeURIComponent(filters.startDate)}`;
-    if (filters?.endDate) query += `&date=lte.${encodeURIComponent(filters.endDate)}`;
-    
-    const url = `${SUPABASE_URL}/rest/v1/attendance?${query}`;
-    const response = await fetch(url, { headers });
-    return handleResponse(response, 'Failed to fetch attendance list');
-  },
-
-  async createAttendanceManual(orgId: string, data: { student_id: string; date: string; start: string; end: string }) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/attendance`;
-    const payload = { ...data, org_id: orgId };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload)
-    });
-    return handleResponse(response, 'Failed to create attendance record');
-  },
-
   // BACKUP METHODS (EDGE FUNCTIONS)
   async listBackups(orgId: string) {
     const headers = await getHeaders();
@@ -433,5 +409,28 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/bookings?${query}`;
     const response = await fetch(url, { headers });
     return handleResponse(response, 'Failed to fetch student bookings');
+  },
+
+  // Added Attendance methods to fix build errors in export and import pages
+  async getAllAttendances(orgId: string, filters?: { startDate?: string; endDate?: string }) {
+    const headers = await getHeaders();
+    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=*&order=date.desc,start.asc`;
+    if (filters?.startDate) query += `&date=gte.${encodeURIComponent(filters.startDate)}`;
+    if (filters?.endDate) query += `&date=lte.${encodeURIComponent(filters.endDate)}`;
+    
+    const url = `${SUPABASE_URL}/rest/v1/attendances?${query}`;
+    const response = await fetch(url, { headers });
+    return handleResponse(response, 'Failed to fetch attendances');
+  },
+
+  async createAttendanceManual(orgId: string, data: { student_id: string; date: string; start: string; end: string }) {
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/attendances`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ...data, org_id: orgId })
+    });
+    return handleResponse(response, 'Failed to create manual attendance');
   }
 };

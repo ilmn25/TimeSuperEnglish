@@ -356,8 +356,7 @@ const BookingsPage: React.FC = () => {
     if (!orgId) return;
     navigate(`/org/${orgId}/export`, { 
       state: { 
-        bookings: processedBookings, 
-        attendances: [] // Removed separate attendances list
+        bookings: processedBookings
       } 
     });
   };
@@ -453,7 +452,7 @@ const BookingsPage: React.FC = () => {
             onClick={() => navigate(`/org/${orgId}/import`)}
             className="flex items-center space-x-2 px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50 transition-all active:scale-95"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4 4m0 0l-4-4m4 4v12" /></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4v12" /></svg>
             <span>{t('nav.import')}</span>
           </button>
           <button 
@@ -869,7 +868,7 @@ const BookingsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-4">
+              <div className="flex items-center justify-end space-xa-3 pt-4">
                 <button type="button" onClick={() => { setIsFormOpen(false); setEditingBooking(null); }} className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">{t('common.cancel')}</button>
                 <button type="submit" disabled={isProcessing} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-[10px] uppercase tracking-widest flex items-center">
                    {isProcessing && <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />}
@@ -901,7 +900,6 @@ const BookingsPage: React.FC = () => {
         <TimelinePanel 
           studentName={selectedTimelineInfo.studentName} 
           bookings={timelineData.bookings} 
-          attendances={[]} // No longer needed
           date={selectedTimelineInfo.date}
           isExpanded={isTimelineExpanded}
           onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}

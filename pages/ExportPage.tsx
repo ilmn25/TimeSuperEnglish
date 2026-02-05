@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Booking, Attendance } from '../types';
+import { Booking } from '../types';
 import { useTranslation } from 'react-i18next';
 
 interface ExportColumn {
@@ -18,7 +17,6 @@ const ExportPage: React.FC = () => {
   
   // Data passed from BookingsPage
   const bookings: (Booking & { calculatedStatus: string })[] = location.state?.bookings || [];
-  const attendances: Attendance[] = location.state?.attendances || [];
 
   const columns: ExportColumn[] = [
     { id: 'student', label: t('export_page.column_student'), default: true },
@@ -28,7 +26,8 @@ const ExportPage: React.FC = () => {
     { id: 'duration', label: t('export_page.column_duration'), default: true },
     { id: 'course', label: t('export_page.column_course'), default: true },
     { id: 'status', label: t('export_page.column_status'), default: true },
-    { id: 'attendance', label: t('export_page.column_attendance'), default: true }
+    { id: 'check_in', label: t('card.check_in'), default: true },
+    { id: 'check_out', label: t('card.check_out'), default: true }
   ];
 
   const [selectedColumnIds, setSelectedColumnIds] = useState<Set<string>>(
@@ -59,29 +58,13 @@ const ExportPage: React.FC = () => {
     }
   };
 
-  // Find the maximum number of attendance records for any booking in the set
-  const maxAttendanceCount = useMemo(() => {
-    if (bookings.length === 0) return 0;
-    return bookings.reduce((max, b) => {
-      const count = attendances.filter(a => a.student_id === b.student_id && a.date === b.date).length;
-      return Math.max(max, count);
-    }, 0);
-  }, [bookings, attendances]);
-
   const generateCSV = () => {
     if (bookings.length === 0) return;
 
     // Header row
     const csvHeaders: string[] = columns
-      .filter(c => selectedColumnIds.has(c.id) && c.id !== 'attendance')
-      .map(c => c.id);
-    
-    if (selectedColumnIds.has('attendance')) {
-      for (let i = 1; i <= maxAttendanceCount; i++) {
-        csvHeaders.push(`checkin${i}`);
-        csvHeaders.push(`checkout${i}`);
-      }
-    }
+      .filter(c => selectedColumnIds.has(c.id))
+      .map(c => c.label);
 
     const rows = bookings.map(b => {
       const rowData: (string|number)[] = [];
@@ -92,18 +75,8 @@ const ExportPage: React.FC = () => {
       if (selectedColumnIds.has('duration')) rowData.push(calculateDurationMinutes(b.start, b.end));
       if (selectedColumnIds.has('course')) rowData.push(b.courses?.name || '');
       if (selectedColumnIds.has('status')) rowData.push(getStatusLabel(b.calculatedStatus));
-
-      if (selectedColumnIds.has('attendance')) {
-        const studentDayAtts = attendances
-          .filter(a => a.student_id === b.student_id && a.date === b.date)
-          .sort((a, b) => a.start.localeCompare(b.start));
-
-        for (let i = 0; i < maxAttendanceCount; i++) {
-          const att = studentDayAtts[i];
-          rowData.push(att ? att.start.slice(0, 5) : '');
-          rowData.push(att ? (att.end ? att.end.slice(0, 5) : 'Live') : '');
-        }
-      }
+      if (selectedColumnIds.has('check_in')) rowData.push(b.check_in || '');
+      if (selectedColumnIds.has('check_out')) rowData.push(b.check_out || '');
 
       return rowData.join(',');
     });
@@ -194,12 +167,9 @@ const ExportPage: React.FC = () => {
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead className="bg-slate-900 border-b border-slate-800">
                   <tr>
-                    {columns.filter(c => selectedColumnIds.has(c.id) && c.id !== 'attendance').map(col => (
+                    {columns.filter(c => selectedColumnIds.has(c.id)).map(col => (
                       <th key={col.id} className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{col.label}</th>
                     ))}
-                    {selectedColumnIds.has('attendance') && (
-                      <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('export_page.column_attendance')}</th>
-                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -212,14 +182,8 @@ const ExportPage: React.FC = () => {
                       {selectedColumnIds.has('duration') && <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-500">{calculateDurationMinutes(b.start, b.end)}m</td>}
                       {selectedColumnIds.has('course') && <td className="px-6 py-4 text-xs font-bold text-slate-600">{b.courses?.name}</td>}
                       {selectedColumnIds.has('status') && <td className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-indigo-600">{getStatusLabel(b.calculatedStatus)}</td>}
-                      {selectedColumnIds.has('attendance') && (
-                        <td className="px-6 py-4 text-[10px] font-mono text-slate-400 italic">
-                          {(() => {
-                            const count = attendances.filter(a => a.student_id === b.student_id && a.date === b.date).length;
-                            return count > 0 ? `${count} logs found` : 'None';
-                          })()}
-                        </td>
-                      )}
+                      {selectedColumnIds.has('check_in') && <td className="px-6 py-4 text-[10px] font-mono text-slate-400">{b.check_in?.slice(11, 16) || '-'}</td>}
+                      {selectedColumnIds.has('check_out') && <td className="px-6 py-4 text-[10px] font-mono text-slate-400">{b.check_out?.slice(11, 16) || '-'}</td>}
                     </tr>
                   ))}
                   {bookings.length > 10 && (

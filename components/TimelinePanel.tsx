@@ -4,7 +4,6 @@ import { Booking } from '../types';
 interface TimelinePanelProps {
   studentName: string | null;
   bookings: Booking[];
-  attendances: any[]; // Deprecated, but kept for compatibility
   date: string;
   isExpanded: boolean;
   onToggle: () => void;
