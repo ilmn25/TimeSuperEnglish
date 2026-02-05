@@ -5,9 +5,20 @@ import { api } from '../services/api';
 import { Booking, Issue } from '../types';
 import { useTranslation } from 'react-i18next';
 
-const getHKTNow = () => {
+/**
+ * Get current HKT date and time strings for safe comparison
+ */
+const getHKTNowStrings = () => {
   const now = new Date();
-  return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Hong_Kong" }));
+  const dateStr = now.toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" }); // YYYY-MM-DD
+  const timeStr = now.toLocaleTimeString("en-GB", { 
+    timeZone: "Asia/Hong_Kong", 
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  }); // HH:mm:ss
+  return { dateStr, timeStr };
 };
 
 const IssuesPage: React.FC = () => {
@@ -42,33 +53,27 @@ const IssuesPage: React.FC = () => {
 
   // Detected Problems based on financial discrepancies
   const problems = useMemo(() => {
-    const hktNow = getHKTNow();
+    const { dateStr: hktToday, timeStr: hktNowTime } = getHKTNowStrings();
     const existingIssueBookingIds = new Set(issues.map(i => i.booking_id));
     
     return bookings.filter(b => {
       // Skip if already tracked as an issue
       if (existingIssueBookingIds.has(b.id)) return false;
 
-      const bDate = new Date(b.date);
-      const [startH, startM] = b.start.split(':').map(Number);
-      const [endH, endM] = b.end.split(':').map(Number);
-      
-      const startDateTime = new Date(bDate);
-      startDateTime.setHours(startH, startM, 0, 0);
-
-      const endDateTime = new Date(bDate);
-      endDateTime.setHours(endH, endM, 0, 0);
-      
       // Rule 1: Attended but no invoice (Ad-hoc / Unbilled)
-      const isAdhoc = !!b.check_in && !b.invoice_id;
+      // Check for both check_in and check_out as suggested
+      const isAttended = !!b.check_in || !!b.check_out;
+      const isAdhoc = isAttended && !b.invoice_id;
 
       // Rule 2: Missed but has invoice (Billed Absence)
-      // Only flag as missed if the scheduled time has fully passed
-      const isMissed = hktNow > endDateTime && !b.check_in && !!b.invoice_id;
+      // Only flag as missed if the scheduled time has fully passed in HK time
+      // Time format comparison (HH:mm:ss) works because it's 24h zero-padded
+      const isPassed = (b.date < hktToday) || (b.date === hktToday && b.end < hktNowTime);
+      const isMissed = isPassed && !isAttended && !!b.invoice_id;
 
       return isMissed || isAdhoc;
     }).map(b => {
-       const isAdhoc = !!b.check_in && !b.invoice_id;
+       const isAdhoc = (!!b.check_in || !!b.check_out) && !b.invoice_id;
        return {
          booking: b,
          type: isAdhoc ? 'adhoc_booking' : 'missed_booking' as 'missed_booking' | 'adhoc_booking'
