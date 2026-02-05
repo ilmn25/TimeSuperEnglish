@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -6,7 +7,7 @@ const resources = {
   en: {
     translation: {
       app: { name: "Counter", dashboard: "Counter Dashboard" },
-      nav: { attendance: "Attendance", bookings: "Bookings", courses: "Courses", students: "Students", backup: "Backup", organizations: "Organizations", back: "Back to Dashboard", import: "Import", export: "Export", subscriptions: "Billing" },
+      nav: { attendance: "Attendance", bookings: "Bookings", courses: "Courses", students: "Students", backup: "Backup", organizations: "Organizations", back: "Back to Dashboard", import: "Import", export: "Export", subscriptions: "Billing", issues: "Issues" },
       user: { signed_in: "Signed in as", logout: "Log Out" },
       auth: { signin: "Sign In", register: "Register", email: "Email Address", password: "Password", create_account: "Create Account", continue: "or continue with", google: "Google Account", access: "Dashboard Access", check_email: "Check your email for the confirmation link!" },
       org: { select: "Select Organization", subtitle: "Choose a workspace to manage", new: "New Organization", no_orgs: "No organizations found", start_create: "Create your first workspace to get started", create_new: "Create New Organization", edit: "Edit Organization", details: "Manage workspace details", name: "Organization Name", owner: "Owner", member: "Member", delete_title: "Delete Workspace?", delete_msg: "This action is irreversible and will permanently delete the workspace. Please type the name of the organization to confirm." },
@@ -34,6 +35,32 @@ const resources = {
         current_plan: "Current Plan",
         expires: "Renews/Expires on:",
         status: "Status:"
+      },
+      issues: {
+        title: "Issues & Resolutions",
+        subtitle: "Identify and resolve booking discrepancies",
+        detected_problems: "Detected Problems",
+        problems_subtitle: "System-flagged discrepancies requiring action",
+        adhoc_booking: "Ad-hoc Booking",
+        missed_booking: "Missed Booking",
+        create_issue: "Create Issue",
+        resolve_issue: "Resolve Issue",
+        active_issues: "Active Issues",
+        active_subtitle: "Track and update existing resolutions",
+        no_problems: "No new discrepancies detected.",
+        no_issues: "No active issues currently.",
+        reschedule: "Reschedule",
+        refund: "Refund",
+        waived: "Waived",
+        billing: "Billing",
+        pending: "Pending",
+        resolved: "Resolved",
+        status_unpaid: "Unpaid",
+        status_paid: "Paid",
+        notes: "Notes",
+        add_notes: "Add internal notes...",
+        mark_as_billing: "Mark for Billing",
+        mark_as_waived: "Waive Issue"
       },
       import_page: {
         subtitle: "Batch upload bookings from CSV files",
@@ -89,7 +116,7 @@ const resources = {
   "zh-CN": {
     translation: {
       app: { name: "计数器", dashboard: "计数器仪表盘" },
-      nav: { attendance: "考勤", bookings: "预约", courses: "课程", students: "学生", backup: "备份", organizations: "机构", back: "返回仪表盘", import: "导入", export: "导出", subscriptions: "订阅" },
+      nav: { attendance: "考勤", bookings: "预约", courses: "课程", students: "学生", backup: "备份", organizations: "机构", back: "返回仪表盘", import: "导入", export: "导出", subscriptions: "订阅", issues: "异常处理" },
       user: { signed_in: "登录用户", logout: "登出" },
       auth: { signin: "登录", register: "注册", email: "邮箱地址", password: "密码", create_account: "创建账户", continue: "或继续使用", google: "Google 账户", access: "仪表盘访问", check_email: "请检查您的邮箱以获取确认链接！" },
       org: { select: "选择机构", subtitle: "选择要管理的工作区", new: "新机构", no_orgs: "未找到机构", start_create: "创建您的第一个工作区以开始", create_new: "创建新机构", edit: "编辑机构", details: "管理工作区详情", name: "机构名称", owner: "所有者", member: "成员", delete_title: "删除工作区？", delete_msg: "此操作不可逆，将永久删除该工作区。请输入机构名称以进行确认。" },
@@ -117,6 +144,32 @@ const resources = {
         current_plan: "当前方案",
         expires: "续费/过期日期:",
         status: "状态:"
+      },
+      issues: {
+        title: "异常处理",
+        subtitle: "识别并解决预约差异",
+        detected_problems: "检测到的问题",
+        problems_subtitle: "系统标记的需要处理的差异",
+        adhoc_booking: "即兴预约 (无账单)",
+        missed_booking: "错过预约 (未签到)",
+        create_issue: "创建异常记录",
+        resolve_issue: "解决异常",
+        active_issues: "活跃异常",
+        active_subtitle: "跟踪和更新现有的处理结果",
+        no_problems: "未检测到新的差异。",
+        no_issues: "当前没有活跃异常。",
+        reschedule: "重新排课",
+        refund: "退款",
+        waived: "豁免",
+        billing: "补开账单",
+        pending: "待处理",
+        resolved: "已解决",
+        status_unpaid: "未支付",
+        status_paid: "已支付",
+        notes: "备注",
+        add_notes: "添加内部备注...",
+        mark_as_billing: "标记为需开单",
+        mark_as_waived: "豁免此问题"
       },
       import_page: {
         subtitle: "从 CSV 文件批量上传预约",
@@ -172,7 +225,7 @@ const resources = {
   "zh-TW": {
     translation: {
       app: { name: "計數器", dashboard: "計數器儀表板" },
-      nav: { attendance: "考勤", bookings: "預約", courses: "課程", students: "學生", backup: "備份", organizations: "機構", back: "返回儀表板", import: "匯入", export: "匯出", subscriptions: "訂閱" },
+      nav: { attendance: "考勤", bookings: "預約", courses: "課程", students: "學生", backup: "備份", organizations: "機構", back: "返回儀表板", import: "匯入", export: "匯出", subscriptions: "訂閱", issues: "異常處理" },
       user: { signed_in: "登入身分", logout: "登出" },
       auth: { signin: "登入", register: "註冊", email: "電子郵件", password: "密碼", create_account: "建立帳戶", continue: "或繼續使用", google: "Google 帳戶", access: "儀表板存取", check_email: "請檢查您的電子郵件以取得確認連結！" },
       org: { select: "選擇機構", subtitle: "選擇要管理的工作區", new: "新機構", no_orgs: "未找到機構", start_create: "建立您的第一個工作區以開始", create_new: "建立新機構", edit: "編輯機構", details: "管理工作區詳情", name: "機構名稱", owner: "擁有者", member: "成員", delete_title: "刪除工作區？", delete_msg: "此動作不可逆，將永久刪除該工作區。請輸入機構名稱以進行確認。" },
@@ -200,6 +253,32 @@ const resources = {
         current_plan: "目前方案",
         expires: "續費/過期日期:",
         status: "狀態:"
+      },
+      issues: {
+        title: "異常處理",
+        subtitle: "識別並解決預約差異",
+        detected_problems: "檢測到的問題",
+        problems_subtitle: "系統標記的需要處理的差異",
+        adhoc_booking: "即興預約 (無賬單)",
+        missed_booking: "錯過預約 (未簽到)",
+        create_issue: "創建異常記錄",
+        resolve_issue: "解決異常",
+        active_issues: "活躍異常",
+        active_subtitle: "跟蹤和更新現有的處理結果",
+        no_problems: "未檢測到新的差異。",
+        no_issues: "當前沒有活躍異常。",
+        reschedule: "重新排課",
+        refund: "退款",
+        waived: "豁免",
+        billing: "補開賬單",
+        pending: "待處理",
+        resolved: "已解決",
+        status_unpaid: "未支付",
+        status_paid: "已支付",
+        notes: "備註",
+        add_notes: "添加內部備註...",
+        mark_as_billing: "標記為需開單",
+        mark_as_waived: "豁免此問題"
       },
       import_page: {
         subtitle: "從 CSV 檔案批量上傳預約",

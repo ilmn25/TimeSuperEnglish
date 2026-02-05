@@ -7,6 +7,7 @@ import AttendancePage from './pages/AttendancePage';
 import CoursesPage from './pages/CoursesPage';
 import StudentsPage from './pages/StudentsPage';
 import BookingsPage from './pages/BookingsPage';
+import IssuesPage from './pages/IssuesPage';
 import ExportPage from './pages/ExportPage';
 import BackupPage from './pages/BackupPage';
 import ImportPage from './pages/ImportPage';
@@ -178,6 +179,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
     if (location.pathname === '/subscriptions') return t('nav.subscriptions');
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
+    if (location.pathname.includes('/issues')) return t('nav.issues');
     if (location.pathname.includes('/export')) return t('nav.export');
     if (location.pathname.includes('/courses')) return t('nav.courses');
     if (location.pathname.includes('/students')) return t('nav.students');
@@ -251,6 +253,9 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                   </NavLink>
                   <NavLink to={`/org/${orgId}/bookings`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}>
                     {t('nav.bookings')}
+                  </NavLink>
+                  <NavLink to={`/org/${orgId}/issues`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}>
+                    {t('nav.issues')}
                   </NavLink>
                   <NavLink to={`/org/${orgId}/courses`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.246.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}>
                     {t('nav.courses')}
@@ -397,6 +402,7 @@ const App: React.FC = () => {
               <Route index element={<Navigate to="attendance" replace />} />
               <Route path="attendance" element={<AttendancePage />} />
               <Route path="bookings" element={<BookingsPage />} />
+              <Route path="issues" element={<IssuesPage />} />
               <Route path="export" element={<ExportPage />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="students" element={<StudentsPage />} />

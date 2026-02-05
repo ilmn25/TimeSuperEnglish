@@ -141,14 +141,14 @@ export const api = {
   // BOOKING METHODS
   async getBookings(orgId: string, date: string) {
     const headers = await getHeaders();
-    const url = `${SUPABASE_URL}/rest/v1/bookings?org_id=eq.${encodeURIComponent(orgId)}&date=eq.${encodeURIComponent(date)}&select=id,date,start,end,check_in,check_out,student_id,students(name,contact,id,level),courses(name,color)`;
+    const url = `${SUPABASE_URL}/rest/v1/bookings?org_id=eq.${encodeURIComponent(orgId)}&date=eq.${encodeURIComponent(date)}&select=id,date,start,end,check_in,check_out,student_id,invoice_id,students(name,contact,id,level),courses(name,color)`;
     const response = await fetch(url, { headers });
     return handleResponse(response, 'Failed to fetch bookings');
   },
 
   async getAllBookings(orgId: string, filters?: { dates?: string[]; student_id?: string; course_id?: string; startDate?: string; endDate?: string }) {
     const headers = await getHeaders();
-    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=id,date,start,end,check_in,check_out,student_id,course_id,students(name,contact,id,level,org_id),courses(name,color)&order=date.desc,start.asc`;
+    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=id,date,start,end,check_in,check_out,student_id,course_id,invoice_id,students(name,contact,id,level,org_id),courses(name,color)&order=date.desc,start.asc`;
     
     if (filters?.dates && filters.dates.length > 0) {
       const dateList = filters.dates.map(d => `"${d}"`).join(',');
@@ -268,6 +268,36 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/students?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
     return handleResponse(response, 'Failed to delete student');
+  },
+
+  // ISSUE METHODS
+  async getIssues(orgId: string) {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/rest/v1/issues?select=*,bookings!inner(*,students(name),courses(name))&bookings.org_id=eq.${encodeURIComponent(orgId)}&order=created_at.desc`;
+    const response = await fetch(url, { headers });
+    return handleResponse(response, 'Failed to fetch issues');
+  },
+
+  async createIssue(data: { booking_id: string; issue_type: 'missed_booking' | 'adhoc_booking'; resolution: string; notes?: string }) {
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/issues`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response, 'Failed to create issue');
+  },
+
+  async updateIssue(id: string, data: Partial<{ resolution: string; billing_status: string; resolved_at: string | null; notes: string }>) {
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/issues?id=eq.${encodeURIComponent(id)}`;
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response, 'Failed to update issue');
   },
 
   // BACKUP METHODS (EDGE FUNCTIONS)
