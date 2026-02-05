@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Attendance } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -28,7 +29,7 @@ const AttendanceRecord: React.FC<AttendanceRecordProps> = ({ attendance, onRemov
       </div>
       <button
         onClick={() => onRemove(attendance.id)}
-        className="text-[9px] text-red-500 hover:text-white hover:bg-red-500 font-black px-1.5 py-1 rounded border border-red-100 transition-all uppercase tracking-tighter shrink-0"
+        className="text-[9px] text-white bg-red-600 hover:bg-red-700 font-black px-2.5 py-1.5 rounded-lg shadow-sm transition-all uppercase tracking-tight shrink-0 active:scale-95"
       >
         {t('common.remove')}
       </button>

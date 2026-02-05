@@ -1,3 +1,4 @@
+
 import React, { useCallback } from 'react';
 import { StudentGroupedData, Booking } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -48,7 +49,11 @@ const StudentCard: React.FC<StudentCardProps> = ({
     return 'red';
   }, []);
 
-  const statusColors = { blue: 'bg-blue-400 text-blue-500', green: 'bg-green-500 text-green-600', red: 'bg-red-500 text-red-500' };
+  const statusColors = { 
+    blue: 'bg-blue-50 text-blue-600 ring-blue-500/10', 
+    green: 'bg-emerald-50 text-emerald-600 ring-emerald-500/10', 
+    red: 'bg-rose-50 text-rose-600 ring-rose-500/10' 
+  };
 
   return (
     <div 
@@ -63,37 +68,37 @@ const StudentCard: React.FC<StudentCardProps> = ({
           </div>
         </div>
         <div className="shrink-0">
-          <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm transition-all ${isCurrentlyInClass ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+          <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm transition-all ${isCurrentlyInClass ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
             {isCurrentlyInClass ? t('parent.in_class').toUpperCase() : t('parent.away').toUpperCase()}
           </span>
         </div>
       </div>
 
       <div className="p-6 space-y-6" onClick={(e) => e.stopPropagation()}>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <label className="block text-[10px] font-black text-slate-300 uppercase tracking-widest">{t('card.todays_schedule')}</label>
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             {bookings.map(booking => {
               const status = getBookingStatus(booking);
               const courseColor = booking.courses?.color || '#f1f5f9';
               const textColor = getContrastColor(courseColor);
               
               return (
-                <div key={booking.id} className="flex flex-col p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-4">
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shadow-sm shrink-0"
-                      style={{ backgroundColor: courseColor, color: textColor }}
-                    >
-                       {booking.courses?.name?.slice(0, 1) || 'B'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-slate-900 text-xs truncate">{booking.courses?.name}</p>
-                      <div className="flex items-center space-x-2 mt-0.5">
-                        <span className="text-[10px] text-slate-400 font-mono font-bold tracking-tighter">{booking.start.slice(0, 5)} - {booking.end.slice(0, 5)}</span>
-                        <div className="flex items-center space-x-1">
-                          <div className={`w-1.5 h-1.5 rounded-full ${statusColors[status].split(' ')[0]}`} />
-                          <span className={`text-[9px] font-black uppercase tracking-tight ${statusColors[status].split(' ')[1]}`}>
+                <div key={booking.id} className="relative flex flex-col p-5 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-slate-50 hover:border-slate-200">
+                  {/* Top: Course & Manual Trigger */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div 
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shadow-sm shrink-0"
+                        style={{ backgroundColor: courseColor, color: textColor }}
+                      >
+                         {booking.courses?.name?.slice(0, 1) || 'B'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-black text-slate-900 text-sm truncate leading-tight">{booking.courses?.name}</p>
+                        <div className="mt-1">
+                          {/* Fixed duplicate className attribute below by merging them into one */}
+                          <span className={`${statusColors[status]} inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-black uppercase ring-1 ring-inset tracking-tighter transition-all`}>
                             {status === 'red' ? t('status.missed') : status === 'green' ? t('status.attended') : t('status.future')}
                           </span>
                         </div>
@@ -101,35 +106,44 @@ const StudentCard: React.FC<StudentCardProps> = ({
                     </div>
                     <button 
                       onClick={() => onOpenManualModal(booking.id, student.name)}
-                      className="p-2 text-slate-300 hover:text-indigo-600 transition-colors"
+                      className="p-2.5 bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 rounded-xl transition-all shadow-sm active:scale-90"
                       title={t('card.manual')}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     </button>
                   </div>
 
-                  {booking.check_in && (
-                    <div className="flex items-center space-x-2 px-3 py-1.5 bg-indigo-50/50 rounded-xl border border-indigo-100/50 w-fit">
-                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                      <span className="text-[10px] font-mono font-bold text-indigo-600">
-                        {booking.check_in.slice(11, 16)} — {booking.check_out ? booking.check_out.slice(11, 16) : '--:--'}
-                      </span>
+                  {/* Details: Scheduled Time & Actual Record */}
+                  <div className="flex flex-col space-y-3">
+                    <div className="flex items-center space-x-2">
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">Schedule:</span>
+                       <span className="text-xs font-mono font-black text-indigo-600 tracking-tight">{booking.start.slice(0, 5)} — {booking.end.slice(0, 5)}</span>
                     </div>
-                  )}
 
+                    {booking.check_in && (
+                      <div className="flex items-center space-x-2 px-3 py-2 bg-indigo-50/50 rounded-xl border border-indigo-100/50 w-fit">
+                        <div className={`w-1.5 h-1.5 rounded-full ${booking.check_out ? 'bg-indigo-400' : 'bg-emerald-500 animate-pulse'}`} />
+                        <span className="text-[10px] font-mono font-bold text-indigo-600">
+                          {booking.check_in.slice(11, 16)} — {booking.check_out ? booking.check_out.slice(11, 16) : '--:--'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions: In/Out Buttons */}
                   {isToday && (
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-2 mt-4">
                       {!booking.check_in ? (
                         <button 
                           onClick={() => onCheckIn(booking.id)} 
-                          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-2.5 rounded-xl text-[9px] uppercase tracking-widest transition-all active:scale-[0.98] shadow-sm"
+                          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition-all active:scale-[0.97] shadow-md shadow-indigo-100"
                         >
                           {t('card.check_in')}
                         </button>
                       ) : !booking.check_out ? (
                         <button 
                           onClick={() => onCheckOut(booking.id)} 
-                          className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-2.5 rounded-xl text-[9px] uppercase tracking-widest transition-all active:scale-[0.98] shadow-sm"
+                          className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black py-3 rounded-xl text-[10px] uppercase tracking-widest transition-all active:scale-[0.97] shadow-md shadow-orange-100"
                         >
                           {t('card.check_out')}
                         </button>
@@ -139,7 +153,11 @@ const StudentCard: React.FC<StudentCardProps> = ({
                 </div>
               );
             })}
-            {bookings.length === 0 && <p className="text-[10px] text-slate-400 italic py-2">{t('card.no_bookings')}</p>}
+            {bookings.length === 0 && (
+              <div className="py-6 text-center">
+                <p className="text-[11px] text-slate-400 font-bold italic">{t('card.no_bookings')}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

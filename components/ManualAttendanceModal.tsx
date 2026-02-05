@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -77,7 +78,7 @@ const ManualAttendanceModal: React.FC<ManualAttendanceModalProps> = ({
                   e.stopPropagation();
                   onClear();
                 }}
-                className="w-full py-3 text-[10px] font-black text-red-500 uppercase tracking-widest hover:bg-red-50 rounded-xl transition-colors border-2 border-transparent hover:border-red-100"
+                className="w-full py-4 text-xs font-black text-white bg-red-600 hover:bg-red-700 rounded-2xl transition-all shadow-lg shadow-red-100 active:scale-95 uppercase tracking-widest"
               >
                 {t('common.remove')} Attendance
               </button>
