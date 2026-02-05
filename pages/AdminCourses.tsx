@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Course } from '../types';
 import { useTranslation } from 'react-i18next';
 
 const AdminCourses: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -165,21 +166,29 @@ const AdminCourses: React.FC = () => {
                 <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">{course.color}</span>
               </div>
 
-              <div className="flex items-center space-x-2 mt-8">
+              <div className="flex flex-col space-y-2 mt-8 relative z-10">
                 <button 
-                  onClick={() => openEdit(course)}
-                  className="flex-1 bg-slate-50 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 font-black py-2.5 rounded-xl text-[10px] uppercase tracking-widest transition-all border border-transparent hover:border-indigo-100"
+                  onClick={() => navigate(`/org/${orgId}/courses/${course.id}/schedule`)}
+                  className="w-full bg-slate-900 hover:bg-indigo-600 text-white font-black py-2.5 rounded-xl text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-[0.98]"
                 >
-                  {t('common.edit')}
+                  Manage Schedule
                 </button>
-                <button 
-                  onClick={() => setConfirmDeleteId(course.id)}
-                  className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={() => openEdit(course)}
+                    className="flex-1 bg-slate-50 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 font-black py-2.5 rounded-xl text-[10px] uppercase tracking-widest transition-all border border-transparent hover:border-indigo-100"
+                  >
+                    {t('common.edit')}
+                  </button>
+                  <button 
+                    onClick={() => setConfirmDeleteId(course.id)}
+                    className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           ))}

@@ -11,6 +11,19 @@ export interface Course {
   id: string;
   name: string;
   color: string;
+  price?: number;
+  description?: string;
+}
+
+export interface CourseSchedule {
+  id: string;
+  course_id: string;
+  date?: string | null;
+  days_of_week?: number[] | null; // 0-6 (Sun-Sat)
+  start_time: string;
+  end_time: string;
+  starts_on?: string | null;
+  biweekly: boolean;
 }
 
 export interface Booking {
@@ -41,7 +54,6 @@ export interface Issue {
   bookings?: Booking & { students: Student; courses: Course };
 }
 
-// Added Attendance interface to fix build errors in components and pages
 export interface Attendance {
   id: string;
   student_id: string;

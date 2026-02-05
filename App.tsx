@@ -5,6 +5,7 @@ import { supabase } from './services/supabaseClient';
 import { api } from './services/api';
 import AdminAttendance from './pages/AdminAttendance';
 import AdminCourses from './pages/AdminCourses';
+import AdminCourseSchedule from './pages/AdminCourseSchedule';
 import AdminStudents from './pages/AdminStudents';
 import AdminBookings from './pages/AdminBookings';
 import AdminIssues from './pages/AdminIssues';
@@ -404,6 +405,7 @@ const App: React.FC = () => {
               <Route path="issues" element={<AdminIssues />} />
               <Route path="export" element={<AdminExport />} />
               <Route path="courses" element={<AdminCourses />} />
+              <Route path="courses/:courseId/schedule" element={<AdminCourseSchedule />} />
               <Route path="students" element={<AdminStudents />} />
               <Route path="import" element={<AdminImport />} />
               <Route path="backup" element={<AdminBackup />} />

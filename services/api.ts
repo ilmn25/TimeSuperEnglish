@@ -204,6 +204,14 @@ export const api = {
     return handleResponse(response, 'Failed to fetch courses');
   },
 
+  async getCourse(orgId: string, courseId: string) {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/rest/v1/courses?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(courseId)}&select=*`;
+    const response = await fetch(url, { headers });
+    const data = await handleResponse(response, 'Failed to fetch course');
+    return Array.isArray(data) ? data[0] : null;
+  },
+
   async createCourse(orgId: string, name: string, color: string) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/courses`;
@@ -231,6 +239,40 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/courses?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
     return handleResponse(response, 'Failed to delete course');
+  },
+
+  // COURSE SCHEDULE METHODS
+  async getCourseSchedules(courseId: string) {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/rest/v1/course_schedule?course_id=eq.${encodeURIComponent(courseId)}&select=*`;
+    const response = await fetch(url, { headers });
+    return handleResponse(response, 'Failed to fetch course schedules');
+  },
+
+  async createCourseSchedule(data: { 
+    course_id: string; 
+    start_time: string; 
+    end_time: string; 
+    date?: string | null; 
+    days_of_week?: number[] | null; 
+    starts_on?: string | null; 
+    biweekly: boolean;
+  }) {
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/course_schedule`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response, 'Failed to create course schedule');
+  },
+
+  async deleteCourseSchedule(id: string) {
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/course_schedule?id=eq.${encodeURIComponent(id)}`;
+    const response = await fetch(url, { method: 'DELETE', headers });
+    return handleResponse(response, 'Failed to delete course schedule');
   },
 
   // STUDENT METHODS
