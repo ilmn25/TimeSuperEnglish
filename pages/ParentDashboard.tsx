@@ -4,9 +4,9 @@ import { api } from '../services/api';
 import { Student, Booking, Course } from '../types';
 import TimelinePanel from '../components/TimelinePanel';
 import { useTranslation } from 'react-i18next';
-import ManualAttendanceModal from '../components/ManualAttendanceModal';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const LEVELS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6'];
 
 const getHKTNow = () => {
   const now = new Date();
@@ -56,16 +56,19 @@ const ParentDashboard: React.FC = () => {
   const [dragStart, setDragStart] = useState<string | null>(null);
   const [dragEnd, setDragEnd] = useState<string | null>(null);
 
+  // Filters
   const [filterStudent, setFilterStudent] = useState('');
   const [filterCourse, setFilterCourse] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   
+  // Modals & Panels
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
   const [selectedTimelineInfo, setSelectedTimelineInfo] = useState<{ studentId: string; studentName: string; date: string } | null>(null);
-  const [manualModalConfig, setManualModalConfig] = useState<{ bookingId: string, name: string, check_in?: string | null, check_out?: string | null } | null>(null);
   const [isCalendarMaximized, setIsCalendarMaximized] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [isSavingStudent, setIsSavingStudent] = useState(false);
 
   const monthName = viewDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
 
@@ -85,17 +88,18 @@ const ParentDashboard: React.FC = () => {
     setError(null);
     try {
       const students = await api.getParentStudents();
-      students.sort((a: Student, b: Student) => a.name.localeCompare(b.name));
       const year = viewDate.getFullYear();
       const month = viewDate.getMonth();
       const startDate = new Date(year, month, 1).toLocaleDateString('en-CA');
       const endDate = new Date(year, month + 1, 0).toLocaleDateString('en-CA');
+      
       const detailedStudents: StudentDetailedData[] = students.map((s: any) => ({
         student: s,
         bookings: [],
         isLoading: true
       }));
       setChildrenData(detailedStudents);
+
       await Promise.all(detailedStudents.map(async (item) => {
         try {
           const bookings = await api.getStudentBookings(item.student.id, { startDate, endDate });
@@ -228,7 +232,6 @@ const ParentDashboard: React.FC = () => {
     };
   }, [processedAllBookings]);
 
-  // Attendance stats for selected date
   const attendanceDayStats = useMemo(() => {
     const dayBookings = childrenData.flatMap(child => child.bookings.filter(b => b.date === selectedDate));
     const studentIds = new Set(dayBookings.map(b => b.student_id));
@@ -286,46 +289,19 @@ const ParentDashboard: React.FC = () => {
     return weeks;
   }, [viewDate]);
 
-  const handleCheckIn = async (bookingId: string) => {
-    const student = childrenData.find(c => c.bookings.some(b => b.id === bookingId))?.student;
-    if (!student?.org_id) return;
+  const handleUpdateStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    setIsSavingStudent(true);
     try {
-      await api.updateBooking(student.org_id, bookingId, { check_in: new Date().toISOString() });
+      await api.updateStudent(editingStudent.org_id!, editingStudent.id, editingStudent.name, editingStudent.contact, editingStudent.level);
+      setEditingStudent(null);
       fetchDashboardData();
-    } catch (err) { alert('Check-in error'); }
-  };
-
-  const handleCheckOut = async (bookingId: string) => {
-    const student = childrenData.find(c => c.bookings.some(b => b.id === bookingId))?.student;
-    if (!student?.org_id) return;
-    try {
-      await api.updateBooking(student.org_id, bookingId, { check_out: new Date().toISOString() });
-      fetchDashboardData();
-    } catch (err) { alert('Check-out error'); }
-  };
-
-  const handleManualAdd = async (bookingId: string, start: string, end: string) => {
-    const child = childrenData.find(c => c.bookings.some(b => b.id === bookingId));
-    if (!child?.student.org_id) return;
-    try {
-      const booking = child.bookings.find(b => b.id === bookingId);
-      if (!booking) return;
-      const check_in = `${booking.date}T${start}:00Z`;
-      const check_out = `${booking.date}T${end}:00Z`;
-      await api.updateBooking(child.student.org_id, bookingId, { check_in, check_out });
-      setManualModalConfig(null);
-      fetchDashboardData();
-    } catch (err) { alert('Manual entry error'); }
-  };
-
-  const handleClearAttendance = async (bookingId: string) => {
-    const child = childrenData.find(c => c.bookings.some(b => b.id === bookingId));
-    if (!child?.student.org_id) return;
-    try {
-      await api.updateBooking(child.student.org_id, bookingId, { check_in: null, check_out: null });
-      setManualModalConfig(null);
-      fetchDashboardData();
-    } catch (err) { alert('Clear error'); }
+    } catch (err) {
+      alert("Failed to update student profile.");
+    } finally {
+      setIsSavingStudent(false);
+    }
   };
 
   const toggleSort = (field: SortField) => {
@@ -462,21 +438,15 @@ const ParentDashboard: React.FC = () => {
       </div>
 
       {activeTab === 'attendance' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-8 lg:gap-12 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12 animate-in fade-in duration-500">
           {childrenData.map((item) => (
-            <ChildCard 
+            <DashboardStudentCard 
               key={item.student.id} 
               data={{ ...item, bookings: item.bookings.filter(b => b.date === selectedDate) }} 
-              onEdit={() => {}} 
+              onEdit={() => setEditingStudent(item.student)} 
               isSelected={selectedTimelineInfo?.studentId === item.student.id && selectedTimelineInfo?.date === selectedDate}
               onSelect={() => { setSelectedTimelineInfo({ studentId: item.student.id, studentName: item.student.name, date: selectedDate }); setIsTimelineExpanded(true); }}
-              currentDate={selectedDate}
-              onCheckIn={handleCheckIn}
-              onCheckOut={handleCheckOut}
-              onOpenManual={(id) => {
-                const b = item.bookings.find(x => x.id === id);
-                setManualModalConfig({ bookingId: id, name: item.student.name, check_in: b?.check_in, check_out: b?.check_out });
-              }}
+              getBookingStatus={getBookingStatus}
             />
           ))}
           {childrenData.length === 0 && !isLoadingMain && (
@@ -487,6 +457,33 @@ const ParentDashboard: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-8 animate-in fade-in duration-500">
+          {/* Filters Bar */}
+          <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_student')}</label>
+              <select value={filterStudent} onChange={e => setFilterStudent(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-bold text-slate-700 appearance-none cursor-pointer">
+                <option value="">{t('bookings.all_students')}</option>
+                {childrenData.map(c => <option key={c.student.id} value={c.student.id}>{c.student.name}</option>)}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_course')}</label>
+              <select value={filterCourse} onChange={e => setFilterCourse(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-bold text-slate-700 appearance-none cursor-pointer">
+                <option value="">{t('bookings.all_courses')}</option>
+                {uniqueCourses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_status')}</label>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-bold text-slate-700 appearance-none cursor-pointer">
+                <option value="">{t('bookings.all_statuses')}</option>
+                <option value="red">{t('status.missed')}</option>
+                <option value="green">{t('status.attended')}</option>
+                <option value="blue">{t('status.future')}</option>
+              </select>
+            </div>
+          </div>
+
           <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col justify-between">
@@ -579,9 +576,6 @@ const ParentDashboard: React.FC = () => {
                       </tr>
                     );
                   })}
-                  {processedAllBookings.length === 0 && (
-                    <tr><td colSpan={5} className="px-6 py-16 text-center text-slate-400 font-bold italic text-sm">{t('bookings.no_match')}</td></tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -589,78 +583,159 @@ const ParentDashboard: React.FC = () => {
         </div>
       )}
 
-      {selectedTimelineInfo && <TimelinePanel studentName={selectedTimelineInfo.studentName} bookings={timelineData.bookings} date={selectedTimelineInfo.date} isExpanded={isTimelineExpanded} onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)} />}
-      
-      {manualModalConfig && (
-        <ManualAttendanceModal 
-          isOpen={true} 
-          studentName={manualModalConfig.name} 
-          initialStart={manualModalConfig.check_in}
-          initialEnd={manualModalConfig.check_out}
-          onClose={() => setManualModalConfig(null)} 
-          onSubmit={(start, end) => handleManualAdd(manualModalConfig.bookingId, start, end)} 
-          onClear={() => handleClearAttendance(manualModalConfig.bookingId)}
-        />
+      {/* Student Edit Modal */}
+      {editingStudent && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="px-10 py-8 border-b border-slate-50 bg-slate-50/30">
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t('parent.edit_profile')}</h3>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">{t('parent.updating')} {editingStudent.name}</p>
+            </div>
+            <form onSubmit={handleUpdateStudent} className="p-10 space-y-6">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">{t('students.full_name')}</label>
+                <input 
+                  type="text" required value={editingStudent.name}
+                  onChange={e => setEditingStudent({...editingStudent, name: e.target.value})}
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">{t('students.grade_level')}</label>
+                  <select 
+                    value={editingStudent.level || ''}
+                    onChange={e => setEditingStudent({...editingStudent, level: e.target.value})}
+                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold"
+                  >
+                    <option value="">{t('students.select')}</option>
+                    {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">{t('students.contact')}</label>
+                  <input 
+                    type="text" value={editingStudent.contact || ''}
+                    onChange={e => setEditingStudent({...editingStudent, contact: e.target.value})}
+                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-end space-x-3 pt-4">
+                <button type="button" onClick={() => setEditingStudent(null)} className="px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest">{t('common.cancel')}</button>
+                <button type="submit" disabled={isSavingStudent} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl text-xs uppercase tracking-widest flex items-center">
+                  {isSavingStudent && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />}
+                  {t('common.save_changes')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
+
+      {selectedTimelineInfo && <TimelinePanel studentName={selectedTimelineInfo.studentName} bookings={timelineData.bookings} date={selectedTimelineInfo.date} isExpanded={isTimelineExpanded} onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)} />}
     </div>
   );
 };
 
-const ChildCard: React.FC<{ 
+const DashboardStudentCard: React.FC<{ 
   data: StudentDetailedData; 
-  onEdit: (e: React.MouseEvent, s: Student) => void;
+  onEdit: () => void;
   isSelected: boolean;
   onSelect: () => void;
-  currentDate: string;
-  onCheckIn: (id: string) => void;
-  onCheckOut: (id: string) => void;
-  onOpenManual: (id: string) => void;
-}> = ({ data, onEdit, isSelected, onSelect, currentDate, onCheckIn, onCheckOut, onOpenManual }) => {
-  const { student, bookings, isLoading } = data;
+  getBookingStatus: (b: Booking) => BookingStatus;
+}> = ({ data, onEdit, isSelected, onSelect, getBookingStatus }) => {
+  const { student, bookings } = data;
   const { t } = useTranslation();
   const isCurrentlyInClass = bookings.some(b => b.check_in && !b.check_out);
 
+  const statusColors = { 
+    blue: 'bg-blue-50 text-blue-600 ring-blue-500/10', 
+    green: 'bg-emerald-50 text-emerald-600 ring-emerald-500/10', 
+    red: 'bg-rose-50 text-rose-600 ring-rose-500/10',
+    yellow: 'bg-amber-50 text-amber-600 ring-amber-500/10'
+  };
+
+  const getContrastColor = (hexcolor: string) => {
+    if (!hexcolor) return '#64748b';
+    const hex = hexcolor.replace("#", "");
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 128) ? '#1e293b' : '#ffffff';
+  };
+
   return (
-    <div onClick={onSelect} className={`bg-white border rounded-[2.5rem] shadow-xl overflow-hidden flex flex-col transition-all cursor-pointer ${isSelected ? 'border-indigo-600 ring-4 ring-indigo-50' : 'border-slate-200'}`}>
-      <div className={`p-8 border-b ${isSelected ? 'bg-indigo-50/20' : 'bg-slate-50/50'}`}>
-        <div className="flex items-center space-x-6">
-          <div className="w-16 h-16 rounded-3xl bg-indigo-600 flex items-center justify-center text-white text-2xl font-black">{student.name.charAt(0)}</div>
-          <div className="min-w-0">
-            <div className="flex items-center space-x-2 mb-2">
-              <h3 className="text-2xl font-black text-slate-900 truncate">{student.name}</h3>
-              <button onClick={(e) => onEdit(e, student)} className="p-1.5 text-slate-300 hover:text-indigo-600 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[10px] font-black uppercase">{student.level || t('parent.unset')}</div>
-              {isCurrentlyInClass && <span className="px-3 py-1 bg-green-50 text-green-700 rounded-lg text-[10px] font-black uppercase animate-pulse">{t('parent.in_class')}</span>}
-            </div>
+    <div 
+      onClick={onSelect}
+      className={`relative bg-white border-2 rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.99] group ${isSelected ? 'border-indigo-500 ring-4 ring-indigo-50 bg-indigo-50/5' : 'border-slate-100'}`}
+    >
+      <div className={`p-6 border-b transition-colors ${isSelected ? 'border-indigo-100 bg-indigo-50/10' : 'border-slate-50'} flex items-start justify-between`}>
+        <div className="min-w-0 flex-1 pr-2">
+          <h3 className="text-xl font-black text-slate-900 leading-tight group-hover:text-indigo-600 transition-colors truncate">{student.name}</h3>
+          <div className="flex items-center space-x-2 mt-1">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t('students.sort_level')}: {student.level || 'N/A'}</span>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              className="p-1 text-slate-300 hover:text-indigo-600 transition-all"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+            </button>
           </div>
+        </div>
+        <div className="shrink-0">
+          <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm transition-all ${isCurrentlyInClass ? 'bg-emerald-500 text-white animate-pulse' : 'bg-slate-100 text-slate-400'}`}>
+            {isCurrentlyInClass ? t('parent.in_class').toUpperCase() : t('parent.away').toUpperCase()}
+          </span>
         </div>
       </div>
 
-      <div className="p-8 space-y-6">
-        {bookings.map((b) => (
-          <div key={b.id} className="flex flex-col p-4 bg-slate-50 rounded-2xl border border-slate-100" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3">
-              <div className="min-w-0">
-                <p className="font-bold text-slate-900 text-sm truncate">{b.courses?.name}</p>
-                <span className="text-[10px] font-bold text-slate-400 font-mono">{b.start.slice(0, 5)} - {b.end.slice(0, 5)}</span>
+      <div className="p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <label className="block text-[10px] font-black text-slate-300 uppercase tracking-widest">{t('card.todays_schedule')}</label>
+        <div className="grid gap-3">
+          {bookings.map(booking => {
+            const status = getBookingStatus(booking);
+            const courseColor = booking.courses?.color || '#f1f5f9';
+            const textColor = getContrastColor(courseColor);
+            
+            return (
+              <div key={booking.id} className="relative flex flex-col p-4 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-slate-50">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shadow-sm shrink-0"
+                    style={{ backgroundColor: courseColor, color: textColor }}
+                  >
+                     {booking.courses?.name?.slice(0, 1) || 'B'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-black text-slate-900 text-xs truncate leading-tight">{booking.courses?.name}</p>
+                    <span className={`${statusColors[status]} inline-flex items-center rounded-md px-1.5 py-0.5 text-[8px] font-black uppercase ring-1 ring-inset tracking-tighter mt-0.5`}>
+                      {t(`status.${status}`)}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Schedule</span>
+                    <span className="text-xs font-mono font-black text-indigo-600">{booking.start.slice(0, 5)} - {booking.end.slice(0, 5)}</span>
+                  </div>
+                  {booking.check_in && (
+                    <div className="text-right">
+                      <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest block">Arrived</span>
+                      <span className="text-[10px] font-mono font-bold text-slate-600">{booking.check_in.slice(11, 16)}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <button onClick={() => onOpenManual(b.id)} className="p-1.5 text-slate-300 hover:text-indigo-600"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg></button>
+            );
+          })}
+          {bookings.length === 0 && (
+            <div className="py-6 text-center">
+              <p className="text-[11px] text-slate-400 font-bold italic">{t('card.no_bookings')}</p>
             </div>
-            {b.check_in && (
-              <div className="text-[10px] font-mono font-bold text-indigo-600 mb-3">{b.check_in.slice(11, 16)} — {b.check_out ? b.check_out.slice(11, 16) : '--:--'}</div>
-            )}
-            <div className="flex space-x-2">
-              {!b.check_in ? (
-                <button onClick={() => onCheckIn(b.id)} className="flex-1 bg-indigo-600 text-white font-black py-2 rounded-xl text-[9px] uppercase tracking-widest">{t('card.check_in')}</button>
-              ) : !b.check_out ? (
-                <button onClick={() => onCheckOut(b.id)} className="flex-1 bg-orange-500 text-white font-black py-2 rounded-xl text-[9px] uppercase tracking-widest">{t('card.check_out')}</button>
-              ) : null}
-            </div>
-          </div>
-        ))}
-        {bookings.length === 0 && !isLoading && <p className="text-slate-400 text-xs italic text-center py-8">{t('parent.no_bookings')}</p>}
+          )}
+        </div>
       </div>
     </div>
   );
