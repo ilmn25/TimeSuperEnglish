@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { StudentGroupedData, Booking } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +36,8 @@ const StudentCard: React.FC<StudentCardProps> = ({
     return (yiq >= 128) ? '#1e293b' : '#ffffff';
   };
 
-  const getBookingStatus = useCallback((booking: Booking) => {
+  // Added explicit return type 'blue' | 'green' | 'yellow' | 'red' to satisfy TypeScript checks in the JSX below
+  const getBookingStatus = useCallback((booking: Booking): 'blue' | 'green' | 'yellow' | 'red' => {
     if (booking.check_in) return 'green';
     const hktNow = getHKTNow();
     const bookingDate = new Date(booking.date);
@@ -52,7 +52,8 @@ const StudentCard: React.FC<StudentCardProps> = ({
   const statusColors = { 
     blue: 'bg-blue-50 text-blue-600 ring-blue-500/10', 
     green: 'bg-emerald-50 text-emerald-600 ring-emerald-500/10', 
-    red: 'bg-rose-50 text-rose-600 ring-rose-500/10' 
+    red: 'bg-rose-50 text-rose-600 ring-rose-500/10',
+    yellow: 'bg-amber-50 text-amber-600 ring-amber-500/10'
   };
 
   return (
@@ -97,9 +98,10 @@ const StudentCard: React.FC<StudentCardProps> = ({
                       <div className="min-w-0">
                         <p className="font-black text-slate-900 text-sm truncate leading-tight">{booking.courses?.name}</p>
                         <div className="mt-1">
-                          {/* Fixed duplicate className attribute below by merging them into one */}
-                          <span className={`${statusColors[status]} inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-black uppercase ring-1 ring-inset tracking-tighter transition-all`}>
-                            {status === 'red' ? t('status.missed') : status === 'green' ? t('status.attended') : t('status.future')}
+                          <span className={`${statusColors[status as keyof typeof statusColors]} inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-black uppercase ring-1 ring-inset tracking-tighter transition-all`}>
+                            {status === 'red' ? t('status.missed') : 
+                             status === 'yellow' ? t('status.partial') :
+                             status === 'green' ? t('status.attended') : t('status.future')}
                           </span>
                         </div>
                       </div>

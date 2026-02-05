@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { Student, Booking, Course } from '../types';
@@ -317,6 +316,17 @@ const ParentDashboard: React.FC = () => {
 
   const statusColors = { blue: 'bg-blue-400', green: 'bg-green-500', yellow: 'bg-yellow-400', red: 'bg-red-500' };
 
+  // Mapping from internal color identifier to i18n translation key
+  const getTranslatedStatus = (status: BookingStatus) => {
+    const mapping: Record<BookingStatus, string> = {
+      red: 'missed',
+      yellow: 'partial',
+      green: 'attended',
+      blue: 'future'
+    };
+    return t(`status.${mapping[status]}`);
+  };
+
   return (
     <div className={`space-y-8 pb-20 transition-all duration-500 ease-in-out ${(selectedTimelineInfo && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0'}`}>
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
@@ -569,7 +579,7 @@ const ParentDashboard: React.FC = () => {
                           <div className={`flex items-center space-x-2 ${(sortField === 'status' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
                              <div className={`w-2 h-2 rounded-full ${statusColors[b.calculatedStatus]}`} />
                              <span className={`text-[10px] font-black uppercase tracking-widest ${b.calculatedStatus === 'red' ? 'text-red-500' : b.calculatedStatus === 'yellow' ? 'text-yellow-600' : b.calculatedStatus === 'green' ? 'text-green-600' : 'text-blue-500'}`}>
-                               {t(`status.${b.calculatedStatus === 'yellow' ? 'partial' : b.calculatedStatus}`)}
+                               {getTranslatedStatus(b.calculatedStatus)}
                              </span>
                           </div>
                         </td>
@@ -699,6 +709,14 @@ const DashboardStudentCard: React.FC<{
             const courseColor = booking.courses?.color || '#f1f5f9';
             const textColor = getContrastColor(courseColor);
             
+            // Mapping for the specific card status labels
+            const statusKey = {
+              red: 'missed',
+              yellow: 'partial',
+              green: 'attended',
+              blue: 'future'
+            }[status];
+
             return (
               <div key={booking.id} className="relative flex flex-col p-4 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-slate-50">
                 <div className="flex items-center space-x-3 mb-3">
@@ -711,7 +729,7 @@ const DashboardStudentCard: React.FC<{
                   <div className="min-w-0">
                     <p className="font-black text-slate-900 text-xs truncate leading-tight">{booking.courses?.name}</p>
                     <span className={`${statusColors[status]} inline-flex items-center rounded-md px-1.5 py-0.5 text-[8px] font-black uppercase ring-1 ring-inset tracking-tighter mt-0.5`}>
-                      {t(`status.${status}`)}
+                      {t(`status.${statusKey}`)}
                     </span>
                   </div>
                 </div>
