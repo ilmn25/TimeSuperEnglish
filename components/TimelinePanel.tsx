@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Booking } from '../types';
 
@@ -21,7 +22,7 @@ const hexToRgba = (hex: string, alpha: number) => {
 const TimelinePanel: React.FC<TimelinePanelProps> = ({ studentName, bookings, date, isExpanded, onToggle }) => {
   const [currentTime, setCurrentTime] = useState<string>('');
   const START_HOUR = 8;
-  const END_HOUR = 23;
+  const END_HOUR = 22;
   const TOTAL_HOURS = END_HOUR - START_HOUR;
 
   useEffect(() => {
@@ -41,7 +42,6 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ studentName, bookings, da
 
   const timeToPercent = (timeStr: string | null) => {
     if (!timeStr) return 100;
-    // Handle both HH:mm:ss and ISO strings
     const parts = timeStr.includes('T') ? timeStr.split('T')[1].split(':') : timeStr.split(':');
     const hours = Number(parts[0]);
     const minutes = Number(parts[1]) || 0;
@@ -55,56 +55,116 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ studentName, bookings, da
   if (!studentName) return null;
 
   return (
-    <div className={`fixed right-0 top-[42px] sm:top-[48px] bottom-0 z-[100] bg-slate-900 shadow-2xl transition-transform duration-500 flex flex-col rounded-tl-[2rem] sm:rounded-tl-[3rem] w-[85vw] sm:w-96 ${isExpanded ? 'translate-x-0' : 'translate-x-full'}`}>
-      <button onClick={onToggle} className="absolute -left-11 top-1/2 -translate-y-1/2 w-11 h-24 bg-slate-900 text-white rounded-l-[2rem] flex items-center justify-center hover:bg-indigo-600 transition-all z-[105]">
+    <div className={`fixed right-0 top-0 bottom-0 z-[100] bg-slate-900 shadow-2xl transition-transform duration-500 flex flex-col w-[85vw] sm:w-96 ${isExpanded ? 'translate-x-0' : 'translate-x-full'}`}>
+      <button 
+        onClick={onToggle} 
+        className="absolute -left-10 top-1/2 -translate-y-1/2 w-10 h-24 bg-slate-900 text-white rounded-l-2xl flex items-center justify-center hover:bg-indigo-600 transition-all z-[105] border-l border-t border-b border-slate-800"
+      >
         <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
       </button>
 
-      <div className="px-6 sm:px-8 pt-7 sm:pt-9 pb-6 bg-slate-900 text-white shrink-0">
-        <span className="text-[11px] font-black tracking-[0.2em] uppercase opacity-70">Daily Timeline</span>
-        <h4 className="font-black text-xl sm:text-3xl text-indigo-100 truncate mt-3">{studentName}</h4>
-        <div className="flex items-center space-x-3 mt-3">
-          <span className="text-[11px] text-slate-400 font-mono bg-slate-800/50 px-2 py-1 rounded">{date}</span>
-          <span className="text-[11px] text-indigo-400 font-black uppercase">HKT</span>
+      <div className="px-8 pt-10 pb-8 bg-slate-900 text-white shrink-0 border-b border-slate-800">
+        <span className="text-[10px] font-black tracking-[0.3em] uppercase opacity-40">System Timeline</span>
+        <h4 className="font-black text-2xl text-white truncate mt-2">{studentName}</h4>
+        <div className="flex items-center space-x-3 mt-4">
+          <span className="text-[10px] text-slate-400 font-mono bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700/50">{date}</span>
+          <div className="flex items-center space-x-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">Live HKT</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 relative bg-slate-50 overflow-y-auto overflow-x-hidden no-scrollbar">
-        <div className="relative h-[1200px] flex px-4 sm:px-10 py-10"> 
-          <div className="w-10 sm:w-14 shrink-0 flex flex-col justify-between">
+      <div className="flex-1 relative bg-[#0f172a] overflow-y-auto no-scrollbar">
+        <div className="relative h-[1000px] flex px-6 sm:px-8 py-12"> 
+          <div className="w-12 shrink-0 flex flex-col justify-between relative z-20">
             {hours.map((hour) => (
-              <div key={hour} className="relative h-0"><span className="absolute -top-2 left-0 text-[10px] font-mono font-black text-slate-400">{hour.toString().padStart(2, '0')}:00</span></div>
+              <div key={hour} className="relative h-0">
+                <span className="absolute -top-2.5 left-0 text-[10px] font-mono font-black text-slate-500 bg-[#0f172a] pr-2">
+                  {hour.toString().padStart(2, '0')}:00
+                </span>
+              </div>
             ))}
           </div>
 
-          <div className="flex-1 relative ml-2 sm:ml-4">
-            <div className="absolute inset-0 flex flex-col justify-between">
-              {hours.map((hour) => (<div key={hour} className="w-full border-t border-slate-200/60 h-0" />))}
+          <div className="flex-1 relative ml-4">
+            <div className="absolute inset-0 flex flex-col justify-between opacity-20">
+              {hours.map((hour) => (
+                <div key={hour} className="w-full border-t border-slate-700 h-0" />
+              ))}
             </div>
 
             <div className="absolute inset-0 z-10">
               {bookings.map((booking) => {
                 const top = timeToPercent(booking.start);
                 const height = timeToPercent(booking.end) - top;
+                const courseColor = booking.courses?.color || '#6366f1';
+                
+                const attTop = booking.check_in ? timeToPercent(booking.check_in) : 0;
+                const attBottom = booking.check_in 
+                  ? (booking.check_out ? timeToPercent(booking.check_out) : timeToPercent(currentTime))
+                  : 0;
+                const attHeight = attBottom - attTop;
+
+                const tooltip = `${booking.courses?.name}\nScheduled: ${booking.start.slice(0,5)} - ${booking.end.slice(0,5)}${booking.check_in ? `\nActual: ${booking.check_in.slice(11,16)} - ${booking.check_out ? booking.check_out.slice(11,16) : 'Now'}` : ''}`;
+
                 return (
-                  <div key={booking.id} className="absolute left-0 right-1 border-l-[6px] transition-all" style={{ top: `${top}%`, height: `${height}%`, backgroundColor: hexToRgba(booking.courses?.color || '#cbd5e1', 0.2), borderLeftColor: booking.courses?.color || '#cbd5e1' }} />
-                );
-              })}
-              {bookings.filter(b => b.check_in).map((b) => {
-                const top = timeToPercent(b.check_in!);
-                const bottom = b.check_out ? timeToPercent(b.check_out) : timeToPercent(currentTime);
-                return (
-                  <div key={`att-${b.id}`} className={`absolute right-0 w-[94%] rounded-r-2xl ${!b.check_out ? 'bg-orange-500/50 animate-pulse' : 'bg-indigo-600/40'}`} style={{ top: `${top}%`, height: `${bottom - top}%` }} />
+                  <div key={booking.id} className="absolute left-0 right-0 group" style={{ top: `${top}%`, height: `${height}%` }} title={tooltip}>
+                    <div 
+                      className="absolute inset-0 rounded-xl border-2 transition-all group-hover:ring-4 group-hover:ring-white/5" 
+                      style={{ 
+                        backgroundColor: hexToRgba(courseColor, 0.1), 
+                        borderColor: hexToRgba(courseColor, 0.3),
+                        borderStyle: 'dashed'
+                      }} 
+                    />
+                    
+                    {booking.check_in && (
+                      <div 
+                        className={`absolute left-1 right-1 rounded-lg border-l-4 shadow-xl transition-all group-hover:brightness-110 ${!booking.check_out ? 'animate-pulse' : ''}`}
+                        style={{ 
+                          top: `${attTop - top}%`, 
+                          height: `${attHeight}%`,
+                          backgroundColor: hexToRgba(courseColor, 0.8),
+                          borderLeftColor: courseColor,
+                          borderTopColor: hexToRgba(courseColor, 0.2),
+                          borderRightColor: hexToRgba(courseColor, 0.2),
+                          borderBottomColor: hexToRgba(courseColor, 0.2)
+                        }}
+                      >
+                        <div className="absolute top-2 left-3 flex flex-col">
+                          <span className="text-[8px] font-black text-white uppercase tracking-widest leading-none opacity-80 mb-1">{booking.courses?.name}</span>
+                          <span className="text-[10px] font-mono font-black text-white leading-none">
+                            {booking.check_in.slice(11, 16)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
 
             {date === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" }) && (
-              <div className="absolute left-0 right-0 border-t-2 border-red-500 z-30 flex items-center" style={{ top: `${timeToPercent(currentTime)}%` }}>
-                <div className="w-3 h-3 rounded-full bg-red-500 -ml-1.5 ring-4 ring-white shadow-xl" />
+              <div className="absolute left-0 right-0 border-t border-red-500/50 z-30 flex items-center pointer-events-none" style={{ top: `${timeToPercent(currentTime)}%` }}>
+                <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+                <div className="ml-2 px-1.5 py-0.5 bg-red-500 text-white text-[8px] font-black rounded uppercase tracking-tighter shadow-lg">NOW</div>
               </div>
             )}
           </div>
+        </div>
+      </div>
+      
+      <div className="p-6 bg-slate-900 border-t border-slate-800 shrink-0">
+        <div className="flex items-center justify-between text-slate-500">
+           <div className="flex items-center space-x-2">
+             <div className="w-2 h-2 rounded-full border border-slate-700 border-dashed" />
+             <span className="text-[9px] font-black uppercase tracking-widest">Schedule</span>
+           </div>
+           <div className="flex items-center space-x-2">
+             <div className="w-2 h-2 rounded-full bg-slate-600" />
+             <span className="text-[9px] font-black uppercase tracking-widest">Attendance</span>
+           </div>
         </div>
       </div>
     </div>
