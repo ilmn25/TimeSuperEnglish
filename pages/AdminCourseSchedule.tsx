@@ -335,7 +335,7 @@ const AdminCourseSchedule: React.FC = () => {
              
              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex p-1 bg-slate-100 rounded-2xl">
-                  <button type="button" onClick={() => { if (!editingId) setScheduleType('recurring'); }} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${scheduleType === 'recurring' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${editingId ? 'cursor-not-allowed' : ''}`}>Weekly</button>
+                  <button type="button" onClick={() => { if (!editingId) setScheduleType('recurring'); }} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${scheduleType === 'recurring' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${editingId ? 'cursor-not-allowed' : ''}`}>Routine</button>
                   <button type="button" onClick={() => { if (!editingId) setScheduleType('one-off'); }} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${scheduleType === 'one-off' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'} ${editingId ? 'cursor-not-allowed' : ''}`}>One-off</button>
                 </div>
 
@@ -415,6 +415,11 @@ const AdminCourseSchedule: React.FC = () => {
                       <div className="flex items-center space-x-2 mb-1">
                         <span className="text-[10px] font-mono font-black text-white">{s.start_time.slice(0,5)}—{s.end_time.slice(0,5)}</span>
                         {s.biweekly && <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 text-[8px] font-black uppercase rounded">2w</span>}
+                        {s.date ? (
+                           <span className="px-1.5 py-0.5 bg-slate-500/20 text-slate-300 text-[8px] font-black uppercase rounded">One-off</span>
+                        ) : (
+                           <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 text-[8px] font-black uppercase rounded">Routine</span>
+                        )}
                       </div>
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">
                         {s.date ? s.date : s.days_of_week?.map(d => WEEKDAYS[d]).join(', ')}
@@ -450,7 +455,11 @@ const AdminCourseSchedule: React.FC = () => {
               <div className="flex items-center space-x-4">
                  <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: course?.color }} />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Routine</span>
+                 </div>
+                 <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 rounded-full bg-slate-600" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">One-off</span>
                  </div>
                  <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 rounded-full border border-indigo-500 border-dashed" />
@@ -492,12 +501,29 @@ const AdminCourseSchedule: React.FC = () => {
                          >
                            <div className="flex items-center justify-between mb-2">
                              <span className={`text-xs font-black ${isToday ? 'text-indigo-600' : (isSelected || isPreviewed) ? 'text-indigo-700' : 'text-slate-400'}`}>{dateObj.getDate()}</span>
-                             {daySchedules.length > 0 && <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: course?.color }} />}
+                             {daySchedules.length > 0 && (
+                               <div className="flex space-x-0.5">
+                                  {daySchedules.some(s => !s.date) && <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: course?.color }} />}
+                                  {daySchedules.some(s => !!s.date) && <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />}
+                               </div>
+                             )}
                            </div>
                            <div className="space-y-1 overflow-y-auto no-scrollbar max-h-[4.5rem]">
                              {daySchedules.slice(0, 3).map((s, idx) => (
-                               <div key={idx} className="px-2 py-1 rounded-lg text-[8px] font-black text-white shadow-sm flex flex-col" style={{ backgroundColor: course?.color || '#6366f1' }}>
+                               <div 
+                                 key={idx} 
+                                 className="group/slot relative px-2 py-1 rounded-lg text-[8px] font-black text-white shadow-sm flex flex-col" 
+                                 style={{ backgroundColor: s.date ? '#475569' : (course?.color || '#6366f1') }}
+                               >
                                  <span className="leading-tight opacity-80 uppercase tracking-tighter truncate">{s.start_time.slice(0,5)}</span>
+                                 {s.date && (
+                                   <button 
+                                     onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
+                                     className="absolute top-1 right-1 opacity-0 group-hover/slot:opacity-100 hover:text-red-400 transition-all"
+                                   >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                                   </button>
+                                 )}
                                </div>
                              ))}
                              {daySchedules.length > 3 && (
@@ -552,6 +578,7 @@ const AdminCourseSchedule: React.FC = () => {
                    const top = timeToPercent(s.start_time);
                    const bottom = timeToPercent(s.end_time);
                    const height = bottom - top;
+                   const color = s.date ? '#475569' : (course?.color || '#6366f1');
                    
                    return (
                      <div 
@@ -560,18 +587,30 @@ const AdminCourseSchedule: React.FC = () => {
                        style={{ 
                          top: `${top}%`, 
                          height: `${height}%`,
-                         backgroundColor: `${course?.color}20`, // 20% opacity
-                         borderLeftColor: course?.color,
-                         borderTopColor: `${course?.color}40`,
-                         borderRightColor: `${course?.color}40`,
-                         borderBottomColor: `${course?.color}40`,
+                         backgroundColor: `${color}20`, 
+                         borderLeftColor: color,
+                         borderTopColor: `${color}40`,
+                         borderRightColor: `${color}40`,
+                         borderBottomColor: `${color}40`,
                          borderWidth: '1px',
                          borderLeftWidth: '4px'
                        }}
                      >
-                       <div className="p-3">
-                         <span className="block text-[8px] font-black uppercase tracking-widest text-white/50 mb-1">{course?.name}</span>
-                         <span className="block text-xs font-mono font-black text-white">{s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}</span>
+                       <div className="p-3 relative h-full">
+                         <div className="flex items-start justify-between">
+                            <div>
+                               <span className="block text-[8px] font-black uppercase tracking-widest text-white/50 mb-1">{s.date ? 'One-off' : 'Routine'}</span>
+                               <span className="block text-xs font-mono font-black text-white">{s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}</span>
+                            </div>
+                            {s.date && (
+                               <button 
+                                 onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
+                                 className="p-1.5 bg-slate-800/80 rounded-lg text-slate-400 hover:text-red-400 transition-all"
+                               >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                               </button>
+                            )}
+                         </div>
                        </div>
                      </div>
                    );
@@ -589,9 +628,18 @@ const AdminCourseSchedule: React.FC = () => {
            </div>
 
            <div className="p-8 border-t border-slate-800 bg-slate-900 shrink-0">
-             <div className="flex items-center space-x-3">
-               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: course?.color }} />
-               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{timelineProjections.length} active slots</span>
+             <div className="flex flex-col space-y-3">
+               <div className="flex items-center space-x-3">
+                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: course?.color }} />
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Routine Slot</span>
+               </div>
+               <div className="flex items-center space-x-3">
+                 <div className="w-3 h-3 rounded-full bg-slate-600" />
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">One-off Slot</span>
+               </div>
+               <div className="pt-2 border-t border-slate-800">
+                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{timelineProjections.length} active slots</span>
+               </div>
              </div>
            </div>
         </div>
