@@ -5,19 +5,16 @@ import { api } from '../services/api';
 import { Booking, Issue } from '../types';
 import { useTranslation } from 'react-i18next';
 
-/**
- * Get current HKT date and time strings for safe comparison
- */
 const getHKTNowStrings = () => {
   const now = new Date();
-  const dateStr = now.toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" }); // YYYY-MM-DD
+  const dateStr = now.toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" });
   const timeStr = now.toLocaleTimeString("en-GB", { 
     timeZone: "Asia/Hong_Kong", 
     hour12: false,
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit'
-  }); // HH:mm:ss
+  });
   return { dateStr, timeStr };
 };
 
@@ -51,29 +48,24 @@ const IssuesPage: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // Detected Problems based on financial discrepancies
   const problems = useMemo(() => {
     const { dateStr: hktToday, timeStr: hktNowTime } = getHKTNowStrings();
     const existingIssueBookingIds = new Set(issues.map(i => i.booking_id));
     
     return bookings.filter(b => {
-      // Skip if already tracked as an issue
       if (existingIssueBookingIds.has(b.id)) return false;
 
-      // Rule 1: Attended but no invoice (Ad-hoc / Unbilled)
-      // Check for both check_in and check_out as suggested
       const isAttended = !!b.check_in || !!b.check_out;
       const isAdhoc = isAttended && !b.invoice_id;
 
-      // Rule 2: Missed but has invoice (Billed Absence)
-      // Only flag as missed if the scheduled time has fully passed in HK time
-      // Time format comparison (HH:mm:ss) works because it's 24h zero-padded
-      const isPassed = (b.date < hktToday) || (b.date === hktToday && b.end < hktNowTime);
+      const bookingEndWithSec = b.end.length === 5 ? `${b.end}:00` : b.end;
+      const isPassed = (b.date < hktToday) || (b.date === hktToday && bookingEndWithSec < hktNowTime);
       const isMissed = isPassed && !isAttended && !!b.invoice_id;
 
       return isMissed || isAdhoc;
     }).map(b => {
-       const isAdhoc = (!!b.check_in || !!b.check_out) && !b.invoice_id;
+       const isAttended = !!b.check_in || !!b.check_out;
+       const isAdhoc = isAttended && !b.invoice_id;
        return {
          booking: b,
          type: isAdhoc ? 'adhoc_booking' : 'missed_booking' as 'missed_booking' | 'adhoc_booking'
@@ -89,7 +81,7 @@ const IssuesPage: React.FC = () => {
         issue_type: type,
         resolution: 'pending'
       });
-      fetchData();
+      await fetchData();
     } catch (err) {
       alert('Failed to create issue');
     } finally {
@@ -102,7 +94,7 @@ const IssuesPage: React.FC = () => {
     try {
       const resolvedAt = (resolution !== 'pending') ? new Date().toISOString() : null;
       await api.updateIssue(issueId, { resolution, resolved_at: resolvedAt });
-      fetchData();
+      await fetchData();
     } catch (err) {
       alert('Failed to update resolution');
     } finally {
@@ -139,7 +131,6 @@ const IssuesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Detected Discrepancies (Problems) */}
       <section className="space-y-6">
         <div className="flex items-center space-x-3">
           <div className="w-1.5 h-6 bg-red-500 rounded-full" />
@@ -186,7 +177,6 @@ const IssuesPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Active & Historical Issues */}
       <section className="space-y-6">
         <div className="flex items-center space-x-3">
           <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
