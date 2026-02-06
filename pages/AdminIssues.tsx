@@ -332,12 +332,12 @@ const AdminIssues: React.FC = () => {
                               <>
                                 <button onClick={() => handleUpdateResolution(item.id!, 'reschedule')} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">{t('issues.reschedule')}</button>
                                 <button onClick={() => handleUpdateResolution(item.id!, 'refund')} className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 hover:text-white transition-all">{t('issues.refund')}</button>
-                                <button onClick={() => handleUpdateResolution(item.id!, 'waived')} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-sm">{t('issues.waived')}</button>
+                                <button onClick={() => handleUpdateResolution(item.id!, 'waived')} className="px-4 py-2 bg-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-300 transition-all active:scale-95">{t('issues.waived')}</button>
                               </>
                             ) : (
                               <>
                                 <button onClick={() => handleUpdateResolution(item.id!, 'billing')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-sm">{t('issues.mark_as_billing')}</button>
-                                <button onClick={() => handleUpdateResolution(item.id!, 'waived')} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-sm">{t('issues.mark_as_waived')}</button>
+                                <button onClick={() => handleUpdateResolution(item.id!, 'waived')} className="px-4 py-2 bg-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-300 transition-all active:scale-95">{t('issues.mark_as_waived')}</button>
                               </>
                             )}
                           </>
