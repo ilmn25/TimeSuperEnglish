@@ -44,6 +44,9 @@ const AdminCourseSchedule: React.FC = () => {
     biweekly: false
   });
 
+  // Deletion State
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
   // Dragging State
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<string | null>(null);
@@ -173,7 +176,11 @@ const AdminCourseSchedule: React.FC = () => {
     }
   };
 
-  const handleEdit = (schedule: CourseSchedule) => {
+  const handleEdit = (schedule: CourseSchedule, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     setEditingId(schedule.id);
     setScheduleType(schedule.date ? 'one-off' : 'recurring');
     setFormData({
@@ -200,14 +207,19 @@ const AdminCourseSchedule: React.FC = () => {
     setSelectedDates([]);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to remove these open hours?')) return;
+  const handleDelete = async () => {
+    if (!deleteConfirmId) return;
+    setIsProcessing(true);
     try {
-      await api.deleteCourseSchedule(id);
-      if (editingId === id) cancelEdit();
+      await api.deleteCourseSchedule(deleteConfirmId);
+      if (editingId === deleteConfirmId) cancelEdit();
+      setDeleteConfirmId(null);
       fetchData();
     } catch (err) {
-      alert('Failed to delete.');
+      console.error('Failed to delete schedule:', err);
+      alert('Failed to delete open hours. Please try again.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -329,7 +341,7 @@ const AdminCourseSchedule: React.FC = () => {
                   {editingId ? 'Edit Open Hours' : 'New Open Hours'}
                 </h3>
                 {editingId && (
-                  <button onClick={cancelEdit} className="text-[10px] font-black text-indigo-600 hover:underline uppercase tracking-widest">Cancel Edit</button>
+                  <button type="button" onClick={cancelEdit} className="text-[10px] font-black text-indigo-600 hover:underline uppercase tracking-widest">Cancel Edit</button>
                 )}
              </div>
              
@@ -425,12 +437,12 @@ const AdminCourseSchedule: React.FC = () => {
                         {s.date ? s.date : s.days_of_week?.map(d => WEEKDAYS[d]).join(', ')}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-1 shrink-0 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                      <button onClick={() => handleEdit(s)} className="p-2 text-slate-400 hover:text-indigo-400 transition-all">
+                    <div className="flex items-center space-x-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover/item:opacity-100 transition-opacity">
+                      <button type="button" onClick={(e) => handleEdit(s, e)} onMouseDown={e => e.stopPropagation()} className="p-2 text-slate-400 hover:text-indigo-400 transition-all">
                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                       </button>
-                      <button onClick={() => handleDelete(s.id)} className="p-2 text-slate-400 hover:text-red-400 transition-all">
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(s.id); }} onMouseDown={e => e.stopPropagation()} className="p-2 text-slate-400 hover:text-red-400 transition-all">
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
                   </div>
@@ -444,11 +456,11 @@ const AdminCourseSchedule: React.FC = () => {
         <div className="lg:col-span-8 bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden flex flex-col">
            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">
+                <button type="button" onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <span className="text-lg font-black text-slate-900 uppercase tracking-tight w-32 text-center">{viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">
+                <button type="button" onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                 </button>
               </div>
@@ -518,10 +530,12 @@ const AdminCourseSchedule: React.FC = () => {
                                  <span className="leading-tight opacity-80 uppercase tracking-tighter truncate">{s.start_time.slice(0,5)}</span>
                                  {s.date && (
                                    <button 
-                                     onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
-                                     className="absolute top-1 right-1 opacity-0 group-hover/slot:opacity-100 hover:text-red-400 transition-all"
+                                     type="button"
+                                     onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(s.id); }}
+                                     onMouseDown={e => e.stopPropagation()}
+                                     className="absolute top-1 right-1 opacity-0 group-hover/slot:opacity-100 hover:text-red-400 transition-all z-10"
                                    >
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                    </button>
                                  )}
                                </div>
@@ -551,7 +565,7 @@ const AdminCourseSchedule: React.FC = () => {
            <div className="p-8 border-b border-slate-800 shrink-0">
               <div className="flex items-center justify-between mb-4">
                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Daily Timeline</span>
-                 <button onClick={() => setSelectedTimelineDate(null)} className="p-2 hover:bg-slate-800 rounded-xl transition-all">
+                 <button type="button" onClick={() => setSelectedTimelineDate(null)} className="p-2 hover:bg-slate-800 rounded-xl transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                  </button>
               </div>
@@ -602,14 +616,24 @@ const AdminCourseSchedule: React.FC = () => {
                                <span className="block text-[8px] font-black uppercase tracking-widest text-white/50 mb-1">{s.date ? 'One-off' : 'Routine'}</span>
                                <span className="block text-xs font-mono font-black text-white">{s.start_time.slice(0, 5)} - {s.end_time.slice(0, 5)}</span>
                             </div>
-                            {s.date && (
+                            <div className="flex items-center space-x-1">
                                <button 
-                                 onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
+                                 type="button"
+                                 onClick={(e) => handleEdit(s, e)}
+                                 onMouseDown={e => e.stopPropagation()}
+                                 className="p-1.5 bg-slate-800/80 rounded-lg text-slate-400 hover:text-indigo-400 transition-all"
+                               >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                               </button>
+                               <button 
+                                 type="button"
+                                 onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(s.id); }}
+                                 onMouseDown={e => e.stopPropagation()}
                                  className="p-1.5 bg-slate-800/80 rounded-lg text-slate-400 hover:text-red-400 transition-all"
                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                </button>
-                            )}
+                            </div>
                          </div>
                        </div>
                      </div>
@@ -642,6 +666,29 @@ const AdminCourseSchedule: React.FC = () => {
                </div>
              </div>
            </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setDeleteConfirmId(null)}>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden p-10 text-center animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+             </div>
+             <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Remove Schedule?</h3>
+             <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">Are you sure you want to permanently delete these open hours? This action cannot be undone.</p>
+             <div className="flex gap-4">
+               <button onClick={() => setDeleteConfirmId(null)} className="flex-1 px-6 py-4 text-xs font-black text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all uppercase tracking-widest">Cancel</button>
+               <button 
+                 onClick={handleDelete} 
+                 disabled={isProcessing} 
+                 className="flex-1 px-6 py-4 text-xs font-black text-white bg-red-600 hover:bg-red-700 rounded-2xl shadow-xl shadow-red-100 transition-all uppercase tracking-widest flex items-center justify-center"
+               >
+                 {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Delete'}
+               </button>
+             </div>
+          </div>
         </div>
       )}
     </div>

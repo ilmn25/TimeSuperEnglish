@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
-import { Booking, Issue } from '../types';
+import { Booking, Issue, Student, Course } from '../types';
 import { useTranslation } from 'react-i18next';
 
 const getHKTNowStrings = () => {
@@ -18,6 +18,21 @@ const getHKTNowStrings = () => {
   return { dateStr, timeStr };
 };
 
+type UnifiedIssue = {
+  id?: string; // If undefined, it's a detected problem not yet in DB
+  booking_id: string;
+  issue_type: 'missed_booking' | 'adhoc_booking';
+  resolution: string | 'unrecorded'; // 'unrecorded' for detected but not saved
+  date: string;
+  student_name: string;
+  course_name: string;
+  booking: Booking;
+  created_at?: string;
+};
+
+type SortField = 'date' | 'student' | 'course' | 'type' | 'status';
+type SortOrder = 'asc' | 'desc';
+
 const AdminIssues: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const { t } = useTranslation();
@@ -26,6 +41,13 @@ const AdminIssues: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Filter & Sort State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const fetchData = useCallback(async () => {
     if (!orgId) return;
@@ -48,30 +70,79 @@ const AdminIssues: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  const problems = useMemo(() => {
+  // Merge recorded issues and detected problems into one list
+  const unifiedDiscrepancies = useMemo(() => {
     const { dateStr: hktToday, timeStr: hktNowTime } = getHKTNowStrings();
-    const existingIssueBookingIds = new Set(issues.map(i => i.booking_id));
+    const existingIssueBookingIds = new Map(issues.map(i => [i.booking_id, i]));
     
-    return bookings.filter(b => {
-      if (existingIssueBookingIds.has(b.id)) return false;
+    const allItems: UnifiedIssue[] = [];
+
+    // Add recorded issues
+    issues.forEach(issue => {
+      if (issue.bookings) {
+        allItems.push({
+          id: issue.id,
+          booking_id: issue.booking_id,
+          issue_type: issue.issue_type,
+          resolution: issue.resolution,
+          date: issue.bookings.date,
+          student_name: issue.bookings.students?.name || 'Unknown',
+          course_name: issue.bookings.courses?.name || 'Unknown',
+          booking: issue.bookings,
+          created_at: issue.created_at
+        });
+      }
+    });
+
+    // Add unrecorded detected problems
+    bookings.forEach(b => {
+      if (existingIssueBookingIds.has(b.id)) return;
 
       const isAttended = !!b.check_in || !!b.check_out;
       const isAdhoc = isAttended && !b.invoice_id;
-
       const bookingEndWithSec = b.end.length === 5 ? `${b.end}:00` : b.end;
       const isPassed = (b.date < hktToday) || (b.date === hktToday && bookingEndWithSec < hktNowTime);
       const isMissed = isPassed && !isAttended && !!b.invoice_id;
 
-      return isMissed || isAdhoc;
-    }).map(b => {
-       const isAttended = !!b.check_in || !!b.check_out;
-       const isAdhoc = isAttended && !b.invoice_id;
-       return {
-         booking: b,
-         type: isAdhoc ? 'adhoc_booking' : 'missed_booking' as 'missed_booking' | 'adhoc_booking'
-       };
+      if (isMissed || isAdhoc) {
+        allItems.push({
+          booking_id: b.id,
+          issue_type: isAdhoc ? 'adhoc_booking' : 'missed_booking',
+          resolution: 'unrecorded',
+          date: b.date,
+          student_name: b.students?.name || 'Unknown',
+          course_name: b.courses?.name || 'Unknown',
+          booking: b
+        });
+      }
     });
+
+    return allItems;
   }, [bookings, issues]);
+
+  // Apply filtering and sorting
+  const processedDiscrepancies = useMemo(() => {
+    let filtered = unifiedDiscrepancies.filter(item => {
+      const matchesSearch = item.student_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           item.course_name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = !filterType || item.issue_type === filterType;
+      const matchesStatus = !filterStatus || item.resolution === filterStatus;
+      
+      return matchesSearch && matchesType && matchesStatus;
+    });
+
+    return filtered.sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'date': comparison = a.date.localeCompare(b.date); break;
+        case 'student': comparison = a.student_name.localeCompare(b.student_name); break;
+        case 'course': comparison = a.course_name.localeCompare(b.course_name); break;
+        case 'type': comparison = a.issue_type.localeCompare(b.issue_type); break;
+        case 'status': comparison = a.resolution.localeCompare(b.resolution); break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [unifiedDiscrepancies, searchQuery, filterType, filterStatus, sortField, sortOrder]);
 
   const handleCreateIssue = async (bookingId: string, type: 'missed_booking' | 'adhoc_booking') => {
     setIsProcessing(true);
@@ -92,8 +163,6 @@ const AdminIssues: React.FC = () => {
   const handleUpdateResolution = async (issueId: string, resolution: string) => {
     setIsProcessing(true);
     try {
-      // Per requirements, frontend only sets resolution. 
-      // The backend handles resolved_at automatically.
       await api.updateIssue(issueId, { resolution });
       await fetchData();
     } catch (err) {
@@ -103,13 +172,27 @@ const AdminIssues: React.FC = () => {
     }
   };
 
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const renderSortArrow = (field: SortField) => {
+    if (sortField !== field) return null;
+    return <span className="ml-1 text-[10px]">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+  };
+
   const stats = useMemo(() => {
     return {
-      pending: issues.filter(i => i.resolution === 'pending').length,
-      resolved: issues.filter(i => i.resolution !== 'pending').length,
-      problems: problems.length
+      pending: unifiedDiscrepancies.filter(i => i.resolution === 'pending').length,
+      resolved: unifiedDiscrepancies.filter(i => i.resolution !== 'pending' && i.resolution !== 'unrecorded').length,
+      unrecorded: unifiedDiscrepancies.filter(i => i.resolution === 'unrecorded').length
     };
-  }, [issues, problems]);
+  }, [unifiedDiscrepancies]);
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
@@ -120,6 +203,11 @@ const AdminIssues: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-3 bg-white border border-slate-200 rounded-[2rem] px-6 py-3 shadow-sm">
+            <div className="flex flex-col">
+              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('issues.detected_problems')}</span>
+              <span className="text-xl font-black text-red-500 leading-none">{stats.unrecorded}</span>
+            </div>
+            <div className="w-px h-6 bg-slate-100 mx-2" />
             <div className="flex flex-col">
               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('issues.pending')}</span>
               <span className="text-xl font-black text-orange-500 leading-none">{stats.pending}</span>
@@ -132,134 +220,146 @@ const AdminIssues: React.FC = () => {
         </div>
       </div>
 
-      <section className="space-y-6">
-        <div className="flex items-center space-x-3">
-          <div className="w-1.5 h-6 bg-red-500 rounded-full" />
-          <div>
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('issues.detected_problems')}</h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t('issues.problems_subtitle')}</p>
-          </div>
+      {/* Filter Bar */}
+      <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm flex flex-col md:flex-row items-center gap-4">
+        <div className="relative flex-1 w-full">
+           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+           </div>
+           <input 
+             type="text"
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.value)}
+             placeholder="Search by student or course..."
+             className="w-full pl-11 pr-6 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all text-sm font-bold text-slate-700"
+           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {problems.map(({ booking, type }) => (
-            <div key={booking.id} className="bg-white border-2 border-slate-100 rounded-[2rem] p-6 hover:border-indigo-500 transition-all group flex flex-col justify-between">
-              <div>
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${type === 'missed_booking' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
-                    {type === 'missed_booking' ? t('issues.missed_booking') : t('issues.adhoc_booking')}
-                  </div>
-                  <span className="text-[10px] font-mono font-bold text-slate-400">{booking.date}</span>
-                </div>
-                
-                <div className="space-y-1 mb-6">
-                  <h4 className="text-lg font-black text-slate-900 truncate">{booking.students?.name}</h4>
-                  <p className="text-xs font-bold text-slate-500">{booking.courses?.name} • <span className="font-mono">{booking.start.slice(0, 5)}-{booking.end.slice(0, 5)}</span></p>
-                  <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase italic">
-                    {type === 'adhoc_booking' ? '✓ Attended (Unbilled)' : '✗ Absent (Already Billed)'}
-                  </p>
-                </div>
-              </div>
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          <select 
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-600 cursor-pointer"
+          >
+            <option value="">All Types</option>
+            <option value="missed_booking">{t('issues.missed_booking')}</option>
+            <option value="adhoc_booking">{t('issues.adhoc_booking')}</option>
+          </select>
 
-              <button 
-                onClick={() => handleCreateIssue(booking.id, type)}
-                disabled={isProcessing}
-                className="w-full py-3 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-              >
-                {t('issues.create_issue')}
-              </button>
-            </div>
-          ))}
-          {problems.length === 0 && !isLoading && (
-            <div className="col-span-full py-12 text-center bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem]">
-              <p className="text-slate-400 font-bold italic text-sm">{t('issues.no_problems')}</p>
-            </div>
-          )}
+          <select 
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-600 cursor-pointer"
+          >
+            <option value="">All Statuses</option>
+            <option value="unrecorded">Unrecorded</option>
+            <option value="pending">{t('issues.pending')}</option>
+            <option value="reschedule">{t('issues.reschedule')}</option>
+            <option value="refund">{t('issues.refund')}</option>
+            <option value="waived">{t('issues.waived')}</option>
+            <option value="billing">{t('issues.billing')}</option>
+          </select>
+
+          <button 
+            onClick={() => { setSearchQuery(''); setFilterType(''); setFilterStatus(''); }}
+            className="px-6 py-3 bg-slate-100 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+          >
+            Reset
+          </button>
         </div>
-      </section>
+      </div>
 
-      <section className="space-y-6">
-        <div className="flex items-center space-x-3">
-          <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
-          <div>
-            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('issues.active_issues')}</h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">{t('issues.active_subtitle')}</p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
-          {isLoading ? (
-            <div className="p-20 flex justify-center"><div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
-          ) : (
-            <div className="overflow-x-auto no-scrollbar">
-              <table className="w-full text-left min-w-[800px]">
-                <thead className="bg-slate-900 border-b border-slate-800">
-                  <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Discrepancy</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resolution</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+      <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
+        {isLoading ? (
+          <div className="p-20 flex justify-center"><div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" /></div>
+        ) : (
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left min-w-[1000px]">
+              <thead className="bg-slate-900 border-b border-slate-800">
+                <tr>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('date')}>Date {renderSortArrow('date')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('student')}>Student {renderSortArrow('student')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('course')}>Course {renderSortArrow('course')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('type')}>Type {renderSortArrow('type')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('status')}>Resolution {renderSortArrow('status')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {processedDiscrepancies.map(item => (
+                  <tr key={item.booking_id} className={`hover:bg-slate-50 transition-colors ${item.resolution === 'unrecorded' ? 'bg-red-50/20' : ''}`}>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                       <span className="text-[11px] font-mono font-bold text-slate-500 uppercase">{item.date}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                       <span className="text-sm font-black text-slate-900">{item.student_name}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                       <span className="text-xs font-bold text-slate-600">{item.course_name}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight ${item.issue_type === 'missed_booking' ? 'text-red-500 bg-red-50' : 'text-amber-500 bg-amber-50'}`}>
+                        {item.issue_type === 'missed_booking' ? t('issues.missed_booking') : t('issues.adhoc_booking')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center space-x-2">
+                         <div className={`w-1.5 h-1.5 rounded-full ${
+                           item.resolution === 'unrecorded' ? 'bg-red-400 animate-pulse' :
+                           item.resolution === 'pending' ? 'bg-orange-400' : 'bg-emerald-500'
+                         }`} />
+                         <span className={`text-[10px] font-black uppercase tracking-widest ${
+                           item.resolution === 'unrecorded' ? 'text-red-500' :
+                           item.resolution === 'pending' ? 'text-orange-500' : 'text-emerald-600'
+                         }`}>
+                           {item.resolution === 'unrecorded' ? 'UNRECORDED' : t(`issues.${item.resolution}`)}
+                         </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        {item.resolution === 'unrecorded' ? (
+                          <button 
+                            onClick={() => handleCreateIssue(item.booking_id, item.issue_type)}
+                            disabled={isProcessing}
+                            className="px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                          >
+                            {t('issues.create_issue')}
+                          </button>
+                        ) : item.resolution === 'pending' ? (
+                          <>
+                            {item.issue_type === 'missed_booking' ? (
+                              <>
+                                <button onClick={() => handleUpdateResolution(item.id!, 'reschedule')} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">{t('issues.reschedule')}</button>
+                                <button onClick={() => handleUpdateResolution(item.id!, 'refund')} className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 hover:text-white transition-all">{t('issues.refund')}</button>
+                                <button onClick={() => handleUpdateResolution(item.id!, 'waived')} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-sm">{t('issues.waived')}</button>
+                              </>
+                            ) : (
+                              <>
+                                <button onClick={() => handleUpdateResolution(item.id!, 'billing')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-sm">{t('issues.mark_as_billing')}</button>
+                                <button onClick={() => handleUpdateResolution(item.id!, 'waived')} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-sm">{t('issues.mark_as_waived')}</button>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          <button onClick={() => handleUpdateResolution(item.id!, 'pending')} className="p-2 text-slate-300 hover:text-orange-500 rounded-lg hover:bg-orange-50 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {issues.map(issue => (
-                    <tr key={issue.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-5">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-black text-slate-900">{issue.bookings?.students?.name}</span>
-                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{issue.bookings?.courses?.name} • {issue.bookings?.date}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight ${issue.issue_type === 'missed_booking' ? 'text-red-500 bg-red-50' : 'text-amber-500 bg-amber-50'}`}>
-                          {issue.issue_type === 'missed_booking' ? t('issues.missed_booking') : t('issues.adhoc_booking')}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center space-x-2">
-                           <div className={`w-1.5 h-1.5 rounded-full ${issue.resolution === 'pending' ? 'bg-orange-400' : 'bg-emerald-500'}`} />
-                           <span className={`text-[10px] font-black uppercase tracking-widest ${issue.resolution === 'pending' ? 'text-orange-500' : 'text-emerald-600'}`}>
-                             {t(`issues.${issue.resolution}`)}
-                           </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          {issue.resolution === 'pending' ? (
-                            <>
-                              {issue.issue_type === 'missed_booking' ? (
-                                <>
-                                  <button onClick={() => handleUpdateResolution(issue.id, 'reschedule')} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">{t('issues.reschedule')}</button>
-                                  <button onClick={() => handleUpdateResolution(issue.id, 'refund')} className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 hover:text-white transition-all">{t('issues.refund')}</button>
-                                  <button onClick={() => handleUpdateResolution(issue.id, 'waived')} className="px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-[9px] font-black uppercase hover:bg-slate-900 hover:text-white transition-all">{t('issues.waived')}</button>
-                                </>
-                              ) : (
-                                <>
-                                  <button onClick={() => handleUpdateResolution(issue.id, 'billing')} className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase hover:bg-emerald-600 hover:text-white transition-all">{t('issues.mark_as_billing')}</button>
-                                  <button onClick={() => handleUpdateResolution(issue.id, 'waived')} className="px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-[9px] font-black uppercase hover:bg-slate-900 hover:text-white transition-all">{t('issues.mark_as_waived')}</button>
-                                </>
-                              )}
-                            </>
-                          ) : (
-                            <button onClick={() => handleUpdateResolution(issue.id, 'pending')} className="p-2 text-slate-300 hover:text-orange-500 rounded-lg hover:bg-orange-50 transition-all">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {issues.length === 0 && !isLoading && (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-20 text-center text-slate-400 font-bold italic text-sm">{t('issues.no_issues')}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </section>
+                ))}
+                {processedDiscrepancies.length === 0 && !isLoading && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-20 text-center text-slate-400 font-bold italic text-sm">No issues found matching your criteria.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

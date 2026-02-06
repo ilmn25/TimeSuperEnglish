@@ -693,11 +693,12 @@ const AdminBookings: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full text-left min-w-[700px]">
+            <table className="w-full text-left min-w-[900px]">
               <thead className="bg-slate-900 border-b border-slate-800">
                 <tr>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('date')}>{t('bookings.date')} {renderSortArrow('date')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('time')}>{t('bookings.time')} {renderSortArrow('time')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('nav.attendance')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('student')}>{t('bookings.student')} {renderSortArrow('student')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('course')}>{t('bookings.course')} {renderSortArrow('course')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('status')}>{t('bookings.status')} {renderSortArrow('status')}</th>
@@ -744,6 +745,13 @@ const AdminBookings: React.FC = () => {
                           {booking.start.slice(0, 5)} - {booking.end.slice(0, 5)}
                         </div>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] font-mono font-bold text-slate-500 align-top">
+                        {booking.check_in ? (
+                          <>
+                            {booking.check_in.slice(11, 16)} - {booking.check_out ? booking.check_out.slice(11, 16) : '--:--'}
+                          </>
+                        ) : '-'}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap align-top">
                         <div className={`transition-opacity duration-200 ${(sortField === 'student' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
                           <span className="text-xs text-slate-900 font-bold group-hover:text-indigo-600 transition-colors">{booking.students?.name}</span>
@@ -788,7 +796,7 @@ const AdminBookings: React.FC = () => {
                 })}
                 {processedBookings.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-16 text-center">
+                    <td colSpan={7} className="px-6 py-16 text-center">
                       <p className="text-slate-400 font-bold text-xs italic">{t('bookings.no_match')}</p>
                     </td>
                   </tr>
@@ -802,7 +810,7 @@ const AdminBookings: React.FC = () => {
       {/* Booking Form Modal */}
       {isFormOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-lg overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="px-8 py-6 border-b border-slate-100 bg-slate-50/50">
               <h3 className="text-xl font-black text-slate-900 tracking-tight">{editingBooking ? t('bookings.edit') : t('bookings.new')}</h3>
             </div>

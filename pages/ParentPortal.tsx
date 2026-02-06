@@ -361,7 +361,7 @@ const ParentPortal: React.FC = () => {
                 onClick={() => setIsCalendarMaximized(!isCalendarMaximized)}
                 className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button 
                 onClick={() => { setSelectedDate(hktToday); setSelectedDates([]); setViewDate(new Date()); }}
@@ -522,11 +522,12 @@ const ParentPortal: React.FC = () => {
 
           <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
             <div className="overflow-x-auto no-scrollbar">
-              <table className="w-full text-left min-w-[700px]">
+              <table className="w-full text-left min-w-[800px]">
                 <thead className="bg-slate-900 border-b border-slate-800">
                   <tr>
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('date')}>{t('bookings.date')} {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('time')}>{t('bookings.time')} {sortField === 'time' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('nav.attendance')}</th>
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('student')}>{t('bookings.student')} {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('course')}>{t('bookings.course')} {sortField === 'course' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('status')}>{t('bookings.status')} {sortField === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
@@ -564,6 +565,13 @@ const ParentPortal: React.FC = () => {
                           <div className={`transition-opacity duration-200 ${(sortField === 'time' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
                             {b.start.slice(0, 5)} - {b.end.slice(0, 5)}
                           </div>
+                        </td>
+                        <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-500 align-top">
+                          {b.check_in ? (
+                            <>
+                              {b.check_in.slice(11, 16)} - {b.check_out ? b.check_out.slice(11, 16) : '--:--'}
+                            </>
+                          ) : '-'}
                         </td>
                         <td className="px-6 py-4 align-top">
                           <div className={`transition-opacity duration-200 ${(sortField === 'student' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>

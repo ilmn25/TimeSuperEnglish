@@ -27,8 +27,7 @@ const AdminExport: React.FC = () => {
     { id: 'duration', label: t('export_page.column_duration'), default: true },
     { id: 'course', label: t('export_page.column_course'), default: true },
     { id: 'status', label: t('export_page.column_status'), default: true },
-    { id: 'check_in', label: t('card.check_in'), default: true },
-    { id: 'check_out', label: t('card.check_out'), default: true }
+    { id: 'check_in_out', label: t('nav.attendance'), default: true }
   ];
 
   const [selectedColumnIds, setSelectedColumnIds] = useState<Set<string>>(
@@ -76,8 +75,10 @@ const AdminExport: React.FC = () => {
       if (selectedColumnIds.has('duration')) rowData.push(calculateDurationMinutes(b.start, b.end));
       if (selectedColumnIds.has('course')) rowData.push(b.courses?.name || '');
       if (selectedColumnIds.has('status')) rowData.push(getStatusLabel(b.calculatedStatus));
-      if (selectedColumnIds.has('check_in')) rowData.push(b.check_in || '');
-      if (selectedColumnIds.has('check_out')) rowData.push(b.check_out || '');
+      if (selectedColumnIds.has('check_in_out')) {
+          const combined = b.check_in ? `${b.check_in.slice(11,16)} - ${b.check_out ? b.check_out.slice(11,16) : '--:--'}` : '-';
+          rowData.push(combined);
+      }
 
       return rowData.join(',');
     });
@@ -183,8 +184,11 @@ const AdminExport: React.FC = () => {
                       {selectedColumnIds.has('duration') && <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-500">{calculateDurationMinutes(b.start, b.end)}m</td>}
                       {selectedColumnIds.has('course') && <td className="px-6 py-4 text-xs font-bold text-slate-600">{b.courses?.name}</td>}
                       {selectedColumnIds.has('status') && <td className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-indigo-600">{getStatusLabel(b.calculatedStatus)}</td>}
-                      {selectedColumnIds.has('check_in') && <td className="px-6 py-4 text-[10px] font-mono text-slate-400">{b.check_in?.slice(11, 16) || '-'}</td>}
-                      {selectedColumnIds.has('check_out') && <td className="px-6 py-4 text-[10px] font-mono text-slate-400">{b.check_out?.slice(11, 16) || '-'}</td>}
+                      {selectedColumnIds.has('check_in_out') && (
+                        <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-500">
+                          {b.check_in ? `${b.check_in.slice(11, 16)} - ${b.check_out ? b.check_out.slice(11, 16) : '--:--'}` : '-'}
+                        </td>
+                      )}
                     </tr>
                   ))}
                   {bookings.length > 10 && (
