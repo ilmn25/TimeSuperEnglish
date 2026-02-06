@@ -197,6 +197,13 @@ export const api = {
   },
 
   // COURSE METHODS
+  async getPublicCourses() {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/rest/v1/courses?select=*&order=name`;
+    const response = await fetch(url, { headers });
+    return handleResponse(response, 'Failed to fetch public courses');
+  },
+
   async getCourses(orgId: string) {
     const headers = await getHeaders();
     const url = `${SUPABASE_URL}/rest/v1/courses?org_id=eq.${encodeURIComponent(orgId)}&select=*&order=name`;

@@ -14,8 +14,11 @@ import AdminBackup from './pages/AdminBackup';
 import AdminImport from './pages/AdminImport';
 import AdminOrgSelection from './pages/AdminOrgSelection';
 import AdminSubscriptions from './pages/AdminSubscriptions';
-import ParentPortal from './pages/ParentPortal';
+import PortalDashboard from './pages/PortalDashboard';
 import AuthPage from './pages/AuthPage';
+import HomePage from './pages/HomePage';
+import CounterAbout from './pages/CounterAbout';
+import CounterPricing from './pages/CounterPricing';
 import { useTranslation } from 'react-i18next';
 import { Organization } from './types';
 
@@ -31,7 +34,6 @@ interface ImportStatusContextType {
 
 const ImportStatusContext = createContext<ImportStatusContextType | undefined>(undefined);
 
-// Custom hook for easy consumption of the import status context.
 export const useImportStatus = () => {
   const context = useContext(ImportStatusContext);
   if (!context) {
@@ -162,6 +164,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   const { isImporting, importProgress, importTotal } = useImportStatus();
   
   const isDashboardView = location.pathname === '/dashboard';
+  const isHomeView = location.pathname === '/';
   const match = location.pathname.match(/^\/org\/([^/]+)/);
   const orgId = match ? match[1] : null;
 
@@ -173,10 +176,12 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
     }
   }, [orgId]);
 
-  // Determine the display name for the header
   const getPageTitle = () => {
+    if (isHomeView) return t('nav.home');
     if (isDashboardView) return t('parent.dashboard');
     if (location.pathname === '/subscriptions') return t('nav.subscriptions');
+    if (location.pathname === '/about') return "About Institutional OS";
+    if (location.pathname === '/pricing') return "Plans & Pricing";
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
     if (location.pathname.includes('/issues')) return t('nav.issues');
@@ -186,6 +191,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
     if (location.pathname.includes('/backup')) return t('nav.backup');
     if (location.pathname.includes('/import')) return t('nav.import');
     if (location.pathname === '/org') return t('nav.organizations');
+    if (location.pathname === '/login') return t('auth.signin');
     return t('app.name');
   };
 
@@ -195,14 +201,13 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
-      <header className="bg-white sticky top-0 z-[60] border-b border-slate-100">
+      <header className="bg-white sticky top-0 z-[80] border-b border-slate-100 shadow-sm">
         <div className="max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-16 xl:px-24">
           <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
-            {/* Left Section: Branding & Page Title */}
             <div className="flex items-center space-x-3 sm:space-x-5 min-w-0">
-              {(orgId || location.pathname === '/org' || location.pathname === '/subscriptions') && (
+              {(!isHomeView) && (
                 <Link 
-                  to="/dashboard" 
+                  to="/" 
                   className="p-2 sm:p-3 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-xl sm:rounded-2xl border-2 border-transparent hover:border-indigo-100 transition-all shrink-0 active:scale-90"
                   title={t('nav.back')}
                 >
@@ -221,29 +226,46 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
               </div>
             </div>
             
-            {/* Right Section: Global Actions */}
             <div className="flex items-center space-x-1.5 sm:space-x-4 shrink-0">
-              {isDashboardView && (
-                <Link 
-                  to="/org" 
-                  className="flex items-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 bg-slate-900 text-white rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg shadow-slate-200 active:scale-95"
+              {isHomeView && userEmail && (
+                 <Link 
+                  to="/dashboard" 
+                  className="flex items-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 bg-indigo-600 text-white rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-100 transition-all active:scale-95 group"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span>{t('parent.dashboard')}</span>
+                </Link>
+              )}
+
+              {!isHomeView && (
+                 <Link 
+                  to="/" 
+                  className="flex items-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 bg-indigo-50 text-indigo-600 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all active:scale-95"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2-2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                   </svg>
-                  <span className="hidden xs:inline">{t('nav.organizations')}</span>
+                  <span className="hidden xs:inline">{t('nav.home')}</span>
                 </Link>
               )}
               
               <LanguageSwitcher />
 
-              {userEmail && (
+              {userEmail ? (
                 <UserProfile email={userEmail} onLogout={handleLogout} />
+              ) : (
+                <Link 
+                  to="/login"
+                  className="px-4 py-2 sm:px-6 sm:py-3 bg-slate-900 text-white rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all active:scale-95 shadow-lg shadow-slate-200"
+                >
+                  {t('auth.signin')}
+                </Link>
               )}
             </div>
           </div>
           
-          {/* Main Control Bar (Only for specific Org) */}
           {orgId && (
             <div className="pb-3 sm:pb-6 lg:pb-8 overflow-hidden relative">
               <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1 sm:pb-2 mask-linear-right touch-pan-x">
@@ -276,6 +298,22 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
       <main className="flex-1 max-w-[1700px] w-full mx-auto px-4 sm:px-8 lg:px-16 xl:px-24 py-4 sm:py-8 lg:py-12">
         {children}
       </main>
+
+      {/* Global Footer */}
+      <footer className="max-w-[1700px] w-full mx-auto pt-12 border-t border-slate-100 flex flex-col items-center space-y-8 pb-12 px-4 mt-auto">
+        <div className="flex flex-col items-center text-center space-y-3">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+            &copy; {new Date().getFullYear()} Counter • Educational Intelligence
+          </p>
+          <div className="flex items-center space-x-6">
+            <Link to="/about" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">About</Link>
+            <span className="w-1 h-1 bg-slate-200 rounded-full" />
+            <Link to="/pricing" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">Pricing</Link>
+            <span className="w-1 h-1 bg-slate-200 rounded-full" />
+            <Link to="/org" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">Admin</Link>
+          </div>
+        </div>
+      </footer>
       
       {isImporting && (
         <div className="fixed bottom-6 right-6 z-[200] bg-white border-2 border-slate-100 rounded-2xl shadow-2xl p-5 w-full max-sm animate-in fade-in slide-in-from-bottom-5 duration-300">
@@ -308,11 +346,10 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   );
 };
 
-const App: React.FC = () => {
-  const [session, setSession] = useState<any>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
-
-  // Global state for import process
+/**
+ * Added missing ImportStatusProvider to wrap the app and provide global import status state.
+ */
+const ImportStatusProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importTotal, setImportTotal] = useState(0);
@@ -322,103 +359,78 @@ const App: React.FC = () => {
     setImportTotal(total);
     setImportProgress(0);
   };
-  
+
   const updateImportProgress = (progress: number) => {
     setImportProgress(progress);
   };
-  
+
   const finishImport = () => {
     setIsImporting(false);
-    setImportTotal(0);
-    setImportProgress(0);
   };
 
-  const contextValue = {
-    isImporting,
-    importProgress,
-    importTotal,
-    startImport,
-    updateImportProgress,
-    finishImport,
-  };
+  return (
+    <ImportStatusContext.Provider value={{ isImporting, importProgress, importTotal, startImport, updateImportProgress, finishImport }}>
+      {children}
+    </ImportStatusContext.Provider>
+  );
+};
+
+/**
+ * Added missing App component definition which handles authentication and routing.
+ */
+const App: React.FC = () => {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setIsInitializing(false);
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      setUser(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Global beforeunload handler to prevent leaving during import
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isImporting) {
-        e.preventDefault();
-        e.returnValue = ''; // Required for Chrome
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isImporting]);
-
-  if (isInitializing) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 border-[5px] sm:border-[6px] border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <p className="mt-4 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Initializing System</p>
-        </div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!session) {
-    return (
-      <HashRouter>
-        <Routes>
-          <Route path="/login" element={<AuthPage />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </HashRouter>
-    );
-  }
-
   return (
-    <ImportStatusContext.Provider value={contextValue}>
+    <ImportStatusProvider>
       <HashRouter>
-        <Layout userEmail={session?.user?.email}>
+        <Layout userEmail={user?.email}>
           <Routes>
-            <Route path="/dashboard" element={<ParentPortal />} />
-            <Route path="/org" element={<AdminOrgSelection />} />
-            <Route path="/subscriptions" element={<AdminSubscriptions />} />
-            
-            <Route path="/org/:orgId">
-              <Route index element={<Navigate to="attendance" replace />} />
-              <Route path="attendance" element={<AdminAttendance />} />
-              <Route path="bookings" element={<AdminBookings />} />
-              <Route path="issues" element={<AdminIssues />} />
-              <Route path="export" element={<AdminExport />} />
-              <Route path="courses" element={<AdminCourses />} />
-              <Route path="courses/:courseId/schedule" element={<AdminCourseSchedule />} />
-              <Route path="students" element={<AdminStudents />} />
-              <Route path="import" element={<AdminImport />} />
-              <Route path="backup" element={<AdminBackup />} />
-            </Route>
-
-            <Route path="/login" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<CounterAbout />} />
+            <Route path="/pricing" element={<CounterPricing />} />
+            <Route path="/login" element={!user ? <AuthPage /> : <Navigate to="/" />} />
+            <Route path="/dashboard" element={user ? <PortalDashboard /> : <Navigate to="/login" />} />
+            <Route path="/subscriptions" element={user ? <AdminSubscriptions /> : <Navigate to="/login" />} />
+            <Route path="/org" element={user ? <AdminOrgSelection /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/attendance" element={user ? <AdminAttendance /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/bookings" element={user ? <AdminBookings /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/issues" element={user ? <AdminIssues /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/courses" element={user ? <AdminCourses /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/courses/:courseId/schedule" element={user ? <AdminCourseSchedule /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/students" element={user ? <AdminStudents /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/backup" element={user ? <AdminBackup /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/import" element={user ? <AdminImport /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/export" element={user ? <AdminExport /> : <Navigate to="/login" />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Layout>
       </HashRouter>
-    </ImportStatusContext.Provider>
+    </ImportStatusProvider>
   );
 };
 
+// Fixed the missing default export error
 export default App;
