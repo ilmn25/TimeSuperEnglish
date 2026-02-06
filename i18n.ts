@@ -6,7 +6,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   en: {
     translation: {
-      app: { name: "Counter", dashboard: "Counter Portal" },
+      app: { name: "Time Super English", dashboard: "Academy Portal" },
       nav: { home: "Home", attendance: "Attendance", bookings: "Bookings", courses: "Courses", students: "Students", backup: "Backup", organizations: "Organizations", back: "Back", import: "Import", export: "Export", subscriptions: "Billing", issues: "Issues", about: "About", pricing: "Pricing", contact: "Contact" },
       user: { signed_in: "Signed in as", logout: "Log Out" },
       auth: { signin: "Sign In", register: "Register", email: "Email Address", password: "Password", create_account: "Create Account", continue: "or continue with", google: "Google Account", access: "Portal Access", check_email: "Check your email for the confirmation link!" },
@@ -129,7 +129,7 @@ const resources = {
   },
   "zh-CN": {
     translation: {
-      app: { name: "计数器", dashboard: "计数器门户" },
+      app: { name: "Time Super English", dashboard: "学院门户" },
       nav: { home: "首页", attendance: "考勤", bookings: "预约", courses: "课程", students: "学生", backup: "备份", organizations: "机构", back: "返回", import: "导入", export: "导出", subscriptions: "订阅", issues: "异常处理", about: "关于", pricing: "价格", contact: "联系我们" },
       user: { signed_in: "登录用户", logout: "登出" },
       auth: { signin: "登录", register: "注册", email: "邮箱地址", password: "密码", create_account: "创建账户", continue: "或继续使用", google: "Google 账户", access: "门户访问", check_email: "请检查您的邮箱以获取确认链接！" },
@@ -205,7 +205,7 @@ const resources = {
         complete_title: "导入完成！",
         complete_subtitle: "成功同步 {{count}} 条预约。",
         view_bookings: "查看预约",
-        error_file: "CSV 文件必须包含表头行和至少一个数据行。",
+        error_file: "CSV 文件必须包含表头行 and 至少一个数据行。",
         error_no_data: "CSV 中未找到有效数据行。",
         in_progress_title: "正在导入",
         warning_refresh: "在处理完成前，请不要刷新或关闭此页面。",
