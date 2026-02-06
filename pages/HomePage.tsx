@@ -39,63 +39,6 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 sm:space-y-24 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700 px-4">
-      {/* Home Navbar - Lowered z-index and removed top margin to tuck behind global header */}
-      <nav className="bg-white border-2 border-slate-100 rounded-[2rem] p-2 flex items-center justify-between shadow-sm sticky top-4 z-[40] transition-all duration-300">
-        <div className="flex items-center space-x-2">
-          <Link 
-            to="/" 
-            className="px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-indigo-100 transition-all active:scale-95"
-          >
-            {t('nav.home')}
-          </Link>
-          
-          <div className="relative" ref={dropdownRef}>
-            <button 
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center space-x-2 ${isDropdownOpen ? 'bg-indigo-50 text-indigo-600' : 'bg-white text-slate-500 hover:text-indigo-600 hover:bg-slate-50'}`}
-            >
-              <span>{t('nav.courses')}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-3 w-3 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute top-full left-0 mt-3 w-64 bg-white border-2 border-slate-100 rounded-[2rem] shadow-2xl overflow-hidden py-3 animate-in fade-in zoom-in slide-in-from-top-2 duration-200 origin-top-left">
-                <div className="px-6 py-2 border-b border-slate-50 mb-1">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('courses.title')}</span>
-                </div>
-                <div className="max-h-[300px] overflow-y-auto no-scrollbar">
-                  {isCoursesLoading ? (
-                    <div className="px-6 py-4 space-y-2">
-                      {[1, 2, 3].map(i => <div key={i} className="h-4 bg-slate-50 rounded-lg animate-pulse" />)}
-                    </div>
-                  ) : courses.length > 0 ? (
-                    courses.map(course => (
-                      <div 
-                        key={course.id}
-                        className="px-6 py-3 hover:bg-indigo-50 transition-colors group cursor-pointer flex items-center space-x-3"
-                      >
-                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: course.color }} />
-                        <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-600 transition-colors truncate">{course.name}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="px-6 py-4 text-center">
-                      <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">{t('courses.no_courses')}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="hidden sm:block px-6">
-          <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">Elite Education Center</span>
-        </div>
-      </nav>
-
       {/* Academy Hero Section */}
       <section className="text-center space-y-8 pt-8">
         <div className="inline-flex items-center px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-600 text-[10px] font-black uppercase tracking-[0.3em] mb-4 shadow-sm">
@@ -108,15 +51,6 @@ const HomePage: React.FC = () => {
         <p className="text-slate-500 text-lg sm:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
           Nurturing confidence and mastery in the English language. Professional tutoring for primary and secondary students.
         </p>
-        
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-           <Link to="/dashboard" className="w-full sm:w-auto px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 text-center">
-             Student Portal
-           </Link>
-           <Link to="/org" className="w-full sm:w-auto px-10 py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:border-indigo-200 hover:text-indigo-600 transition-all text-center active:scale-95">
-             Staff Portal
-           </Link>
-        </div>
       </section>
 
       {/* Simplified About Section */}

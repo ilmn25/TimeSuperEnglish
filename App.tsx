@@ -15,6 +15,8 @@ import AdminImport from './pages/AdminImport';
 import AdminOrgSelection from './pages/AdminOrgSelection';
 import AdminSubscriptions from './pages/AdminSubscriptions';
 import PortalDashboard from './pages/PortalDashboard';
+import PortalCourses from './pages/PortalCourses';
+import ContactUs from './pages/ContactUs';
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
 import CounterAbout from './pages/CounterAbout';
@@ -163,8 +165,13 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const { isImporting, importProgress, importTotal } = useImportStatus();
   
-  const isDashboardView = location.pathname === '/dashboard';
-  const isHomeView = location.pathname === '/';
+  const portalRoutes = ['/dashboard', '/portal/courses'];
+  const homeRoutes = ['/', '/about', '/pricing', '/contact'];
+  
+  const isPortalView = portalRoutes.includes(location.pathname);
+  const isHomeView = homeRoutes.includes(location.pathname);
+  const isLandingRoot = location.pathname === '/';
+  
   const match = location.pathname.match(/^\/org\/([^/]+)/);
   const orgId = match ? match[1] : null;
 
@@ -177,11 +184,13 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   }, [orgId]);
 
   const getPageTitle = () => {
-    if (isHomeView) return t('nav.home');
-    if (isDashboardView) return t('parent.dashboard');
+    if (isLandingRoot) return t('nav.home');
+    if (location.pathname === '/dashboard') return t('parent.dashboard');
+    if (location.pathname === '/portal/courses') return t('nav.courses');
     if (location.pathname === '/subscriptions') return t('nav.subscriptions');
-    if (location.pathname === '/about') return "About Institutional OS";
-    if (location.pathname === '/pricing') return "Plans & Pricing";
+    if (location.pathname === '/about') return t('nav.about');
+    if (location.pathname === '/pricing') return t('nav.pricing');
+    if (location.pathname === '/contact') return t('nav.contact');
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
     if (location.pathname.includes('/issues')) return t('nav.issues');
@@ -205,7 +214,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
         <div className="max-w-[1700px] mx-auto px-4 sm:px-8 lg:px-16 xl:px-24">
           <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
             <div className="flex items-center space-x-3 sm:space-x-5 min-w-0">
-              {(!isHomeView) && (
+              {(!isLandingRoot) && (
                 <Link 
                   to="/" 
                   className="p-2 sm:p-3 text-slate-400 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 rounded-xl sm:rounded-2xl border-2 border-transparent hover:border-indigo-100 transition-all shrink-0 active:scale-90"
@@ -227,30 +236,6 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
             </div>
             
             <div className="flex items-center space-x-1.5 sm:space-x-4 shrink-0">
-              {isHomeView && userEmail && (
-                 <Link 
-                  to="/dashboard" 
-                  className="flex items-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 bg-indigo-600 text-white rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-xl hover:shadow-indigo-100 transition-all active:scale-95 group"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                  <span>{t('parent.dashboard')}</span>
-                </Link>
-              )}
-
-              {!isHomeView && (
-                 <Link 
-                  to="/" 
-                  className="flex items-center space-x-2 px-3 sm:px-6 py-2 sm:py-3 bg-indigo-50 text-indigo-600 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all active:scale-95"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                  <span className="hidden xs:inline">{t('nav.home')}</span>
-                </Link>
-              )}
-              
               <LanguageSwitcher />
 
               {userEmail ? (
@@ -266,29 +251,67 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
             </div>
           </div>
           
-          {orgId && (
+          {(orgId || isPortalView || isHomeView) && (
             <div className="pb-3 sm:pb-6 lg:pb-8 overflow-hidden relative">
-              <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1 sm:pb-2 mask-linear-right touch-pan-x">
-                <nav className="flex items-center space-x-1 sm:space-x-2 bg-slate-50/50 p-1 sm:p-1.5 rounded-2xl sm:rounded-[2rem] border-2 border-slate-100 min-w-max">
-                  <NavLink to={`/org/${orgId}/attendance`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>}>
-                    {t('nav.attendance')}
-                  </NavLink>
-                  <NavLink to={`/org/${orgId}/bookings`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}>
-                    {t('nav.bookings')}
-                  </NavLink>
-                  <NavLink to={`/org/${orgId}/issues`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}>
-                    {t('nav.issues')}
-                  </NavLink>
-                  <NavLink to={`/org/${orgId}/courses`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.246.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}>
-                    {t('nav.courses')}
-                  </NavLink>
-                  <NavLink to={`/org/${orgId}/students`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" /></svg>}>
-                    {t('nav.students')}
-                  </NavLink>
-                  <NavLink to={`/org/${orgId}/backup`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}>
-                    {t('nav.backup')}
-                  </NavLink>
-                </nav>
+              <div className="flex items-center justify-between space-x-4">
+                {/* Scrollable Nav Area */}
+                <div className="flex-1 overflow-x-auto no-scrollbar mask-linear-right touch-pan-x pb-1 sm:pb-2">
+                  <nav className="flex items-center space-x-1 sm:space-x-2 bg-slate-50/50 p-1 sm:p-1.5 rounded-2xl sm:rounded-[2rem] border-2 border-slate-100 min-w-max">
+                    {orgId ? (
+                      <>
+                        <NavLink to={`/org/${orgId}/attendance`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>}>
+                          {t('nav.attendance')}
+                        </NavLink>
+                        <NavLink to={`/org/${orgId}/bookings`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}>
+                          {t('nav.bookings')}
+                        </NavLink>
+                        <NavLink to={`/org/${orgId}/issues`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}>
+                          {t('nav.issues')}
+                        </NavLink>
+                        <NavLink to={`/org/${orgId}/courses`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.246.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}>
+                          {t('nav.courses')}
+                        </NavLink>
+                        <NavLink to={`/org/${orgId}/students`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" /></svg>}>
+                          {t('nav.students')}
+                        </NavLink>
+                        <NavLink to={`/org/${orgId}/backup`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}>
+                          {t('nav.backup')}
+                        </NavLink>
+                      </>
+                    ) : isPortalView ? (
+                      <>
+                        <NavLink to="/dashboard" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}>
+                          {t('parent.dashboard')}
+                        </NavLink>
+                        <NavLink to="/portal/courses" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.246.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}>
+                          {t('nav.courses')}
+                        </NavLink>
+                      </>
+                    ) : (
+                      <>
+                        <NavLink to="/" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>}>
+                          {t('nav.home')}
+                        </NavLink>
+                        <NavLink to="/contact" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>}>
+                          {t('nav.contact')}
+                        </NavLink>
+                      </>
+                    )}
+                  </nav>
+                </div>
+
+                {/* Static Portal Button (Outside of the mask container) */}
+                {isHomeView && (
+                  <div className="shrink-0 pl-4">
+                    <Link 
+                      to="/dashboard"
+                      className="flex items-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 bg-indigo-600 text-white rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" /></svg>
+                      <span>{t('parent.dashboard')}</span>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -336,7 +359,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .mask-linear-right {
-          mask-image: linear-gradient(to right, black 88%, transparent 100%);
+          mask-image: linear-gradient(to right, black 85%, transparent 100%);
         }
         @media (max-width: 480px) {
           .xs\\:inline { display: inline; }
@@ -411,8 +434,10 @@ const App: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/about" element={<CounterAbout />} />
             <Route path="/pricing" element={<CounterPricing />} />
+            <Route path="/contact" element={<ContactUs />} />
             <Route path="/login" element={!user ? <AuthPage /> : <Navigate to="/" />} />
             <Route path="/dashboard" element={user ? <PortalDashboard /> : <Navigate to="/login" />} />
+            <Route path="/portal/courses" element={user ? <PortalCourses /> : <Navigate to="/login" />} />
             <Route path="/subscriptions" element={user ? <AdminSubscriptions /> : <Navigate to="/login" />} />
             <Route path="/org" element={user ? <AdminOrgSelection /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/attendance" element={user ? <AdminAttendance /> : <Navigate to="/login" />} />
