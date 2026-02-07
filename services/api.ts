@@ -1,8 +1,4 @@
-
-import { supabase } from './supabaseClient';
-
-const SUPABASE_URL = 'https://cxjkcrpapxlrceelzshu.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_27zWxhCOkv7vnnXEOA8qmQ_e2tp76FD';
+import { supabase, SUPABASE_URL, SUPABASE_KEY, SUPABASE_ORG_ID } from './supabaseClient';
 
 const getHeaders = async (isMutation = false) => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -198,7 +194,6 @@ export const api = {
 
   // COURSE METHODS
   async getPublicCourses() {
-    // Use standard SDK client for public fetching to handle role/header requirements more reliably
     const { data, error } = await supabase
       .from('courses')
       .select('*')
@@ -206,8 +201,6 @@ export const api = {
     
     if (error) {
       console.warn("Public Courses Fetch Warning:", error.message);
-      // Log the specific error but allow the app to continue with an empty list
-      // This handles cases where RLS specifically blocks 'anon' on the students table dependency
       return [];
     }
     return data || [];
@@ -326,6 +319,19 @@ export const api = {
       body: JSON.stringify({ name, contact, level, org_id: orgId })
     });
     return handleResponse(response, 'Failed to create student');
+  },
+
+  async createPortalStudent(name: string, contact: string, level?: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/students`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ name, contact, level, user_id: user.id, org_id: SUPABASE_ORG_ID })
+    });
+    return handleResponse(response, 'Failed to create portal student');
   },
 
   async updateStudent(orgId: string, id: string, name: string, contact: string, level?: string) {
@@ -454,7 +460,6 @@ export const api = {
 
   // ACCESS MANAGEMENT
   async getStudentAccessList(studentId: string) {
-    // Corrected column name from parent_email to user_id as per user instruction.
     const { data, error } = await supabase
       .from('students')
       .select('user_id')

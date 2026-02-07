@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, createContext, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from './services/supabaseClient';
@@ -14,7 +13,9 @@ import AdminBackup from './pages/AdminBackup';
 import AdminImport from './pages/AdminImport';
 import AdminOrgSelection from './pages/AdminOrgSelection';
 import AdminSubscriptions from './pages/AdminSubscriptions';
-import PortalDashboard from './pages/PortalDashboard';
+import PortalAttendance from './pages/PortalAttendance';
+import PortalBookings from './pages/PortalBookings';
+import PortalStudents from './pages/PortalStudents';
 import PortalCourses from './pages/PortalCourses';
 import ContactUs from './pages/ContactUs';
 import AuthPage from './pages/AuthPage';
@@ -165,7 +166,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const { isImporting, importProgress, importTotal } = useImportStatus();
   
-  const portalRoutes = ['/dashboard', '/portal/courses'];
+  const portalRoutes = ['/portal/attendance', '/portal/bookings', '/portal/courses', '/portal/students'];
   const homeRoutes = ['/', '/about', '/pricing', '/contact'];
   const counterPages = ['/about', '/pricing'];
   
@@ -187,8 +188,10 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
 
   const getPageTitle = () => {
     if (isLandingRoot) return t('nav.home');
-    if (location.pathname === '/dashboard') return t('parent.dashboard');
+    if (location.pathname === '/portal/attendance') return t('nav.attendance');
+    if (location.pathname === '/portal/bookings') return t('nav.bookings');
     if (location.pathname === '/portal/courses') return t('nav.courses');
+    if (location.pathname === '/portal/students') return t('nav.students');
     if (location.pathname === '/subscriptions') return t('nav.subscriptions');
     if (location.pathname === '/about') return t('nav.about');
     if (location.pathname === '/pricing') return t('nav.pricing');
@@ -282,11 +285,17 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                       </>
                     ) : isPortalView ? (
                       <>
-                        <NavLink to="/dashboard" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}>
-                          {t('parent.dashboard')}
+                        <NavLink to="/portal/attendance" icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" className="h-4 w-4" strokeWidth={2.5}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>}>
+                          {t('nav.attendance')}
+                        </NavLink>
+                        <NavLink to="/portal/bookings" icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" className="h-4 w-4" strokeWidth={2.5}><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}>
+                          {t('nav.bookings')}
                         </NavLink>
                         <NavLink to="/portal/courses" icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.246.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}>
                           {t('nav.courses')}
+                        </NavLink>
+                        <NavLink to="/portal/students" icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" className="h-4 w-4" strokeWidth={2.5}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" /></svg>}>
+                          {t('nav.students')}
                         </NavLink>
                       </>
                     ) : (
@@ -306,7 +315,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                 {isHomeView && (
                   <div className="shrink-0 pl-4">
                     <Link 
-                      to="/dashboard"
+                      to="/portal/attendance"
                       className="flex items-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 bg-indigo-600 text-white rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" /></svg>
@@ -432,8 +441,10 @@ const App: React.FC = () => {
             <Route path="/pricing" element={<CounterPricing />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/login" element={!user ? <AuthPage /> : <Navigate to="/" />} />
-            <Route path="/dashboard" element={user ? <PortalDashboard /> : <Navigate to="/login" />} />
+            <Route path="/portal/attendance" element={user ? <PortalAttendance /> : <Navigate to="/login" />} />
+            <Route path="/portal/bookings" element={user ? <PortalBookings /> : <Navigate to="/login" />} />
             <Route path="/portal/courses" element={user ? <PortalCourses /> : <Navigate to="/login" />} />
+            <Route path="/portal/students" element={user ? <PortalStudents /> : <Navigate to="/login" />} />
             <Route path="/subscriptions" element={user ? <AdminSubscriptions /> : <Navigate to="/login" />} />
             <Route path="/org" element={user ? <AdminOrgSelection /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/attendance" element={user ? <AdminAttendance /> : <Navigate to="/login" />} />

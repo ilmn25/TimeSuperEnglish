@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
-import { Course, CourseSchedule, Student } from '../types';
+import { Course, CourseSchedule } from '../types';
 import { useTranslation } from 'react-i18next';
+import { SUPABASE_ORG_ID } from '../services/supabaseClient';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -22,20 +23,18 @@ const PortalCourses: React.FC = () => {
   const fetchAllData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const students = await api.getParentStudents();
-      const orgIds = Array.from(new Set(students.map((s: any) => s.org_id).filter(Boolean)));
+      const orgId = SUPABASE_ORG_ID;
+      const [orgCourses, org] = await Promise.all([
+        api.getCourses(orgId),
+        api.getOrganization(orgId)
+      ]);
       
-      const allCourses: (Course & { org_name: string })[] = [];
-      
-      await Promise.all(orgIds.map(async (orgId: any) => {
-        const orgCourses = await api.getCourses(orgId);
-        const org = await api.getOrganization(orgId);
-        orgCourses.forEach((c: Course) => {
-          allCourses.push({ ...c, org_name: org?.name || 'Unknown School' });
-        });
+      const mappedCourses = (orgCourses || []).map((c: Course) => ({
+        ...c,
+        org_name: org?.name || 'Academy'
       }));
 
-      setCourses(allCourses.sort((a, b) => a.name.localeCompare(b.name)));
+      setCourses(mappedCourses.sort((a: Course, b: Course) => a.name.localeCompare(b.name)));
     } catch (err) {
       console.error("Failed to load portal courses", err);
     } finally {
