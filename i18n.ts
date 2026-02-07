@@ -1,260 +1,28 @@
-
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-const resources = {
-  en: {
-    translation: {
-      app: { name: "Time Super English", dashboard: "Academy Portal" },
-      nav: { home: "Home", attendance: "Attendance", bookings: "Bookings", courses: "Courses", students: "Students", backup: "Backup", organizations: "Organizations", back: "Back", import: "Import", export: "Export", subscriptions: "Billing", issues: "Issues", about: "About", pricing: "Pricing", contact: "Contact" },
-      user: { signed_in: "Signed in as", logout: "Log Out" },
-      auth: { signin: "Sign In", register: "Register", email: "Email Address", password: "Password", create_account: "Create Account", continue: "or continue with", google: "Google Account", access: "Portal Access", check_email: "Check your email for the confirmation link!" },
-      org: { select: "Select Organization", subtitle: "Choose a workspace to manage", new: "New Organization", no_orgs: "No organizations found", start_create: "Create your first workspace to get started", create_new: "Create New Organization", edit: "Edit Organization", details: "Manage workspace details", name: "Organization Name", owner: "Owner", member: "Member", delete_title: "Delete Workspace?", delete_msg: "This action is irreversible and will permanently delete the workspace. Please type the name of the organization to confirm." },
-      common: { cancel: "Cancel", confirm: "Confirm", save: "Save", create: "Create", delete: "Delete", edit: "Edit", remove: "Remove", save_changes: "Save Changes", loading: "Loading", processing: "Processing", or: "or", download: "Download", copy: "Copy", send: "Send" },
-      attendance: { summary: "Attendance Summary", booked: "Booked", arrived: "Arrived", here: "Here", today: "Today", error: "Error", retry: "Retry", no_students: "No students booked for this date.", remove_title: "Remove Record?", remove_msg: "Permanently remove this attendance record?" },
-      bookings: { title: "Bookings", subtitle: "Monthly schedule overview", new_entry: "New Entry", select_month: "Select Month", reset: "Reset", filter_student: "Student filter", filter_course: "Course filter", filter_status: "Status filter", all_students: "All Students", all_courses: "All Courses", all_statuses: "All Statuses", date: "Date", time: "Time", student: "Student", course: "Course", status: "Status", actions: "Actions", syncing: "Synchronizing", no_match: "No entries match your search criteria.", edit: "Edit Booking", new: "New Booking", start: "Start", end: "End", delete_title: "Delete Entry?", delete_msg: "This record will be permanently deleted from the database.", summary_title: "Filtered Summary", total_time: "Total Duration", total_entries: "Total Bookings", export: "Export", request_session: "Request Session", request_success: "Booking request sent!", request_fail: "Failed to send request.", pending_requests: "Pending Requests", approve: "Approve", reject: "Reject" },
-      status: { missed: "Missed", partial: "Partial", attended: "Attended", future: "Future" },
-      courses: { title: "Courses", subtitle: "Curriculum and subject management", add: "Add Course", no_courses: "No courses found", start_building: "Start building your curriculum by adding your first course.", add_now: "Add Course Now", edit_title: "Edit Course", create_title: "Create Course", workspace_details: "Workspace Details", subject_name: "Subject Name", label_color: "Label Color", hex_code: "Hex Code", delete_title: "Delete Course?", delete_msg: "Are you sure? This will remove the course and might impact historical booking data visualization." },
-      students: { title: "Student Directory", subtitle: "Manage student profiles and portal access", register: "Register Student", search: "Search by name, level, or contact...", sort_name: "Name", sort_level: "Level", no_contact: "No contact info", access: "Access", no_match: "No students matched", adjust_query: "Try adjusting your search query or registering a new student.", clear_filters: "Clear filters", edit_profile: "Edit Profile", registration: "Registration", student_data: "Student Data", full_name: "Full Name", grade_level: "Grade Level", select: "Select", contact: "Contact", register_now: "Register Now", dashboard_access: "Portal Access", manage_links: "Manage link for", authorized_parents: "Authorized Parent Account", no_accounts: "no account linked yet", invite: "Invite Parent to Portal", link: "Link", unlink_title: "Unlink Parent?", unlink_msg: "Remove portal access for", unlink: "Unlink", delete_title: "Delete Profile?", delete_msg: "Permanently remove this student? This will erase all attendance history and linked parent associations." },
-      backup: { title: "History", subtitle: "Manage database snapshots and point-in-time restores", snapshots: "Snapshots", quota_full: "Quota Full", upload: "Upload", snapshot: "Snapshot", export: "Export", restore: "Restore", active: "Closest Version", latest: "Latest Snapshot", user_upload: "User Upload", empty: "Empty History", no_snapshots: "No snapshots found for this workspace.", take_first: "Take First Snapshot", restore_point: "Restore Point", delete_snapshot: "Delete Snapshot", restore_msg: "Restore database to state on {{date}}? This will overwrite all current progress.", delete_msg: "Permanently delete snapshot {{id}}?", success_create: "Backup created successfully!", success_upload: "Backup uploaded successfully!", success_delete: "Backup deleted successfully", success_restore: "Database restored successfully!", error_quota: "Quota reached. Please delete an old backup first." },
-      parent: { dashboard: "Portal", subtitle: "student activity and status", go_today: "Go to Today", edit_profile: "Edit Student Profile", updating: "Updating profile for", unset: "Unset", in_class: "In Class", away: "Away", no_bookings: "No bookings", no_activity: "No activity", session: "Session", live: "Live", now: "Now" },
-      card: { todays_schedule: "Today's Schedule", no_bookings: "No bookings found for this day.", log: "Attendance Log", manual: "manual input", no_activity: "No activity yet", check_in: "Check In", check_out: "Check Out" },
-      manual: { title: "Manual Attendance", subtitle: "Enter custom times for", start: "Start Time", end: "End Time" },
-      subscriptions: {
-        title: "Subscription Plans",
-        subtitle: "Unlock professional management tools",
-        monthly_title: "Monthly Pro",
-        monthly_price: "HK$79/mo",
-        monthly_desc: "Full access for school administrators",
-        lifetime_title: "Lifetime Access",
-        lifetime_price: "HK$799 once",
-        lifetime_desc: "One-time payment for eternal access",
-        subscribe: "Subscribe Now",
-        portal: "Manage Billing",
-        current_plan: "Current Plan",
-        expires: "Renews/Expires on:",
-        status: "Status:"
+Promise.all([
+  fetch('./locales/en.json').then(res => res.json()),
+  fetch('./locales/zh-CN.json').then(res => res.json())
+]).then(([en, zhCN]) => {
+  i18n
+    .use(LanguageDetector)
+    .use(initReactI18next)
+    .init({
+      resources: {
+        en: {
+          translation: en
+        },
+        "zh-CN": {
+          translation: zhCN
+        }
       },
-      issues: {
-        title: "Issues & Resolutions",
-        subtitle: "Identify and resolve booking discrepancies",
-        detected_problems: "Detected Problems",
-        problems_subtitle: "System-flagged discrepancies requiring action",
-        unpaid_booking: "Unpaid Booking",
-        missed_booking: "Missed Booking",
-        create_issue: "Create Issue",
-        resolve_issue: "Resolve Issue",
-        active_issues: "Resolved History",
-        active_subtitle: "Track and update existing resolutions",
-        no_problems: "No new discrepancies detected.",
-        no_issues: "No resolved issues currently.",
-        reschedule: "Reschedule",
-        refund: "Refund",
-        waived: "Waived",
-        billing: "Billing",
-        resolved: "Resolved",
-        status_unpaid: "Unpaid",
-        status_paid: "Paid",
-        mark_as_billing: "Mark for Billing",
-        mark_as_waived: "Waive Issue"
-      },
-      import_page: {
-        subtitle: "Batch upload bookings from CSV files",
-        step1_title: "Upload your CSV",
-        step1_headers: "Required Headers:",
-        example_title: "Example CSV Content",
-        select_file: "Select CSV File",
-        map_students: "Map Students",
-        map_courses: "Map Courses",
-        create_student: "Create New Student",
-        create_course: "Create New Course",
-        back_to_upload: "Back to Upload",
-        resolve_review: "Resolve & Review",
-        review_title: "Review Import",
-        review_subtitle: "Please verify the entries before final import.",
-        bookings_count: "{{count}} Bookings",
-        back_to_mapping: "Back to Mapping",
-        confirm_import: "Confirm & Import All",
-        complete_title: "Import Complete!",
-        complete_subtitle: "{{count}} bookings successfully synchronized.",
-        view_bookings: "View Bookings",
-        error_file: "CSV file must have a header row and at least one data row.",
-        error_no_data: "No valid data rows found in CSV.",
-        in_progress_title: "Import in Progress",
-        warning_refresh: "Please do not refresh or close this page until the process is complete.",
-        duplicate_title: "Duplicates Detected",
-        duplicate_subtitle: "{{count}} bookings appear to already exist. How would you like to proceed?",
-        import_all: "Import All Anyway",
-        skip_duplicates: "Skip Duplicates",
-        cancel_import: "Cancel Import",
-        backup_title: "Backup Recommended",
-        backup_subtitle: "Before importing new data, it's a good idea to create a backup of your current workspace to prevent accidental data loss.",
-        continue_anyway: "Continue without Backup",
-        go_to_backup: "Go to Backup Page"
-      },
-      export_page: {
-        title: "Export Bookings",
-        subtitle: "Configure and download your filtered results as a CSV file.",
-        columns_title: "Select Columns",
-        preview_title: "Data Preview",
-        download_btn: "Export to CSV",
-        column_student: "Student Name",
-        column_date: "Date",
-        column_start: "Start Time",
-        column_end: "End Time",
-        column_duration: "Duration (Mins)",
-        column_course: "Course",
-        column_status: "Status",
-        empty_state: "No data available to export. Please return to Bookings and filter your results."
-      },
-      contact_page: {
-        title: "Contact Us",
-        subtitle: "Get in touch with our team",
-        location: "Location",
-        location_val: "123 Education St, Central, Hong Kong",
-        phone: "Phone",
-        phone_val: "+852 2345 6789",
-        email: "Email",
-        email_val: "info@timesuperenglish.com",
-        office_hours: "Office Hours",
-        office_hours_val: "Mon-Sat: 09:00 - 19:00",
-        status: "System Status",
-        status_online: "All Systems Operational"
+      fallbackLng: 'en',
+      interpolation: {
+        escapeValue: false
       }
-    }
-  },
-  "zh-CN": {
-    translation: {
-      app: { name: "Time Super English", dashboard: "学院门户" },
-      nav: { home: "首页", attendance: "考勤", bookings: "预约", courses: "课程", students: "学生", backup: "备份", organizations: "机构", back: "返回", import: "导入", export: "导出", subscriptions: "订阅", issues: "异常处理", about: "关于", pricing: "价格", contact: "联系我们" },
-      user: { signed_in: "登录用户", logout: "登出" },
-      auth: { signin: "登录", register: "注册", email: "邮箱地址", password: "密码", create_account: "创建账户", continue: "或继续使用", google: "Google 账户", access: "门户访问", check_email: "请检查您的邮箱以获取确认链接！" },
-      org: { select: "选择机构", subtitle: "选择要管理的工作区", new: "新机构", no_orgs: "未找到机构", start_create: "创建您的第一个工作区以开始", create_new: "创建新机构", edit: "编辑机构", details: "管理工作区详情", name: "机构名称", owner: "所有者", member: "成员", delete_title: "删除工作区？", delete_msg: "此操作不可逆，将永久删除该工作区。请输入机构名称以进行确认。" },
-      common: { cancel: "取消", confirm: "确认", save: "保存", create: "创建", delete: "删除", edit: "编辑", remove: "移除", save_changes: "保存更改", loading: "加载中", processing: "处理中", or: "或", download: "下载", copy: "复制", send: "发送" },
-      attendance: { summary: "考勤摘要", booked: "已预约", arrived: "已到达", here: "在校", today: "今天", error: "错误", retry: "重试", no_students: "此日期无学生预约。", remove_title: "移除记录？", remove_msg: "永久移除此考勤记录？" },
-      bookings: { title: "预约", subtitle: "月度日程概览", new_entry: "新条目", select_month: "选择月份", reset: "重置", filter_student: "学生筛选", filter_course: "课程筛选", filter_status: "状态筛选", all_students: "所有学生", all_courses: "所有课程", all_statuses: "所有状态", date: "日期", time: "时间", student: "学生", course: "课程", status: "状态", actions: "操作", syncing: "同步中", no_match: "没有符合条件的条目。", edit: "编辑预约", new: "新预约", start: "开始", end: "结束", delete_title: "删除条目？", delete_msg: "此记录将从数据库中永久删除。", summary_title: "过滤摘要", total_time: "总时长", total_entries: "预约总数", export: "导出", request_session: "预约课程", request_success: "预约请求已发送！", request_fail: "发送失败。", pending_requests: "待处理请求", approve: "批准", reject: "拒绝" },
-      status: { missed: "缺席", partial: "部分", attended: "出席", future: "未来" },
-      courses: { title: "课程", subtitle: "课程和科目管理", add: "添加课程", no_courses: "未找到课程", start_building: "添加您的第一门课程以构建课程体系。", add_now: "立即添加课程", edit_title: "编辑课程", create_title: "创建课程", workspace_details: "工作区详情", subject_name: "科目名称", label_color: "标签颜色", hex_code: "十六进制代码", delete_title: "删除课程？", delete_msg: "确定吗？这将删除该课程，并可能影响历史预约数据的可视化。" },
-      students: { title: "学生名录", subtitle: "管理学生档案和门户访问", register: "注册学生", search: "按姓名、年级或联系方式搜索...", sort_name: "姓名", sort_level: "年级", no_contact: "无联系信息", access: "访问权限", no_match: "未找到匹配的学生", adjust_query: "尝试调整搜索词或注册新学生。", clear_filters: "清除筛选", edit_profile: "编辑档案", registration: "注册", student_data: "学生数据", full_name: "全名", grade_level: "年级", select: "选择", contact: "联系方式", register_now: "立即注册", dashboard_access: "门户访问", manage_links: "管理链接对象", authorized_parents: "授权家长账户", no_accounts: "暂无关联账户", invite: "邀请家长访问门户", link: "关联", unlink_title: "取消关联家长？", unlink_msg: "移除门户访问权限对象", unlink: "取消关联", delete_title: "删除档案？", delete_msg: "永久删除此学生？这将清除所有考勤历史和关联的家长账户。" },
-      backup: { title: "历史记录", subtitle: "管理数据库快照 and 时间点恢复", snapshots: "快照", quota_full: "配额已满", upload: "上传", snapshot: "快照", export: "导出", restore: "恢复", active: "最接近版本", latest: "最新快照", user_upload: "用户上传", empty: "无历史记录", no_snapshots: "此工作区未找到快照。", take_first: "创建第一个快照", restore_point: "恢复点", delete_snapshot: "删除快照", restore_msg: "将数据库恢复到 {{date}} 的状态？这将覆盖当前所有进度。", delete_msg: "永久删除快照 {{id}}？", success_create: "备份创建成功！", success_upload: "备份上传成功！", success_delete: "备份删除成功", success_restore: "数据库恢复成功！", error_quota: "配额已达上限。请先删除旧备份。" },
-      parent: { dashboard: "门户", subtitle: "学生活动和状态", go_today: "回到今天", edit_profile: "编辑学生档案", updating: "正在更新档案对象", unset: "未设置", in_class: "上课中", away: "不在校", no_bookings: "无预约", no_activity: "无活动", session: "会话", live: "实时", now: "现在" },
-      card: { todays_schedule: "今日日程", no_bookings: "今日无预约。", log: "考勤日志", manual: "手动输入", no_activity: "暂无活动", check_in: "签到", check_out: "签退" },
-      manual: { title: "手动考勤", subtitle: "输入自定义时间对象", start: "开始时间", end: "结束时间" },
-      subscriptions: {
-        title: "订阅方案",
-        subtitle: "解锁专业管理工具",
-        monthly_title: "按月订阅",
-        monthly_price: "HK$79/月",
-        monthly_desc: "完整访问权限，适合学校管理",
-        lifetime_title: "终身买断",
-        lifetime_price: "HK$799 一次性",
-        lifetime_desc: "一次支付，终身使用",
-        subscribe: "立即订阅",
-        portal: "管理账单",
-        current_plan: "当前方案",
-        expires: "续费/过期日期:",
-        status: "状态:"
-      },
-      issues: {
-        title: "异常处理",
-        subtitle: "识别并解决预约差异",
-        detected_problems: "检测到的问题",
-        problems_subtitle: "系统标记的需要处理的差异",
-        unpaid_booking: "未支付预约",
-        missed_booking: "错过预约 (未签到)",
-        create_issue: "创建异常记录",
-        resolve_issue: "解决异常",
-        active_issues: "处理历史",
-        active_subtitle: "跟踪和更新现有的处理结果",
-        no_problems: "未检测到新的差异。",
-        no_issues: "当前没有已处理的异常。",
-        reschedule: "重新排课",
-        refund: "退款",
-        waived: "豁免",
-        billing: "补开账单",
-        resolved: "已解决",
-        status_unpaid: "未支付",
-        status_paid: "已支付",
-        mark_as_billing: "标记为需开单",
-        mark_as_waived: "豁免此问题"
-      },
-      import_page: {
-        subtitle: "从 CSV 文件批量上传预约",
-        step1_title: "上传 CSV",
-        step1_headers: "所需表头:",
-        example_title: "示例 CSV 内容",
-        select_file: "选择 CSV 文件",
-        map_students: "匹配学生",
-        map_courses: "匹配课程",
-        create_student: "创建新学生",
-        create_course: "创建新课程",
-        back_to_upload: "返回上传",
-        resolve_review: "解析并预览",
-        review_title: "检查导入内容",
-        review_subtitle: "最终导入前请核对条目。",
-        bookings_count: "{{count}} 条预约",
-        back_to_mapping: "返回匹配",
-        confirm_import: "确认并全部导入",
-        complete_title: "导入完成！",
-        complete_subtitle: "成功同步 {{count}} 条预约。",
-        view_bookings: "查看预约",
-        error_file: "CSV 文件必须包含表头行 and 至少一个数据行。",
-        error_no_data: "CSV 中未找到有效数据行。",
-        in_progress_title: "正在导入",
-        warning_refresh: "在处理完成前，请不要刷新或关闭此页面。",
-        duplicate_title: "检测到重复项",
-        duplicate_subtitle: "我们发现 {{count}} 条预约似乎已存在。您希望如何处理？",
-        import_all: "全部导入",
-        skip_duplicates: "跳过重复项",
-        cancel_import: "取消导入",
-        backup_title: "建议备份",
-        backup_subtitle: "在导入新数据之前，建议您创建当前工作区的备份，以防意外数据丢失。",
-        continue_anyway: "继续导入（不备份）",
-        go_to_backup: "前往备份页面"
-      },
-      export_page: {
-        title: "导出预约",
-        subtitle: "配置并下载您的过滤结果为 CSV 文件。",
-        columns_title: "选择列",
-        preview_title: "数据预览",
-        download_btn: "导出 CSV",
-        column_student: "学生姓名",
-        column_date: "日期",
-        column_start: "开始时间",
-        column_end: "结束时间",
-        column_duration: "时长 (分钟)",
-        column_course: "课程",
-        column_status: "状态",
-        empty_state: "无可用导出数据。请返回预约页面并过滤结果。"
-      },
-      contact_page: {
-        title: "联系我们",
-        subtitle: "与我们的团队取得联系",
-        location: "地址",
-        location_val: "香港中环教育街123号",
-        phone: "电话",
-        phone_val: "+852 2345 6789",
-        email: "邮箱",
-        email_val: "info@timesuperenglish.com",
-        office_hours: "办公时间",
-        office_hours_val: "周一至周六: 09:00 - 19:00",
-        status: "系统状态",
-        status_online: "所有系统运行正常"
-      }
-    }
-  }
-};
-
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: 'en',
-    interpolation: {
-      escapeValue: false
-    }
-  });
+    });
+});
 
 export default i18n;

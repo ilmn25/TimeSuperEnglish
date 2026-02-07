@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { api } from '../services/api';
 import { Student } from '../types';
@@ -87,7 +86,7 @@ const PortalStudents: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div className="space-y-1">
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('students.title')}</h2>
-          <p className="text-slate-500 font-medium">Manage students linked to your account.</p>
+          <p className="text-slate-500 font-medium">{t('students.subtitle')}</p>
         </div>
         <button 
           onClick={() => setIsFormOpen(true)}
@@ -112,7 +111,7 @@ const PortalStudents: React.FC = () => {
               <div className="flex-1 min-w-0">
                 <h3 className="text-lg sm:text-xl font-black text-slate-900 truncate tracking-tight">{student.name}</h3>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-400 mt-1">
-                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded border border-indigo-100">{student.level || 'Unset'}</span>
+                  <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase tracking-widest rounded border border-indigo-100">{student.level || t('parent.unset')}</span>
                   <span className="text-xs font-bold text-slate-600">{student.contact || t('students.no_contact')}</span>
                 </div>
               </div>
@@ -137,9 +136,9 @@ const PortalStudents: React.FC = () => {
           ))}
           {students.length === 0 && (
             <div className="py-24 text-center bg-white border-2 border-dashed border-slate-200 rounded-[3rem]">
-              <h3 className="text-xl font-black text-slate-900 mb-2">No students found</h3>
-              <p className="text-slate-400 text-sm max-w-xs mx-auto mb-8 font-medium">Register your first student to get started with the portal.</p>
-              <button onClick={() => setIsFormOpen(true)} className="text-indigo-600 font-black text-xs uppercase tracking-widest hover:text-indigo-700 underline underline-offset-8 transition-all">Add Student Now</button>
+              <h3 className="text-xl font-black text-slate-900 mb-2">{t('students.no_match')}</h3>
+              <p className="text-slate-400 text-sm max-w-xs mx-auto mb-8 font-medium">{t('students.adjust_query')}</p>
+              <button onClick={() => setIsFormOpen(true)} className="text-indigo-600 font-black text-xs uppercase tracking-widest hover:text-indigo-700 underline underline-offset-8 transition-all">{t('students.register_now')}</button>
             </div>
           )}
         </div>
@@ -148,13 +147,13 @@ const PortalStudents: React.FC = () => {
       {/* Profile Form Modal (Used for Create & Edit) */}
       {isFormOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="px-6 py-6 sm:px-10 sm:py-8 border-b border-slate-50 bg-slate-50/30">
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 {editingStudent ? t('students.edit_profile') : t('students.registration')}
               </h3>
               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">
-                {editingStudent ? `Updating data for ${editingStudent.name}` : "Add a new student to your portal"}
+                {editingStudent ? `${t('parent.updating')} ${editingStudent.name}` : t('students.student_data')}
               </p>
             </div>
             <form onSubmit={handleSubmit} className="p-6 sm:p-10 space-y-5 sm:space-y-6">
@@ -213,7 +212,7 @@ const PortalStudents: React.FC = () => {
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
           <div className="bg-white rounded-[2rem] shadow-2xl w-full max-sm overflow-hidden p-8 sm:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
             <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             </div>
             <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-2">{t('students.delete_title')}</h3>
             <p className="text-slate-500 text-xs sm:text-sm mb-8 sm:mb-10 leading-relaxed">{t('students.delete_msg')}</p>

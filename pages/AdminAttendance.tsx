@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -7,8 +6,6 @@ import StudentCard from '../components/StudentCard';
 import TimelinePanel from '../components/TimelinePanel';
 import ManualAttendanceModal from '../components/ManualAttendanceModal';
 import { useTranslation } from 'react-i18next';
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const getHKTNow = () => {
   const now = new Date();
@@ -27,7 +24,16 @@ const AdminAttendance: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
   const hktToday = getHKTDateString();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const weekdays = useMemo(() => {
+    const base = new Date(2021, 0, 3); // A Sunday
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      return d.toLocaleDateString(i18n.language, { weekday: 'short' });
+    });
+  }, [i18n.language]);
   
   const [date, setDate] = useState<string>(hktToday);
   const [viewDate, setViewDate] = useState(new Date());
@@ -47,7 +53,7 @@ const AdminAttendance: React.FC = () => {
   } | null>(null);
 
   const isToday = date === hktToday;
-  const monthName = viewDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+  const monthName = viewDate.toLocaleString(i18n.language, { month: 'short', year: 'numeric' });
 
   const calendarWeeks = useMemo(() => {
     const year = viewDate.getFullYear();
@@ -82,12 +88,12 @@ const AdminAttendance: React.FC = () => {
       const bookings = await api.getAllBookings(orgId, { startDate, endDate });
       setMonthBookings(bookings);
     } catch (err: any) {
-      setError(err.message || 'Could not load data.');
+      setError(err.message || t('attendance.error'));
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, [orgId, viewDate]);
+  }, [orgId, viewDate, t]);
 
   useEffect(() => {
     loadData();
@@ -168,7 +174,7 @@ const AdminAttendance: React.FC = () => {
       const now = new Date().toISOString();
       await api.updateBooking(orgId, bookingId, { check_in: now });
       loadData();
-    } catch (err) { alert('Check-in error'); }
+    } catch (err) { alert(t('common.error')); }
   };
 
   const handleCheckOut = async (bookingId: string) => {
@@ -177,7 +183,7 @@ const AdminAttendance: React.FC = () => {
       const now = new Date().toISOString();
       await api.updateBooking(orgId, bookingId, { check_out: now });
       loadData();
-    } catch (err) { alert('Check-out error'); }
+    } catch (err) { alert(t('common.error')); }
   };
 
   const handleManualAdd = async (bookingId: string, start: string, end: string) => {
@@ -190,7 +196,7 @@ const AdminAttendance: React.FC = () => {
       await api.updateBooking(orgId, bookingId, { check_in, check_out });
       setManualModalConfig(null);
       loadData();
-    } catch (err) { alert('Manual entry error'); }
+    } catch (err) { alert(t('common.error')); }
   };
 
   const handleClearAttendance = async (bookingId: string) => {
@@ -199,7 +205,7 @@ const AdminAttendance: React.FC = () => {
       await api.updateBooking(orgId, bookingId, { check_in: null, check_out: null });
       setManualModalConfig(null);
       loadData();
-    } catch (err) { alert('Clear error'); }
+    } catch (err) { alert(t('common.error')); }
   };
 
   const selectedStudentData = useMemo(() => dailyGroupedData.find(d => d.student.id === selectedStudentId), [dailyGroupedData, selectedStudentId]);
@@ -233,18 +239,27 @@ const AdminAttendance: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
               </button>
             </div>
-            <button 
-              onClick={() => { setDate(hktToday); setViewDate(new Date()); }}
-              className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
-            >
-              {t('attendance.today')}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button 
+                onClick={() => setIsCalendarMaximized(!isCalendarMaximized)}
+                className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
+                title={isCalendarMaximized ? t('common.minimize') : t('common.maximize')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+              </button>
+              <button 
+                onClick={() => { setDate(hktToday); setViewDate(new Date()); }}
+                className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+              >
+                {t('attendance.today')}
+              </button>
+            </div>
           </div>
 
           <div className="px-6 py-5 bg-white">
             <div className="mx-auto">
               <div className="grid grid-cols-7 gap-1 mb-2">
-                {WEEKDAYS.map(day => (
+                {weekdays.map(day => (
                   <div key={day} className="text-center text-[8px] font-black text-slate-300 uppercase tracking-widest">{day}</div>
                 ))}
               </div>
@@ -277,7 +292,7 @@ const AdminAttendance: React.FC = () => {
                               {studentStatuses.map((s, i) => (
                                 <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
                                   <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
-                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-500'}`}>
+                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-50'}`}>
                                     {s.name}
                                   </span>
                                 </div>

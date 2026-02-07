@@ -316,7 +316,7 @@ const AdminStudents: React.FC = () => {
       {/* Registration Form Modal */}
       {isFormOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="px-6 py-6 sm:px-10 sm:py-8 border-b border-slate-50 bg-slate-50/30">
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{editingStudent ? t('students.edit_profile') : t('students.registration')}</h3>
               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">{t('students.student_data')}</p>
@@ -389,7 +389,7 @@ const AdminStudents: React.FC = () => {
             
             <div className="p-6 sm:p-10 space-y-6 sm:space-y-10">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 sm:mb-4 ml-1">Current Portal Association</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 sm:mb-4 ml-1">{t('students.portal_association')}</label>
                 <div className="min-h-[120px] flex flex-col items-center justify-center">
                   {isAccessLoading ? (
                     <div className="py-8">
@@ -401,7 +401,7 @@ const AdminStudents: React.FC = () => {
                             <div className="flex items-center space-x-3">
                                 <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Authorized User ID</span>
+                                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{t('students.authorized_user_id')}</span>
                                     <span className="text-xs sm:text-sm font-mono font-bold text-slate-700 truncate max-w-[200px] sm:max-w-none">{linkedAccounts[0]}</span>
                                 </div>
                             </div>
@@ -414,7 +414,7 @@ const AdminStudents: React.FC = () => {
                             {isProcessing ? <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" /> : (
                                 <>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    <span>{t('students.unlink')} User</span>
+                                    <span>{t('students.unlink')}</span>
                                 </>
                             )}
                         </button>
@@ -426,7 +426,7 @@ const AdminStudents: React.FC = () => {
                         </div>
                         
                         <div className="space-y-4">
-                            <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">{t('students.invite')}</label>
+                            <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">{t('students.invite_user')}</label>
                             <div className="flex flex-col gap-3">
                                 <input 
                                     type="email" 
@@ -443,7 +443,7 @@ const AdminStudents: React.FC = () => {
                                     {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : (
                                         <>
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                                            <span>{t('students.link')} Portal User</span>
+                                            <span>{t('students.link')}</span>
                                         </>
                                     )}
                                 </button>
@@ -456,7 +456,7 @@ const AdminStudents: React.FC = () => {
             </div>
             
             <div className="px-10 py-6 bg-slate-50 border-t border-slate-100 text-center">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Association allows the user to view schedules and attendance logs</p>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('students.association_notice')}</p>
             </div>
           </div>
         </div>

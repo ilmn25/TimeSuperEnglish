@@ -85,7 +85,7 @@ const ManualAttendanceModal: React.FC<ManualAttendanceModalProps> = ({
                 }}
                 className="w-full py-4 text-xs font-black text-white bg-red-600 hover:bg-red-700 rounded-2xl transition-all shadow-lg shadow-red-100 active:scale-95 uppercase tracking-widest"
               >
-                {t('common.remove')} Attendance
+                {t('common.remove')}
               </button>
             </div>
           )}

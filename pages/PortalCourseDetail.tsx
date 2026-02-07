@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
@@ -187,7 +186,7 @@ const PortalCourseDetail: React.FC = () => {
     );
   }
 
-  if (!course) return <div className="text-center py-20 font-black text-slate-400 uppercase tracking-widest">Course Not Found</div>;
+  if (!course) return <div className="text-center py-20 font-black text-slate-400 uppercase tracking-widest">{t('courses.not_found')}</div>;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20 max-w-7xl mx-auto">
@@ -212,12 +211,12 @@ const PortalCourseDetail: React.FC = () => {
           <div className="flex-1 p-8 md:p-12 flex flex-col overflow-hidden">
             <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center space-x-6">
-                  <button onClick={() => changeMonth(-1)} className="p-3 hover:bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all border border-slate-100 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg></button>
+                  <button onClick={() => changeMonth(-1)} className="p-3 hover:bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all border border-slate-100 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg></button>
                   <span className="text-2xl font-black text-slate-900 uppercase tracking-tight w-48 text-center">{viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
                   <button onClick={() => changeMonth(1)} className="p-3 hover:bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all border border-slate-100 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M9 5l7 7-7 7" /></svg></button>
                 </div>
                 <div className="hidden sm:flex items-center space-x-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                  <div className="flex items-center space-x-1.5"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: course.color }} /><span>Projected Class</span></div>
+                  <div className="flex items-center space-x-1.5"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: course.color }} /><span>{t('courses.projected_class')}</span></div>
                 </div>
             </div>
 
@@ -244,7 +243,7 @@ const PortalCourseDetail: React.FC = () => {
                                   <span className={`text-xs font-black self-start ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>{dateObj.getDate()}</span>
                                   {hasClass && !isSelected && <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: course.color }} />}
                                   <span className={`text-[9px] font-black uppercase tracking-tighter ${isSelected ? 'text-indigo-50' : 'text-indigo-400'}`}>
-                                    {hasClass ? `${daySchedules.length} Sessions` : ''}
+                                    {hasClass ? t('courses.sessions_count', { count: daySchedules.length }) : ''}
                                   </span>
                               </button>
                             );
@@ -258,8 +257,8 @@ const PortalCourseDetail: React.FC = () => {
           {/* Details Side - Matches Admin Timeline Aesthetics */}
           <div className="w-full lg:w-[420px] bg-slate-900 border-l border-slate-800 p-8 md:p-10 flex flex-col shrink-0">
             <div className="mb-8">
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">Inspection</span>
-                <h4 className="text-xl font-black text-white mt-1 uppercase tracking-tight">{selectedDate || 'Select a date'}</h4>
+                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">{t('course_schedule.inspection')}</span>
+                <h4 className="text-xl font-black text-white mt-1 uppercase tracking-tight">{selectedDate || t('course_schedule.select_date')}</h4>
             </div>
 
             <div className="flex-1 relative overflow-y-auto no-scrollbar bg-[#0f172a] rounded-2xl p-6 border border-slate-800 shadow-inner">
@@ -297,7 +296,7 @@ const PortalCourseDetail: React.FC = () => {
                          }}
                        >
                           <div className="flex items-center justify-between">
-                            <span className="text-[8px] font-black text-white/50 uppercase tracking-tighter truncate">{s.date ? 'Special' : 'Routine'}</span>
+                            <span className="text-[8px] font-black text-white/50 uppercase tracking-tighter truncate">{s.date ? t('course_schedule.special') : t('course_schedule.routine')}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white/40 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                           </div>
                           <span className="text-[11px] font-mono font-black text-white truncate leading-none mt-1">{formatTime(s.start_time)}—{formatTime(s.end_time)}</span>
@@ -308,10 +307,9 @@ const PortalCourseDetail: React.FC = () => {
                    {!selectedDate && (
                       <div className="flex flex-col items-center justify-center h-full text-slate-700 opacity-50 space-y-4">
                         <div className="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center border border-slate-700">
-                          {/* Fix: Added missing closing quote after h-8 w-8 and separated attributes correctly */}
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center max-w-[150px]">Select a date to view timeline</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center max-w-[150px]">{t('course_schedule.inspect_timeline')}</p>
                       </div>
                    )}
                 </div>
@@ -320,10 +318,10 @@ const PortalCourseDetail: React.FC = () => {
             <div className="mt-8 flex flex-col space-y-4">
                 <div className="flex items-center space-x-3">
                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: course.color }} />
-                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Available Slots</span>
+                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('bookings.available_slots')}</span>
                 </div>
                 <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
-                  Click on any block in the timeline to send a booking request for your child.
+                  {t('bookings.timeline_instruction')}
                 </p>
             </div>
           </div>
@@ -343,31 +341,31 @@ const PortalCourseDetail: React.FC = () => {
 
              <form onSubmit={handleSendRequest} className="p-10 space-y-6">
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Select Student</label>
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.student')}</label>
                    <select 
                      required
                      value={requestFormData.student_id}
                      onChange={e => setRequestFormData({ ...requestFormData, student_id: e.target.value })}
                      className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold transition-all text-slate-900"
                    >
-                      <option value="">Choose a child</option>
+                      <option value="">{t('bookings.choose_child')}</option>
                       {myStudents.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                    </select>
                 </div>
 
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Proposed Time</label>
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.proposed_time')}</label>
                    <div className="flex items-center space-x-3 p-4 bg-slate-50 border border-slate-100 rounded-2xl">
                       <span className="text-sm font-black font-mono text-indigo-600">{formatTime(requestingSlot.start)} — {formatTime(requestingSlot.end)}</span>
                    </div>
                 </div>
 
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Optional Message</label>
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.optional_message')}</label>
                    <textarea 
                      value={requestFormData.message}
                      onChange={e => setRequestFormData({ ...requestFormData, message: e.target.value })}
-                     placeholder="Any special notes for the academy..."
+                     placeholder={t('bookings.academy_notes')}
                      rows={3}
                      className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all resize-none text-slate-900"
                    />

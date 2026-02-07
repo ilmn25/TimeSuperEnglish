@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
@@ -60,7 +59,7 @@ const PortalCourses: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('courses.title')}</h2>
-          <p className="text-slate-500 mt-1 font-medium">Explore available classes and send requests to your school.</p>
+          <p className="text-slate-500 mt-1 font-medium">{t('courses.explore_classes')}</p>
         </div>
         <div className="relative w-full sm:w-72">
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
@@ -68,7 +67,7 @@ const PortalCourses: React.FC = () => {
           </div>
           <input 
             type="text" 
-            placeholder="Search classes..."
+            placeholder={t('courses.search_classes')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-11 pr-6 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold transition-all text-sm"
@@ -106,14 +105,14 @@ const PortalCourses: React.FC = () => {
               </div>
               
               <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between text-slate-400 font-black text-[9px] uppercase tracking-[0.1em] group-hover:text-indigo-600 transition-colors">
-                <span>View Schedule & Create Booking Request</span>
+                <span>{t('courses.view_detail')}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
               </div>
             </Link>
           ))}
           {filteredCourses.length === 0 && (
             <div className="col-span-full py-24 text-center bg-white border-2 border-dashed border-slate-200 rounded-[3rem]">
-              <p className="text-slate-400 font-bold italic">No matching courses found.</p>
+              <p className="text-slate-400 font-bold italic">{t('bookings.no_match')}</p>
             </div>
           )}
         </div>

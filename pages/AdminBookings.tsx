@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -10,8 +9,6 @@ import { useTranslation } from 'react-i18next';
 type SortField = 'date' | 'time' | 'student' | 'course' | 'status';
 type SortOrder = 'asc' | 'desc';
 type BookingStatus = 'blue' | 'green' | 'yellow' | 'red';
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const getHKTNow = () => {
   const now = new Date();
@@ -35,7 +32,16 @@ const getDatesInRange = (startStr: string, endStr: string) => {
 const AdminBookings: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const weekdays = useMemo(() => {
+    const base = new Date(2021, 0, 3); // A Sunday
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      return d.toLocaleDateString(i18n.language, { weekday: 'short' });
+    });
+  }, [i18n.language]);
   
   // Raw Data State
   const [monthBookings, setMonthBookings] = useState<Booking[]>([]);
@@ -78,7 +84,7 @@ const AdminBookings: React.FC = () => {
   });
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const monthName = viewDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+  const monthName = viewDate.toLocaleString(i18n.language, { month: 'short', year: 'numeric' });
 
   // Generate weeks for the calendar grid
   const calendarWeeks = useMemo(() => {
@@ -140,12 +146,12 @@ const AdminBookings: React.FC = () => {
       setCourses(coursesData);
       setStudents(studentsData);
     } catch (err) {
-      setError('Failed to load data');
+      setError(t('common.error'));
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, [orgId, viewDate]);
+  }, [orgId, viewDate, t]);
 
   useEffect(() => {
     fetchData();
@@ -330,7 +336,7 @@ const AdminBookings: React.FC = () => {
       setEditingBooking(null);
       fetchData();
     } catch (err: any) {
-      alert('Failed to save booking: ' + (err.message || 'Unknown error'));
+      alert(t('common.error'));
     } finally {
       setIsProcessing(false);
     }
@@ -344,7 +350,7 @@ const AdminBookings: React.FC = () => {
       setConfirmDeleteId(null);
       fetchData();
     } catch (err: any) {
-      alert('Failed to delete booking: ' + (err.message || 'Unknown error'));
+      alert(t('common.error'));
     } finally {
       setIsProcessing(false);
     }
@@ -508,7 +514,7 @@ const AdminBookings: React.FC = () => {
               <button 
                 onClick={() => setIsCalendarMaximized(!isCalendarMaximized)}
                 className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
-                title={isCalendarMaximized ? "Minimize" : "Maximize"}
+                title={isCalendarMaximized ? t('common.minimize') : t('common.maximize')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
@@ -532,7 +538,7 @@ const AdminBookings: React.FC = () => {
           <div className="mx-auto">
             <div className="grid grid-cols-[24px_repeat(7,1fr)] gap-1 mb-2">
               <div />
-              {WEEKDAYS.map(day => (
+              {weekdays.map(day => (
                 <div key={day} className="text-center text-[8px] font-black text-slate-300 uppercase tracking-widest">
                   {day}
                 </div>
@@ -752,7 +758,7 @@ const AdminBookings: React.FC = () => {
                         <div className={`flex flex-col transition-opacity duration-200 ${(sortField === 'date' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
                           <span className="text-xs font-black text-slate-900">{booking.date}</span>
                           <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                            {new Date(booking.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                            {new Date(booking.date).toLocaleDateString(i18n.language, { weekday: 'short' })}
                           </span>
                         </div>
                       </td>

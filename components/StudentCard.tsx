@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { StudentGroupedData, Booking } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -116,7 +115,7 @@ const StudentCard: React.FC<StudentCardProps> = ({
 
                   <div className="flex flex-col space-y-3">
                     <div className="flex items-center space-x-2">
-                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">Schedule:</span>
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">{t('timeline.schedule')}:</span>
                        <span className="text-xs font-mono font-black text-indigo-600 tracking-tight">{booking.start.slice(0, 5)} — {booking.end.slice(0, 5)}</span>
                     </div>
 

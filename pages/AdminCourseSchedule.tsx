@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -31,7 +30,7 @@ const getDatesInRange = (startStr: string, endStr: string) => {
 const AdminCourseSchedule: React.FC = () => {
   const { orgId, courseId } = useParams<{ orgId: string, courseId: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [schedules, setSchedules] = useState<CourseSchedule[]>([]);
@@ -177,7 +176,7 @@ const AdminCourseSchedule: React.FC = () => {
       }
       fetchData();
     } catch (err) {
-      alert('Failed to save open hours.');
+      alert(t('common.error'));
     } finally {
       setIsProcessing(false);
     }
@@ -224,7 +223,7 @@ const AdminCourseSchedule: React.FC = () => {
       fetchData();
     } catch (err) {
       console.error('Failed to delete schedule:', err);
-      alert('Failed to delete open hours. Please try again.');
+      alert(t('common.error'));
     } finally {
       setIsProcessing(false);
     }
@@ -342,8 +341,8 @@ const AdminCourseSchedule: React.FC = () => {
              {course?.name?.charAt(0).toUpperCase()}
            </div>
            <div>
-             <h2 className="text-2xl font-black text-slate-900 tracking-tight">{course?.name} <span className="text-indigo-600">Schedules</span></h2>
-             <p className="text-slate-500 font-medium text-xs">Define and visualize automatic class availability.</p>
+             <h2 className="text-2xl font-black text-slate-900 tracking-tight">{course?.name} <span className="text-indigo-600">{t('course_schedule.title')}</span></h2>
+             <p className="text-slate-500 font-medium text-xs">{t('course_schedule.subtitle')}</p>
            </div>
         </div>
       </div>
@@ -355,26 +354,26 @@ const AdminCourseSchedule: React.FC = () => {
              <div className="flex items-center justify-between mb-6">
                 <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                   <div className={`w-1.5 h-3 rounded-full ${editingId ? 'bg-indigo-600 animate-pulse' : 'bg-indigo-600'}`} />
-                  {editingId ? 'Edit Entry' : 'New Schedule'}
+                  {editingId ? t('course_schedule.edit_entry') : t('course_schedule.new_schedule')}
                 </h3>
                 {editingId && (
-                  <button type="button" onClick={cancelEdit} className="text-[9px] font-black text-indigo-600 hover:underline uppercase tracking-widest">Cancel</button>
+                  <button type="button" onClick={cancelEdit} className="text-[9px] font-black text-indigo-600 hover:underline uppercase tracking-widest">{t('common.cancel')}</button>
                 )}
              </div>
              
              <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="flex p-1 bg-slate-100 rounded-xl">
-                  <button type="button" onClick={() => { if (!editingId) setScheduleType('recurring'); }} className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${scheduleType === 'recurring' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>Routine</button>
-                  <button type="button" onClick={() => { if (!editingId) setScheduleType('one-off'); }} className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${scheduleType === 'one-off' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>One-off</button>
+                  <button type="button" onClick={() => { if (!editingId) setScheduleType('recurring'); }} className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${scheduleType === 'recurring' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{t('course_schedule.routine')}</button>
+                  <button type="button" onClick={() => { if (!editingId) setScheduleType('one-off'); }} className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${scheduleType === 'one-off' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{t('course_schedule.one_off')}</button>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Start Time</label>
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('course_schedule.start_time')}</label>
                     <input type="time" required value={formData.start_time} onChange={e => setFormData({...formData, start_time: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black font-mono text-slate-900 focus:ring-4 focus:ring-indigo-100 outline-none" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">End Time</label>
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('course_schedule.end_time')}</label>
                     <input type="time" required value={formData.end_time} onChange={e => setFormData({...formData, end_time: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black font-mono text-slate-900 focus:ring-4 focus:ring-indigo-100 outline-none" />
                   </div>
                 </div>
@@ -382,7 +381,7 @@ const AdminCourseSchedule: React.FC = () => {
                 {scheduleType === 'recurring' ? (
                   <div className="space-y-5 pt-2 border-t border-slate-50">
                     <div>
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Days</label>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('course_schedule.days')}</label>
                       <div className="flex flex-wrap gap-1.5">
                         {WEEKDAYS.map((day, idx) => (
                           <button key={day} type="button" onClick={() => toggleDay(idx)} className={`w-8 h-8 rounded-lg text-[9px] font-black transition-all ${formData.days_of_week.includes(idx) ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-400 border border-slate-200'}`}>
@@ -392,17 +391,17 @@ const AdminCourseSchedule: React.FC = () => {
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Starts On</label>
+                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('course_schedule.starts_on')}</label>
                       <input type="date" value={formData.starts_on} onChange={e => setFormData({...formData, starts_on: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900" />
                     </div>
                     <label className="flex items-center space-x-2.5 cursor-pointer group">
                       <input type="checkbox" checked={formData.biweekly} onChange={e => setFormData({...formData, biweekly: e.target.checked})} className="w-4 h-4 rounded border-2 border-slate-200 text-indigo-600 focus:ring-indigo-500" />
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Bi-Weekly</span>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('course_schedule.bi_weekly')}</span>
                     </label>
                   </div>
                 ) : (
                   <div className="space-y-3 pt-2 border-t border-slate-50">
-                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Selected Dates ({selectedDates.length})</label>
+                    <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('course_schedule.selected_dates', { count: selectedDates.length })}</label>
                     <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200 no-scrollbar">
                       {selectedDates.sort().map(d => (
                         <div key={d} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[8px] font-black rounded-md flex items-center gap-1 shadow-sm">
@@ -410,7 +409,7 @@ const AdminCourseSchedule: React.FC = () => {
                           {!editingId && <button type="button" onClick={() => setSelectedDates(prev => prev.filter(x => x !== d))} className="hover:text-indigo-900 transition-colors">×</button>}
                         </div>
                       ))}
-                      {selectedDates.length === 0 && <span className="text-[9px] text-slate-400 italic">Select on calendar</span>}
+                      {selectedDates.length === 0 && <span className="text-[9px] text-slate-400 italic">{t('course_schedule.select_on_calendar')}</span>}
                     </div>
                   </div>
                 )}
@@ -420,13 +419,13 @@ const AdminCourseSchedule: React.FC = () => {
                   disabled={isProcessing || (scheduleType === 'recurring' && formData.days_of_week.length === 0) || (scheduleType === 'one-off' && selectedDates.length === 0)} 
                   className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-[10px] uppercase tracking-widest disabled:opacity-50"
                 >
-                   {isProcessing ? 'Saving...' : editingId ? 'Update' : 'Add Schedule'}
+                   {isProcessing ? t('common.loading') : editingId ? t('common.update') : t('course_schedule.new_schedule')}
                 </button>
              </form>
            </section>
 
            <section className="bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl overflow-hidden">
-              <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4">Active Rules</h3>
+              <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4">{t('course_schedule.active_rules')}</h3>
               <div className="space-y-2 max-h-[300px] overflow-y-auto no-scrollbar">
                 {schedules.map((s) => (
                   <div key={s.id} className={`bg-slate-800/40 border p-3 rounded-xl flex items-center justify-between transition-all ${editingId === s.id ? 'border-indigo-500' : 'border-slate-700/50 hover:border-slate-600'}`}>
@@ -451,12 +450,12 @@ const AdminCourseSchedule: React.FC = () => {
            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg></button>
-                <span className="text-sm font-black text-slate-900 uppercase tracking-tight w-28 text-center">{viewDate.toLocaleString('default', { month: 'short', year: 'numeric' })}</span>
+                <span className="text-sm font-black text-slate-900 uppercase tracking-tight w-28 text-center">{viewDate.toLocaleString(i18n.language, { month: 'short', year: 'numeric' })}</span>
                 <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M9 5l7 7-7 7" /></svg></button>
               </div>
               <div className="flex items-center space-x-3 text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                 <div className="flex items-center space-x-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: course?.color }} /><span>Rules</span></div>
-                 <div className="flex items-center space-x-1"><div className="w-1.5 h-1.5 rounded-full bg-slate-600" /><span>One-off</span></div>
+                 <div className="flex items-center space-x-1"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: course?.color }} /><span>{t('course_schedule.regular')}</span></div>
+                 <div className="flex items-center space-x-1"><div className="w-1.5 h-1.5 rounded-full bg-slate-600" /><span>{t('course_schedule.one_off')}</span></div>
               </div>
            </div>
 
@@ -508,8 +507,8 @@ const AdminCourseSchedule: React.FC = () => {
         {/* Right (3 Cols): Integrated Daily Timeline */}
         <div className="lg:col-span-3 bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl flex flex-col h-[600px] border border-slate-800">
             <div className="mb-6">
-                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Inspection</span>
-                <h4 className="text-xl font-black text-white mt-1">{selectedTimelineDate || 'Select a date'}</h4>
+                <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{t('course_schedule.inspection')}</span>
+                <h4 className="text-xl font-black text-white mt-1 uppercase">{selectedTimelineDate || t('course_schedule.select_date')}</h4>
             </div>
 
             <div className="flex-1 relative overflow-y-auto no-scrollbar bg-[#0f172a] rounded-2xl p-4 border border-slate-800">
@@ -539,7 +538,7 @@ const AdminCourseSchedule: React.FC = () => {
                            borderColor: `${color}50`
                          }}
                        >
-                          <span className="text-[7px] font-black text-white/40 uppercase tracking-tighter truncate">{s.date ? 'Event' : 'Routine'}</span>
+                          <span className="text-[7px] font-black text-white/40 uppercase tracking-tighter truncate">{s.date ? t('course_schedule.event') : t('course_schedule.routine')}</span>
                           <span className="text-[10px] font-mono font-black text-white truncate leading-none">{formatTime(s.start_time)}—{formatTime(s.end_time)}</span>
                        </div>
                      );
@@ -548,7 +547,7 @@ const AdminCourseSchedule: React.FC = () => {
                    {!selectedTimelineDate && (
                       <div className="flex flex-col items-center justify-center h-full text-slate-700 opacity-50">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                        <p className="text-[9px] font-black uppercase">Inspect Date</p>
+                        <p className="text-[9px] font-black uppercase">{t('course_schedule.inspect_date')}</p>
                       </div>
                    )}
                 </div>
@@ -556,11 +555,11 @@ const AdminCourseSchedule: React.FC = () => {
             <div className="mt-4 flex flex-col space-y-2">
                 <div className="flex items-center space-x-2">
                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: course?.color }} />
-                   <span className="text-[8px] font-black text-slate-500 uppercase">Regular</span>
+                   <span className="text-[8px] font-black text-slate-500 uppercase">{t('course_schedule.regular')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                    <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-                   <span className="text-[8px] font-black text-slate-500 uppercase">One-off</span>
+                   <span className="text-[8px] font-black text-slate-500 uppercase">{t('course_schedule.one_off')}</span>
                 </div>
             </div>
         </div>
@@ -569,13 +568,13 @@ const AdminCourseSchedule: React.FC = () => {
       {/* Delete Confirmation */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md" onClick={() => setDeleteConfirmId(null)}>
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-sm overflow-hidden p-10 text-center animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
-             <h3 className="text-xl font-black text-slate-900 mb-2">Delete Schedule?</h3>
-             <p className="text-slate-500 text-xs mb-8">This will permanently remove this availability slot from the system.</p>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-sm overflow-hidden p-10 text-center animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+             <h3 className="text-xl font-black text-slate-900 mb-2">{t('course_schedule.delete_title')}</h3>
+             <p className="text-slate-500 text-xs mb-8">{t('course_schedule.delete_msg')}</p>
              <div className="flex gap-4">
-               <button onClick={() => setDeleteConfirmId(null)} className="flex-1 px-4 py-3 text-[10px] font-black text-slate-500 bg-slate-50 rounded-xl uppercase">Cancel</button>
+               <button onClick={() => setDeleteConfirmId(null)} className="flex-1 px-4 py-3 text-[10px] font-black text-slate-500 bg-slate-50 rounded-xl uppercase">{t('common.cancel')}</button>
                <button onClick={handleDelete} disabled={isProcessing} className="flex-1 px-4 py-3 text-[10px] font-black text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-lg shadow-red-100 uppercase">
-                 {isProcessing ? '...' : 'Confirm'}
+                 {isProcessing ? t('common.loading') : t('common.confirm')}
                </button>
              </div>
           </div>

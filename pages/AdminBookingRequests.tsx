@@ -155,7 +155,7 @@ const AdminBookingRequests: React.FC = () => {
       setSelectedRequestId(null);
       fetchRequests();
     } catch (err: any) {
-      alert('Approval failed: ' + err.message);
+      alert(t('common.error'));
     } finally {
       setIsProcessing(false);
     }
@@ -177,7 +177,7 @@ const AdminBookingRequests: React.FC = () => {
       setSelectedRequestId(null);
       fetchRequests();
     } catch (err: any) {
-      alert('Rejection failed: ' + err.message);
+      alert(t('common.error'));
     } finally {
       setIsProcessing(false);
     }
@@ -251,17 +251,17 @@ const AdminBookingRequests: React.FC = () => {
             <thead className="bg-slate-900 border-b border-slate-800">
               <tr>
                 <th onClick={() => toggleSort('student')} className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white transition-colors">
-                  Student {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  {t('bookings.student')} {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
                 <th onClick={() => toggleSort('course')} className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white transition-colors">
-                  Course {sortField === 'course' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  {t('bookings.course')} {sortField === 'course' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
                 <th onClick={() => toggleSort('date')} className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center cursor-pointer hover:text-white transition-colors">
-                  Date {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  {t('bookings.date')} {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Time</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{t('bookings.time')}</th>
                 <th onClick={() => toggleSort('status')} className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right cursor-pointer hover:text-white transition-colors">
-                  Status {sortField === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  {t('common.status')} {sortField === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </th>
               </tr>
             </thead>
@@ -308,9 +308,9 @@ const AdminBookingRequests: React.FC = () => {
             </div>
             
             <div className="flex flex-wrap gap-2 mt-6">
-                <button onClick={() => setTimelinePendingOnly(!timelinePendingOnly)} className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${timelinePendingOnly ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>Pending Only</button>
-                <button onClick={() => setFilterByCourse(!filterByCourse)} className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${filterByCourse ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>{selectedRequest.courses?.name} Only</button>
-                <button onClick={() => setFilterByStudent(!filterByStudent)} className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${filterByStudent ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>{selectedRequest.students?.name.split(' ')[0]} Only</button>
+                <button onClick={() => setTimelinePendingOnly(!timelinePendingOnly)} className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${timelinePendingOnly ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>{t('timeline.pending_only')}</button>
+                <button onClick={() => setFilterByCourse(!filterByCourse)} className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${filterByCourse ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>{selectedRequest.courses?.name} {t('bookings.only')}</button>
+                <button onClick={() => setFilterByStudent(!filterByStudent)} className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all ${filterByStudent ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>{selectedRequest.students?.name.split(' ')[0]} {t('bookings.only')}</button>
             </div>
           </div>
 
@@ -321,7 +321,7 @@ const AdminBookingRequests: React.FC = () => {
                    <div className="absolute top-6 right-6 w-52 bg-slate-800 border border-slate-700 shadow-2xl rounded-2xl p-4 z-[250] pointer-events-none animate-in fade-in slide-in-from-top-4 slide-in-from-right-4 duration-300">
                       <div className="space-y-2">
                          <div className="flex flex-col">
-                            <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">{hoveredItem.type === 'request' ? 'PENDING REQUEST' : 'BOOKING'}</span>
+                            <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">{hoveredItem.type === 'request' ? t('timeline.pending_request').toUpperCase() : t('timeline.booked').toUpperCase()}</span>
                             <span className="text-sm font-black text-white leading-tight">{hoveredItem.students?.name || hoveredItem.name}</span>
                          </div>
                          <div className="h-px bg-slate-700/50 w-full" />
@@ -413,13 +413,13 @@ const AdminBookingRequests: React.FC = () => {
           <div className="p-8 border-t border-slate-800 bg-slate-900 shrink-0">
             {selectedRequest.message && (
                <div className="mb-8 p-6 bg-indigo-500/10 border border-indigo-500/20 rounded-[2rem] shadow-inner">
-                  <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1 block">Parent Message</span>
+                  <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1 block">{t('bookings.parent_message')}</span>
                   <p className="text-sm font-medium text-indigo-100 leading-relaxed italic">"{selectedRequest.message}"</p>
                </div>
             )}
             <div className="flex flex-col space-y-3">
-               <button onClick={() => handleApprove(selectedRequest)} disabled={isProcessing} className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-3">{isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Approve Session'}</button>
-               <button onClick={() => setRejectingRequest(selectedRequest)} disabled={isProcessing} className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-red-400 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center">Decline Request</button>
+               <button onClick={() => handleApprove(selectedRequest)} disabled={isProcessing} className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-3">{isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : t('bookings.approve_session')}</button>
+               <button onClick={() => setRejectingRequest(selectedRequest)} disabled={isProcessing} className="w-full py-4 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-red-400 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center">{t('bookings.decline_request')}</button>
             </div>
           </div>
         </aside>,
@@ -430,17 +430,17 @@ const AdminBookingRequests: React.FC = () => {
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-300">
              <div className="px-10 py-8 border-b border-slate-50 bg-red-50/30 text-center">
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Decline Request</h3>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">For {rejectingRequest.students?.name}</p>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t('bookings.decline_request')}</h3>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">{t('bookings.for_student', { name: rejectingRequest.students?.name })}</p>
              </div>
              <div className="p-10 space-y-6">
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Reason (Optional)</label>
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">{t('bookings.reason_optional')}</label>
                    <textarea value={rejectionMessage} onChange={(e) => setRejectionMessage(e.target.value)} rows={4} className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-red-50 transition-all resize-none text-slate-900" />
                 </div>
                 <div className="flex space-x-3">
                    <button onClick={() => setRejectingRequest(null)} className="flex-1 px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.cancel')}</button>
-                   <button onClick={handleConfirmReject} disabled={isProcessing} className="flex-[2] py-4 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">Confirm Reject</button>
+                   <button onClick={handleConfirmReject} disabled={isProcessing} className="flex-[2] py-4 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">{t('bookings.confirm_reject')}</button>
                 </div>
              </div>
           </div>

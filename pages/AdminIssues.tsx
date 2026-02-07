@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
@@ -154,7 +153,7 @@ const AdminIssues: React.FC = () => {
       });
       await fetchData();
     } catch (err) {
-      alert('Failed to resolve issue');
+      alert(t('common.error'));
     } finally {
       setIsProcessing(false);
     }
@@ -202,7 +201,6 @@ const AdminIssues: React.FC = () => {
         </div>
       </div>
 
-      {/* Filter Bar */}
       <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm flex flex-col md:flex-row items-center gap-4">
         <div className="relative flex-1 w-full">
            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
@@ -212,7 +210,7 @@ const AdminIssues: React.FC = () => {
              type="text"
              value={searchQuery}
              onChange={(e) => setSearchQuery(e.target.value)}
-             placeholder="Search by student or course..."
+             placeholder={t('issues.search_placeholder')}
              className="w-full pl-11 pr-6 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all text-sm font-bold text-slate-700"
            />
         </div>
@@ -223,7 +221,7 @@ const AdminIssues: React.FC = () => {
             onChange={(e) => setFilterType(e.target.value)}
             className="px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-600 cursor-pointer"
           >
-            <option value="">All Types</option>
+            <option value="">{t('issues.all_types')}</option>
             <option value="missed_booking">{t('issues.missed_booking')}</option>
             <option value="unpaid_booking">{t('issues.unpaid_booking')}</option>
           </select>
@@ -233,8 +231,8 @@ const AdminIssues: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-600 cursor-pointer"
           >
-            <option value="">All Statuses</option>
-            <option value="unrecorded">Unrecorded</option>
+            <option value="">{t('issues.all_statuses')}</option>
+            <option value="unrecorded">{t('issues.unrecorded')}</option>
             <option value="reschedule">{t('issues.reschedule')}</option>
             <option value="refund">{t('issues.refund')}</option>
             <option value="waived">{t('issues.waived')}</option>
@@ -245,7 +243,7 @@ const AdminIssues: React.FC = () => {
             onClick={() => { setSearchQuery(''); setFilterType(''); setFilterStatus(''); }}
             className="px-6 py-3 bg-slate-100 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
           >
-            Reset
+            {t('common.reset')}
           </button>
         </div>
       </div>
@@ -258,12 +256,12 @@ const AdminIssues: React.FC = () => {
             <table className="w-full text-left min-w-[1000px]">
               <thead className="bg-slate-900 border-b border-slate-800">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('date')}>Date {renderSortArrow('date')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('student')}>Student {renderSortArrow('student')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('course')}>Course {renderSortArrow('course')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('type')}>Type {renderSortArrow('type')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('status')}>Resolution {renderSortArrow('status')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('date')}>{t('bookings.date')} {renderSortArrow('date')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('student')}>{t('bookings.student')} {renderSortArrow('student')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('course')}>{t('bookings.course')} {renderSortArrow('course')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('type')}>{t('bookings.status')} {renderSortArrow('type')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('status')}>{t('common.resolution')} {renderSortArrow('status')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('bookings.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -294,7 +292,7 @@ const AdminIssues: React.FC = () => {
                          <span className={`text-[10px] font-black uppercase tracking-widest ${
                            item.resolution === 'unrecorded' ? 'text-red-500' : 'text-emerald-600'
                          }`}>
-                           {item.resolution === 'unrecorded' ? 'UNRESOLVED' : t(`issues.${item.resolution}`)}
+                           {item.resolution === 'unrecorded' ? t('issues.unresolved') : t(`issues.${item.resolution}`)}
                          </span>
                       </div>
                     </td>
@@ -322,7 +320,7 @@ const AdminIssues: React.FC = () => {
                 ))}
                 {processedDiscrepancies.length === 0 && !isLoading && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-20 text-center text-slate-400 font-bold italic text-sm">No issues found matching your criteria.</td>
+                    <td colSpan={6} className="px-6 py-20 text-center text-slate-400 font-bold italic text-sm">{t('bookings.no_match')}</td>
                   </tr>
                 )}
               </tbody>

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef, createContext, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from './services/supabaseClient';
@@ -150,7 +149,6 @@ const UserProfile: React.FC<{ email: string; onLogout: () => void }> = ({ email,
           </Link>
 
           <button 
-            /* Fix: Call onLogout prop instead of undefined handleLogout */
             onClick={onLogout}
             className="w-full flex items-center space-x-3 px-6 py-4 text-red-500 hover:bg-red-50 transition-colors text-sm font-black uppercase tracking-widest"
           >
@@ -239,7 +237,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
               )}
               <div className="flex flex-col min-w-0">
                 <span className="text-[8px] sm:text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] sm:tracking-[0.3em] opacity-80 leading-none mb-1 sm:mb-1.5 truncate">
-                  {currentOrg ? currentOrg.name : (isCounterPage ? "Counter" : t('app.name'))}
+                  {currentOrg ? currentOrg.name : (isCounterPage ? t('app.educational_intelligence') : t('app.name'))}
                 </span>
                 <h1 className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 tracking-tight truncate max-w-[120px] sm:text-nowrap sm:max-w-md">
                   {getPageTitle()}
@@ -326,7 +324,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                       className="flex items-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 bg-indigo-600 text-white rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" /></svg>
-                      <span>{t('parent.dashboard')} Access</span>
+                      <span>{t('nav.parent_dashboard_access')}</span>
                     </Link>
                   </div>
                 )}
@@ -344,14 +342,14 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
       <footer className="max-w-[1700px] w-full mx-auto pt-12 border-t border-slate-100 flex flex-col items-center space-y-8 pb-12 px-4 mt-auto">
         <div className="flex flex-col items-center text-center space-y-3">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
-            &copy; {new Date().getFullYear()} {isCounterPage ? "Counter • Educational Intelligence" : "Time Super English • Academy Management"}
+            &copy; {new Date().getFullYear()} {isCounterPage ? t('app.educational_intelligence') : t('app.academy_management')}
           </p>
           <div className="flex items-center space-x-6">
-            <Link to="/about" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">About</Link>
+            <Link to="/about" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('nav.about')}</Link>
             <span className="w-1 h-1 bg-slate-200 rounded-full" />
-            <Link to="/pricing" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">Pricing</Link>
+            <Link to="/pricing" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('nav.pricing')}</Link>
             <span className="w-1 h-1 bg-slate-200 rounded-full" />
-            <Link to="/org" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">Admin</Link>
+            <Link to="/org" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('footer.admin')}</Link>
           </div>
         </div>
       </footer>

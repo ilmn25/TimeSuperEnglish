@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
@@ -30,7 +29,6 @@ const AdminBackup: React.FC = () => {
   } | null>(null);
 
   useEffect(() => {
-    // Update every second to show seconds ticking
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -91,8 +89,7 @@ const AdminBackup: React.FC = () => {
       showToast(t('backup.success_create'));
       fetchInitialData();
     } catch (err) {
-      showToast('Failed to create backup', true);
-      console.error(err);
+      showToast(t('common.error'), true);
     } finally {
       setIsCreating(false);
     }
@@ -105,7 +102,6 @@ const AdminBackup: React.FC = () => {
       return;
     }
     const file = e.target.files[0];
-    
     setIsUploading(true);
     setError(null);
     try {
@@ -113,8 +109,7 @@ const AdminBackup: React.FC = () => {
       showToast(t('backup.success_upload'));
       fetchInitialData();
     } catch (err) {
-      showToast('Upload failed. Ensure the file is a valid backup JSON.', true);
-      console.error(err);
+      showToast(t('backup.upload_failed'), true);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -131,18 +126,18 @@ const AdminBackup: React.FC = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showToast('Download started');
+        showToast(t('common.download_started'));
       } else {
-        throw new Error('No URL returned');
+        throw new Error('No URL');
       }
     } catch (err) {
-      showToast('Failed to generate download link', true);
-      console.error(err);
+      showToast(t('backup.download_link_failed'), true);
     }
   };
 
   const handleDelete = async (backupId: string) => {
     setConfirmModal(null);
+    setIsLoading(true);
     try {
       const backupToDelete = backups.find(b => b.id === backupId);
       await api.deleteBackup(backupId);
@@ -152,25 +147,26 @@ const AdminBackup: React.FC = () => {
       showToast(t('backup.success_delete'));
       fetchInitialData();
     } catch (err) {
-      showToast('Failed to delete backup', true);
-      console.error(err);
+      showToast(t('backup.delete_failed'), true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleRestore = async (backupId: string) => {
     setConfirmModal(null);
+    setIsLoading(true);
     try {
       const backupToRestore = backups.find(b => b.id === backupId);
       if (!backupToRestore) throw new Error('Backup not found');
-      
       await api.restoreBackup(backupId);
       await api.updateOrganizationBackupTime(orgId!, backupToRestore.created_at);
-      
       showToast(t('backup.success_restore'));
       fetchInitialData();
     } catch (err) {
-      showToast('Restore failed', true);
-      console.error(err);
+      showToast(t('backup.restore_failed'), true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -201,7 +197,6 @@ const AdminBackup: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 md:space-y-12 animate-in fade-in duration-500 pb-20 px-3 sm:px-4">
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8 bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm">
         <div className="space-y-3">
           <div className="flex items-center space-x-3">
@@ -262,9 +257,7 @@ const AdminBackup: React.FC = () => {
         </div>
       )}
 
-      {/* Git-Style Timeline History */}
       <div className="relative pl-6 sm:pl-10 md:pl-12">
-        {/* Continuous timeline line */}
         <div className="absolute left-6 sm:left-[2.75rem] md:left-[3.25rem] top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 via-indigo-300 to-slate-200 rounded-full" />
 
         {isLoading ? (
@@ -276,6 +269,11 @@ const AdminBackup: React.FC = () => {
               </div>
             ))}
           </div>
+        ) : sortedBackups.length === 0 ? (
+          <div className="ml-8 sm:ml-10 md:ml-12 bg-white border-2 border-dashed border-slate-200 rounded-[2.5rem] p-16 text-center">
+            <h3 className="text-xl font-black text-slate-400 italic mb-4">{t('backup.empty')}</h3>
+            <button onClick={handleCreateBackup} className="text-indigo-600 font-black text-xs uppercase tracking-widest hover:underline">{t('backup.take_first')}</button>
+          </div>
         ) : (
           <div className="space-y-8 md:space-y-12">
             {sortedBackups.map((backup, index) => {
@@ -285,7 +283,6 @@ const AdminBackup: React.FC = () => {
 
               return (
                 <div key={backup.id} className="relative group animate-in slide-in-from-left duration-500" style={{ animationDelay: `${index * 80}ms` }}>
-                  {/* Timeline Node Icon */}
                   <div className={`absolute left-[-1.2rem] md:left-[-1.2rem] top-4 md:top-6 w-10 h-10 md:w-11 md:h-11 rounded-full border-[5px] md:border-[6px] border-slate-50 flex items-center justify-center z-20 transition-all group-hover:scale-110 ${isActive ? 'bg-green-500 shadow-lg shadow-green-200 ring-4 ring-green-100' : isFirst ? 'bg-indigo-600 shadow-lg shadow-indigo-200' : isUploaded ? 'bg-teal-500 shadow-lg shadow-teal-100' : 'bg-slate-200'}`}>
                     {isActive ? (
                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -301,7 +298,6 @@ const AdminBackup: React.FC = () => {
                   </div>
 
                   <div className={`ml-8 sm:ml-10 md:ml-12 bg-white border-2 rounded-[2rem] md:rounded-[2.5rem] p-5 md:p-8 transition-all duration-300 relative ${isActive ? 'border-green-400 shadow-xl shadow-green-50 ring-2 ring-green-50' : isUploaded ? 'border-teal-50 hover:border-teal-400 hover:shadow-2xl hover:shadow-teal-50' : 'border-slate-100 hover:border-indigo-400 hover:shadow-2xl hover:shadow-indigo-50'}`}>
-                    {/* Floating Badges */}
                     <div className="flex flex-wrap gap-1.5 mb-3 md:absolute md:-top-4 md:right-8 md:mb-0">
                       {isActive && (
                         <div className="px-3 py-1 bg-green-500 text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-green-100 flex items-center space-x-1.5 shrink-0">
@@ -361,9 +357,7 @@ const AdminBackup: React.FC = () => {
                           onClick={() => setConfirmModal({ type: 'delete', id: backup.id, date: formatTimestamp(backup.created_at) })} 
                           className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} /></svg>
                         </button>
                       </div>
                     </div>
@@ -371,56 +365,21 @@ const AdminBackup: React.FC = () => {
                 </div>
               );
             })}
-            
-            {backups.length === 0 && (
-              <div className="text-center py-16 md:py-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] ml-4 md:ml-0">
-                <div className="w-14 h-14 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 md:h-8 md:w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-1">{t('backup.empty')}</h3>
-                <p className="text-slate-500 text-sm mb-6 px-4">{t('backup.no_snapshots')}</p>
-                <button 
-                  onClick={handleCreateBackup}
-                  disabled={isCreating}
-                  className="text-indigo-600 font-bold hover:text-indigo-700 text-sm"
-                >
-                  {t('backup.take_first')} &rarr;
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      {/* Confirmation Modal */}
       {confirmModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmModal(null)}>
-          <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl w-full max-sm overflow-hidden p-8 md:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
-            <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.type === 'restore' ? 'bg-orange-50' : 'bg-red-50'}`}>
-              {confirmModal.type === 'restore' ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 md:h-8 md:w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 md:h-8 md:w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              )}
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-sm overflow-hidden p-10 animate-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${confirmModal.type === 'restore' ? 'bg-orange-50 text-orange-600' : 'bg-red-50 text-red-600'}`}>
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={confirmModal.type === 'restore' ? "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" : "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"} /></svg>
             </div>
-            
-            <h3 className="text-lg md:text-xl font-black text-slate-900 mb-2">
-              {confirmModal.type === 'restore' ? t('backup.restore_point') : t('backup.delete_snapshot')}
-            </h3>
-            
-            <p className="text-slate-500 text-sm mb-8 md:mb-10 leading-relaxed px-2">
-              {confirmModal.type === 'restore' 
-                ? t('backup.restore_msg', { date: confirmModal.date })
-                : t('backup.delete_msg', { id: confirmModal.id.slice(0, 8) })
-              }
-            </p>
-            
+            <h3 className="text-xl font-black text-slate-900 mb-2">{confirmModal.type === 'restore' ? t('backup.restore_point') : t('backup.delete_snapshot')}</h3>
+            <p className="text-slate-500 text-sm mb-10 leading-relaxed">{confirmModal.type === 'restore' ? t('backup.restore_msg', { date: confirmModal.date }) : t('backup.delete_msg', { id: confirmModal.id.slice(0,8) })}</p>
             <div className="flex space-x-3">
-              <button onClick={() => setConfirmModal(null)} className="flex-1 px-4 py-3 md:px-6 md:py-3 text-[11px] font-black text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors uppercase tracking-widest">{t('common.cancel')}</button>
-              <button 
-                onClick={() => confirmModal.type === 'restore' ? handleRestore(confirmModal.id) : handleDelete(confirmModal.id)} 
-                className={`flex-1 px-4 py-3 md:px-6 md:py-3 text-[11px] font-black text-white rounded-xl transition-all shadow-lg uppercase tracking-widest flex items-center justify-center ${confirmModal.type === 'restore' ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-100' : 'bg-red-600 hover:bg-red-700 shadow-red-100'}`}
-              >
+              <button onClick={() => setConfirmModal(null)} className="flex-1 px-6 py-3 text-xs font-black text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors uppercase tracking-widest">{t('common.cancel')}</button>
+              <button onClick={() => confirmModal.type === 'restore' ? handleRestore(confirmModal.id) : handleDelete(confirmModal.id)} className={`flex-1 px-6 py-3 text-xs font-black text-white rounded-xl shadow-lg uppercase tracking-widest ${confirmModal.type === 'restore' ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-100' : 'bg-red-600 hover:bg-red-700 shadow-red-100'}`}>
                 {confirmModal.type === 'restore' ? t('backup.restore') : t('common.delete')}
               </button>
             </div>

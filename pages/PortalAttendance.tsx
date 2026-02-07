@@ -246,7 +246,7 @@ const PortalAttendanceCard: React.FC<{
       <div className={`p-6 border-b transition-colors ${isSelected ? 'border-indigo-100 bg-indigo-50/10' : 'border-slate-50'} flex items-start justify-between`}>
         <div className="min-w-0 flex-1 pr-2">
           <h3 className="text-xl font-black text-slate-900 leading-tight truncate">{student.name}</h3>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{t('students.sort_level')}: {student.level || 'N/A'}</p>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{t('students.sort_level')}: {student.level || t('parent.unset')}</p>
         </div>
         <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${isCurrentlyInClass ? 'bg-emerald-500 text-white animate-pulse' : 'bg-slate-100 text-slate-400'}`}>
           {isCurrentlyInClass ? t('parent.in_class').toUpperCase() : t('parent.away').toUpperCase()}
@@ -262,7 +262,7 @@ const PortalAttendanceCard: React.FC<{
             </div>
             <div className="flex items-center justify-between text-[10px]">
               <span className="font-mono font-black text-indigo-600">{b.start.slice(0, 5)} - {b.end.slice(0, 5)}</span>
-              {b.check_in && <span className="font-mono font-bold text-emerald-600">IN: {b.check_in.slice(11, 16)}</span>}
+              {b.check_in && <span className="font-mono font-bold text-emerald-600">{t('timeline.actual').toUpperCase()}: {b.check_in.slice(11, 16)}</span>}
             </div>
           </div>
         ))}
