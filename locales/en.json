@@ -136,6 +136,7 @@
     "parent_message": "Parent Message",
     "academy_feedback": "Academy Feedback",
     "your_note": "Your Note",
+    "no_note": "No note provided.",
     "request_hub": "Request Hub",
     "manage_pending": "Manage your child's pending sessions.",
     "approve_session": "Approve Session",

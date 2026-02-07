@@ -26,7 +26,7 @@ const PortalCourseDetail: React.FC = () => {
   
   // View State
   const [viewDate, setViewDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(new Date().toLocaleDateString('en-CA'));
 
   // Request Form State
   const [requestingSlot, setRequestingSlot] = useState<{
@@ -189,79 +189,83 @@ const PortalCourseDetail: React.FC = () => {
   if (!course) return <div className="text-center py-20 font-black text-slate-400 uppercase tracking-widest">{t('courses.not_found')}</div>;
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-500 pb-20 max-w-7xl mx-auto">
-      <div className="flex items-center space-x-6">
-         <Link to="/portal/courses" className="p-4 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-         </Link>
-         <div 
-           className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black shadow-lg shrink-0"
-           style={{ backgroundColor: course.color, color: getContrastColor(course.color) }}
-         >
-           {course.name.charAt(0).toUpperCase()}
-         </div>
-         <div>
-           <h3 className="text-2xl font-black text-slate-900 tracking-tight">{course.name}</h3>
-           <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{course.org_name}</p>
-         </div>
+    <div className="space-y-6 sm:space-y-10 animate-in fade-in duration-500 pb-20 max-w-7xl mx-auto px-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center space-x-4 sm:space-x-6">
+           <Link to="/portal/courses" className="p-3 sm:p-4 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90 shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+           </Link>
+           <div 
+             className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-xl font-black shadow-lg shrink-0"
+             style={{ backgroundColor: course.color, color: getContrastColor(course.color) }}
+           >
+             {course.name.charAt(0).toUpperCase()}
+           </div>
+           <div className="min-w-0">
+             <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">{course.name}</h3>
+             <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest truncate">{course.org_name}</p>
+           </div>
+        </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-[3rem] shadow-xl overflow-hidden flex flex-col lg:flex-row min-h-[750px]">
+      <div className="bg-white border border-slate-200 rounded-[2rem] sm:rounded-[3rem] shadow-xl overflow-hidden flex flex-col lg:flex-row min-h-[600px] lg:min-h-[750px]">
           {/* Calendar Side */}
-          <div className="flex-1 p-8 md:p-12 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between mb-10">
-                <div className="flex items-center space-x-6">
-                  <button onClick={() => changeMonth(-1)} className="p-3 hover:bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all border border-slate-100 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg></button>
-                  <span className="text-2xl font-black text-slate-900 uppercase tracking-tight w-48 text-center">{viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                  <button onClick={() => changeMonth(1)} className="p-3 hover:bg-slate-50 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all border border-slate-100 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M9 5l7 7-7 7" /></svg></button>
+          <div className="flex-1 p-6 sm:p-8 md:p-12 flex flex-col overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-8 sm:mb-10 gap-4">
+                <div className="flex items-center space-x-4 sm:space-x-6">
+                  <button onClick={() => changeMonth(-1)} className="p-2 sm:p-3 hover:bg-slate-50 rounded-xl sm:rounded-2xl text-slate-400 hover:text-indigo-600 transition-all border border-slate-100 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg></button>
+                  <span className="text-lg sm:text-2xl font-black text-slate-900 uppercase tracking-tight w-32 sm:w-48 text-center">{viewDate.toLocaleString('default', { month: 'short', year: 'numeric' })}</span>
+                  <button onClick={() => changeMonth(1)} className="p-2 sm:p-3 hover:bg-slate-50 rounded-xl sm:rounded-2xl text-slate-400 hover:text-indigo-600 transition-all border border-slate-100 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M9 5l7 7-7 7" /></svg></button>
                 </div>
-                <div className="hidden sm:flex items-center space-x-4 text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                <div className="flex items-center space-x-4 text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   <div className="flex items-center space-x-1.5"><div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: course.color }} /><span>{t('courses.projected_class')}</span></div>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar">
-                <div className="grid grid-cols-7 gap-4 mb-6">
-                  {WEEKDAYS.map(day => <div key={day} className="text-center text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">{day}</div>)}
-                </div>
-                <div className="space-y-4">
-                  {calendarWeeks.map((week, wIdx) => (
-                      <div key={wIdx} className="grid grid-cols-7 gap-4">
-                        {week.map((dateObj, dIdx) => {
-                            if (!dateObj) return <div key={dIdx} className="h-24" />;
-                            const dateStr = dateObj.toLocaleDateString('en-CA');
-                            const daySchedules = getProjectionsForMonth[dateStr] || [];
-                            const isSelected = selectedDate === dateStr;
-                            const hasClass = daySchedules.length > 0;
+            <div className="flex-1 overflow-x-auto no-scrollbar">
+                <div className="min-w-[300px]">
+                  <div className="grid grid-cols-7 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                    {WEEKDAYS.map(day => <div key={day} className="text-center text-[9px] sm:text-[11px] font-black text-slate-300 uppercase tracking-[0.2em]">{day}</div>)}
+                  </div>
+                  <div className="space-y-2 sm:space-y-4">
+                    {calendarWeeks.map((week, wIdx) => (
+                        <div key={wIdx} className="grid grid-cols-7 gap-2 sm:gap-4">
+                          {week.map((dateObj, dIdx) => {
+                              if (!dateObj) return <div key={dIdx} className="h-16 sm:h-24 md:h-28" />;
+                              const dateStr = dateObj.toLocaleDateString('en-CA');
+                              const daySchedules = getProjectionsForMonth[dateStr] || [];
+                              const isSelected = selectedDate === dateStr;
+                              const hasClass = daySchedules.length > 0;
 
-                            return (
-                              <button
-                                  key={dateStr}
-                                  onClick={() => setSelectedDate(dateStr)}
-                                  className={`h-28 p-4 rounded-[2rem] border-2 transition-all flex flex-col items-center justify-between group ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xl shadow-indigo-200' : hasClass ? 'bg-indigo-50/40 border-indigo-100 hover:border-indigo-300' : 'bg-slate-50/30 border-slate-50 opacity-40 grayscale pointer-events-none'}`}
-                              >
-                                  <span className={`text-xs font-black self-start ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>{dateObj.getDate()}</span>
-                                  {hasClass && !isSelected && <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: course.color }} />}
-                                  <span className={`text-[9px] font-black uppercase tracking-tighter ${isSelected ? 'text-indigo-50' : 'text-indigo-400'}`}>
-                                    {hasClass ? t('courses.sessions_count', { count: daySchedules.length }) : ''}
-                                  </span>
-                              </button>
-                            );
-                        })}
-                      </div>
-                  ))}
+                              return (
+                                <button
+                                    key={dateStr}
+                                    onClick={() => setSelectedDate(dateStr)}
+                                    className={`h-16 sm:h-24 md:h-28 p-2 sm:p-4 rounded-xl sm:rounded-[2rem] border-2 transition-all flex flex-col items-center justify-between group ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xl shadow-indigo-200' : hasClass ? 'bg-indigo-50/40 border-indigo-100 hover:border-indigo-300' : 'bg-slate-50/30 border-slate-50 opacity-40 grayscale pointer-events-none'}`}
+                                >
+                                    <span className={`text-[10px] sm:text-xs font-black self-start ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>{dateObj.getDate()}</span>
+                                    {hasClass && !isSelected && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shadow-sm" style={{ backgroundColor: course.color }} />}
+                                    <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-tighter ${isSelected ? 'text-indigo-50' : 'text-indigo-400'}`}>
+                                      {hasClass ? (window.innerWidth < 640 ? `${daySchedules.length}` : t('courses.sessions_count', { count: daySchedules.length })) : ''}
+                                    </span>
+                                </button>
+                              );
+                          })}
+                        </div>
+                    ))}
+                  </div>
                 </div>
             </div>
           </div>
 
-          {/* Details Side - Matches Admin Timeline Aesthetics */}
-          <div className="w-full lg:w-[420px] bg-slate-900 border-l border-slate-800 p-8 md:p-10 flex flex-col shrink-0">
-            <div className="mb-8">
+          {/* Details Side */}
+          <div className="w-full lg:w-[400px] bg-slate-900 border-l border-slate-800 p-6 sm:p-8 md:p-10 flex flex-col shrink-0">
+            <div className="mb-6 sm:mb-8">
                 <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">{t('course_schedule.inspection')}</span>
-                <h4 className="text-xl font-black text-white mt-1 uppercase tracking-tight">{selectedDate || t('course_schedule.select_date')}</h4>
+                <h4 className="text-lg sm:text-xl font-black text-white mt-1 uppercase tracking-tight">{selectedDate || t('course_schedule.select_date')}</h4>
             </div>
 
-            <div className="flex-1 relative overflow-y-auto no-scrollbar bg-[#0f172a] rounded-2xl p-6 border border-slate-800 shadow-inner">
+            <div className="flex-1 relative overflow-y-auto no-scrollbar bg-[#0f172a] rounded-2xl p-4 sm:p-6 border border-slate-800 shadow-inner min-h-[400px]">
                 {/* Time Axis Grid Lines */}
                 <div className="absolute inset-x-6 top-6 bottom-6 flex flex-col justify-between opacity-10 pointer-events-none">
                   {Array.from({ length: 15 }, (_, i) => 8 + i).map(hour => (
@@ -269,7 +273,7 @@ const PortalCourseDetail: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="relative h-full mx-auto w-full z-10 min-h-[500px]">
+                <div className="relative h-full mx-auto w-full z-10 min-h-[450px]">
                    {selectedDate && (getProjectionsForMonth[selectedDate] || []).map((s, idx) => {
                      const top = timeToPercent(s.start_time);
                      const bottom = timeToPercent(s.end_time);
@@ -278,7 +282,7 @@ const PortalCourseDetail: React.FC = () => {
                      return (
                        <div 
                          key={idx} 
-                         className="absolute left-0 right-0 rounded-xl border-l-4 shadow-2xl flex flex-col p-3 group transition-all hover:brightness-110 cursor-pointer"
+                         className="absolute left-0 right-0 rounded-lg sm:rounded-xl border-l-4 shadow-2xl flex flex-col p-2 sm:p-3 group transition-all hover:brightness-110 cursor-pointer"
                          onClick={() => setRequestingSlot({ 
                            course: course, 
                            date: selectedDate, 
@@ -296,31 +300,31 @@ const PortalCourseDetail: React.FC = () => {
                          }}
                        >
                           <div className="flex items-center justify-between">
-                            <span className="text-[8px] font-black text-white/50 uppercase tracking-tighter truncate">{s.date ? t('course_schedule.special') : t('course_schedule.routine')}</span>
+                            <span className="text-[7px] sm:text-[8px] font-black text-white/50 uppercase tracking-tighter truncate">{s.date ? t('course_schedule.special') : t('course_schedule.routine')}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white/40 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                           </div>
-                          <span className="text-[11px] font-mono font-black text-white truncate leading-none mt-1">{formatTime(s.start_time)}—{formatTime(s.end_time)}</span>
+                          <span className="text-[10px] sm:text-[11px] font-mono font-black text-white truncate leading-none mt-1">{formatTime(s.start_time)}—{formatTime(s.end_time)}</span>
                        </div>
                      );
                    })}
 
                    {!selectedDate && (
                       <div className="flex flex-col items-center justify-center h-full text-slate-700 opacity-50 space-y-4">
-                        <div className="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center border border-slate-700">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center border border-slate-700">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-center max-w-[150px]">{t('course_schedule.inspect_timeline')}</p>
+                        <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-center max-w-[150px]">{t('course_schedule.inspect_timeline')}</p>
                       </div>
                    )}
                 </div>
             </div>
 
-            <div className="mt-8 flex flex-col space-y-4">
+            <div className="mt-6 sm:mt-8 flex flex-col space-y-3 sm:space-y-4">
                 <div className="flex items-center space-x-3">
                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: course.color }} />
-                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('bookings.available_slots')}</span>
+                   <span className="text-[8px] sm:text-[9px] font-black text-slate-500 uppercase tracking-widest">{t('bookings.available_slots')}</span>
                 </div>
-                <p className="text-[10px] text-slate-500 font-bold leading-relaxed">
+                <p className="text-[9px] sm:text-[10px] text-slate-500 font-bold leading-relaxed">
                   {t('bookings.timeline_instruction')}
                 </p>
             </div>
@@ -330,23 +334,23 @@ const PortalCourseDetail: React.FC = () => {
       {/* Request Booking Modal */}
       {requestingSlot && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
-           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-300">
-             <div className="px-10 py-8 border-b border-slate-50 bg-slate-50/30">
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t('bookings.request_session')}</h3>
+           <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+             <div className="px-8 py-6 sm:px-10 sm:py-8 border-b border-slate-50 bg-slate-50/30">
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{t('bookings.request_session')}</h3>
                 <div className="flex items-center space-x-2 mt-2">
-                   <div className="px-2 py-0.5 rounded bg-indigo-100 text-indigo-600 text-[9px] font-black uppercase tracking-widest">{requestingSlot.course.name}</div>
-                   <div className="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest">{requestingSlot.date}</div>
+                   <div className="px-2 py-0.5 rounded bg-indigo-100 text-indigo-600 text-[8px] sm:text-[9px] font-black uppercase tracking-widest">{requestingSlot.course.name}</div>
+                   <div className="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[8px] sm:text-[9px] font-black uppercase tracking-widest">{requestingSlot.date}</div>
                 </div>
              </div>
 
-             <form onSubmit={handleSendRequest} className="p-10 space-y-6">
+             <form onSubmit={handleSendRequest} className="p-8 sm:p-10 space-y-5 sm:space-y-6">
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.student')}</label>
+                   <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.student')}</label>
                    <select 
                      required
                      value={requestFormData.student_id}
                      onChange={e => setRequestFormData({ ...requestFormData, student_id: e.target.value })}
-                     className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold transition-all text-slate-900"
+                     className="w-full px-5 py-3.5 sm:px-6 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold transition-all text-slate-900 text-sm"
                    >
                       <option value="">{t('bookings.choose_child')}</option>
                       {myStudents.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -354,29 +358,29 @@ const PortalCourseDetail: React.FC = () => {
                 </div>
 
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.proposed_time')}</label>
-                   <div className="flex items-center space-x-3 p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-                      <span className="text-sm font-black font-mono text-indigo-600">{formatTime(requestingSlot.start)} — {formatTime(requestingSlot.end)}</span>
+                   <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.proposed_time')}</label>
+                   <div className="flex items-center space-x-3 p-3 sm:p-4 bg-slate-50 border border-slate-100 rounded-xl sm:rounded-2xl">
+                      <span className="text-xs sm:text-sm font-black font-mono text-indigo-600">{formatTime(requestingSlot.start)} — {formatTime(requestingSlot.end)}</span>
                    </div>
                 </div>
 
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.optional_message')}</label>
+                   <label className="block text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.optional_message')}</label>
                    <textarea 
                      value={requestFormData.message}
                      onChange={e => setRequestFormData({ ...requestFormData, message: e.target.value })}
                      placeholder={t('bookings.academy_notes')}
                      rows={3}
-                     className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all resize-none text-slate-900"
+                     className="w-full px-5 py-3.5 sm:px-6 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all resize-none text-slate-900 text-sm"
                    />
                 </div>
 
-                <div className="flex items-center justify-end space-x-4 pt-4">
-                   <button type="button" onClick={() => setRequestingSlot(null)} className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">{t('common.cancel')}</button>
+                <div className="flex items-center justify-end space-x-4 pt-2 sm:pt-4">
+                   <button type="button" onClick={() => setRequestingSlot(null)} className="px-4 py-2 text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">{t('common.cancel')}</button>
                    <button 
                      type="submit" 
                      disabled={isRequesting || !requestFormData.student_id}
-                     className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl text-xs uppercase tracking-widest flex items-center space-x-3 disabled:opacity-50"
+                     className="px-6 py-3.5 sm:px-8 sm:py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl sm:rounded-2xl font-black shadow-xl text-xs uppercase tracking-widest flex items-center space-x-3 disabled:opacity-50"
                    >
                       {isRequesting ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
