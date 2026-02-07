@@ -8,9 +8,7 @@ import { Course } from '../types';
 const HomePage: React.FC = () => {
   const { t } = useTranslation();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCoursesLoading, setIsCoursesLoading] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -19,22 +17,15 @@ const HomePage: React.FC = () => {
         const data = await api.getPublicCourses();
         setCourses(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Failed to load courses for landing page", err);
+        // Silently handle the error for the landing page.
+        // If RLS is missing for 'anon' role, we just show the academy description without course listing.
+        console.warn("Public course directory currently unavailable (Check Supabase RLS settings).");
+        setCourses([]);
       } finally {
         setIsCoursesLoading(false);
       }
     };
     fetchCourses();
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -52,6 +43,27 @@ const HomePage: React.FC = () => {
           Nurturing confidence and mastery in the English language. Professional tutoring for primary and secondary students.
         </p>
       </section>
+
+      {/* Course Carousel/Grid if available */}
+      {courses.length > 0 && (
+        <section className="space-y-10">
+          <div className="flex items-center space-x-4">
+             <div className="w-2 h-8 bg-indigo-600 rounded-full" />
+             <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase tracking-widest">Our Curriculum</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {courses.slice(0, 6).map(course => (
+              <div key={course.id} className="bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm hover:shadow-xl transition-all">
+                <div className="w-12 h-12 rounded-xl mb-6 flex items-center justify-center text-white font-black" style={{ backgroundColor: course.color }}>
+                  {course.name.charAt(0)}
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-2">{course.name}</h3>
+                <p className="text-slate-500 text-sm font-medium line-clamp-2">{course.description || "Interactive sessions focusing on language mastery and academic growth."}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Simplified About Section */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center bg-white rounded-[3rem] border border-slate-100 p-8 sm:p-12 shadow-sm">

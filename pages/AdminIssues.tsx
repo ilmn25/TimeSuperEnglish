@@ -21,7 +21,7 @@ const getHKTNowStrings = () => {
 type UnifiedIssue = {
   id?: string; // If undefined, it's a detected problem not yet in DB
   booking_id: string;
-  issue_type: 'missed_booking' | 'adhoc_booking';
+  issue_type: 'missed_booking' | 'unpaid_booking';
   resolution: string | 'unrecorded'; // 'unrecorded' for detected but not saved
   date: string;
   student_name: string;
@@ -83,7 +83,7 @@ const AdminIssues: React.FC = () => {
         allItems.push({
           id: issue.id,
           booking_id: issue.booking_id,
-          issue_type: issue.issue_type,
+          issue_type: issue.issue_type as any,
           resolution: issue.resolution,
           date: issue.bookings.date,
           student_name: issue.bookings.students?.name || 'Unknown',
@@ -99,15 +99,15 @@ const AdminIssues: React.FC = () => {
       if (existingIssueBookingIds.has(b.id)) return;
 
       const isAttended = !!b.check_in || !!b.check_out;
-      const isAdhoc = isAttended && !b.invoice_id;
+      const isUnpaid = isAttended && !b.invoice_id;
       const bookingEndWithSec = b.end.length === 5 ? `${b.end}:00` : b.end;
       const isPassed = (b.date < hktToday) || (b.date === hktToday && bookingEndWithSec < hktNowTime);
       const isMissed = isPassed && !isAttended && !!b.invoice_id;
 
-      if (isMissed || isAdhoc) {
+      if (isMissed || isUnpaid) {
         allItems.push({
           booking_id: b.id,
-          issue_type: isAdhoc ? 'adhoc_booking' : 'missed_booking',
+          issue_type: isUnpaid ? 'unpaid_booking' : 'missed_booking',
           resolution: 'unrecorded',
           date: b.date,
           student_name: b.students?.name || 'Unknown',
@@ -144,29 +144,17 @@ const AdminIssues: React.FC = () => {
     });
   }, [unifiedDiscrepancies, searchQuery, filterType, filterStatus, sortField, sortOrder]);
 
-  const handleCreateIssue = async (bookingId: string, type: 'missed_booking' | 'adhoc_booking') => {
+  const handleCreateAndResolveIssue = async (bookingId: string, type: 'missed_booking' | 'unpaid_booking', resolution: string) => {
     setIsProcessing(true);
     try {
       await api.createIssue({
         booking_id: bookingId,
         issue_type: type,
-        resolution: 'pending'
+        resolution: resolution
       });
       await fetchData();
     } catch (err) {
-      alert('Failed to create issue');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleUpdateResolution = async (issueId: string, resolution: string) => {
-    setIsProcessing(true);
-    try {
-      await api.updateIssue(issueId, { resolution });
-      await fetchData();
-    } catch (err) {
-      alert('Failed to update resolution');
+      alert('Failed to resolve issue');
     } finally {
       setIsProcessing(false);
     }
@@ -188,8 +176,7 @@ const AdminIssues: React.FC = () => {
 
   const stats = useMemo(() => {
     return {
-      pending: unifiedDiscrepancies.filter(i => i.resolution === 'pending').length,
-      resolved: unifiedDiscrepancies.filter(i => i.resolution !== 'pending' && i.resolution !== 'unrecorded').length,
+      resolved: unifiedDiscrepancies.filter(i => i.resolution !== 'unrecorded').length,
       unrecorded: unifiedDiscrepancies.filter(i => i.resolution === 'unrecorded').length
     };
   }, [unifiedDiscrepancies]);
@@ -206,11 +193,6 @@ const AdminIssues: React.FC = () => {
             <div className="flex flex-col">
               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('issues.detected_problems')}</span>
               <span className="text-xl font-black text-red-500 leading-none">{stats.unrecorded}</span>
-            </div>
-            <div className="w-px h-6 bg-slate-100 mx-2" />
-            <div className="flex flex-col">
-              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('issues.pending')}</span>
-              <span className="text-xl font-black text-orange-500 leading-none">{stats.pending}</span>
             </div>
             <div className="w-px h-6 bg-slate-100 mx-2" />
             <div className="flex flex-col">
@@ -243,7 +225,7 @@ const AdminIssues: React.FC = () => {
           >
             <option value="">All Types</option>
             <option value="missed_booking">{t('issues.missed_booking')}</option>
-            <option value="adhoc_booking">{t('issues.adhoc_booking')}</option>
+            <option value="unpaid_booking">{t('issues.unpaid_booking')}</option>
           </select>
 
           <select 
@@ -253,7 +235,6 @@ const AdminIssues: React.FC = () => {
           >
             <option value="">All Statuses</option>
             <option value="unrecorded">Unrecorded</option>
-            <option value="pending">{t('issues.pending')}</option>
             <option value="reschedule">{t('issues.reschedule')}</option>
             <option value="refund">{t('issues.refund')}</option>
             <option value="waived">{t('issues.waived')}</option>
@@ -293,59 +274,48 @@ const AdminIssues: React.FC = () => {
                     </td>
                     <td className="px-6 py-5">
                        <span className="text-sm font-black text-slate-900">{item.student_name}</span>
+                       {!item.booking.invoice_id && (
+                         <span className="ml-2 px-1.5 py-0.5 bg-red-100 text-red-600 rounded text-[8px] font-black uppercase tracking-widest">{t('issues.status_unpaid')}</span>
+                       )}
                     </td>
                     <td className="px-6 py-5">
                        <span className="text-xs font-bold text-slate-600">{item.course_name}</span>
                     </td>
                     <td className="px-6 py-5">
                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight ${item.issue_type === 'missed_booking' ? 'text-red-500 bg-red-50' : 'text-amber-500 bg-amber-50'}`}>
-                        {item.issue_type === 'missed_booking' ? t('issues.missed_booking') : t('issues.adhoc_booking')}
+                        {item.issue_type === 'missed_booking' ? t('issues.missed_booking') : t('issues.unpaid_booking')}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex items-center space-x-2">
                          <div className={`w-1.5 h-1.5 rounded-full ${
-                           item.resolution === 'unrecorded' ? 'bg-red-400 animate-pulse' :
-                           item.resolution === 'pending' ? 'bg-orange-400' : 'bg-emerald-500'
+                           item.resolution === 'unrecorded' ? 'bg-red-400 animate-pulse' : 'bg-emerald-500'
                          }`} />
                          <span className={`text-[10px] font-black uppercase tracking-widest ${
-                           item.resolution === 'unrecorded' ? 'text-red-500' :
-                           item.resolution === 'pending' ? 'text-orange-500' : 'text-emerald-600'
+                           item.resolution === 'unrecorded' ? 'text-red-500' : 'text-emerald-600'
                          }`}>
-                           {item.resolution === 'unrecorded' ? 'UNRECORDED' : t(`issues.${item.resolution}`)}
+                           {item.resolution === 'unrecorded' ? 'UNRESOLVED' : t(`issues.${item.resolution}`)}
                          </span>
                       </div>
                     </td>
                     <td className="px-6 py-5 text-right">
                       <div className="flex items-center justify-end space-x-2">
                         {item.resolution === 'unrecorded' ? (
-                          <button 
-                            onClick={() => handleCreateIssue(item.booking_id, item.issue_type)}
-                            disabled={isProcessing}
-                            className="px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-                          >
-                            {t('issues.create_issue')}
-                          </button>
-                        ) : item.resolution === 'pending' ? (
                           <>
                             {item.issue_type === 'missed_booking' ? (
                               <>
-                                <button onClick={() => handleUpdateResolution(item.id!, 'reschedule')} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">{t('issues.reschedule')}</button>
-                                <button onClick={() => handleUpdateResolution(item.id!, 'refund')} className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 hover:text-white transition-all">{t('issues.refund')}</button>
-                                <button onClick={() => handleUpdateResolution(item.id!, 'waived')} className="px-4 py-2 bg-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-300 transition-all active:scale-95">{t('issues.waived')}</button>
+                                <button onClick={() => handleCreateAndResolveIssue(item.booking_id, item.issue_type, 'reschedule')} disabled={isProcessing} className="px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">{t('issues.reschedule')}</button>
+                                <button onClick={() => handleCreateAndResolveIssue(item.booking_id, item.issue_type, 'refund')} disabled={isProcessing} className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 hover:text-white transition-all">{t('issues.refund')}</button>
+                                <button onClick={() => handleCreateAndResolveIssue(item.booking_id, item.issue_type, 'waived')} disabled={isProcessing} className="px-4 py-2 bg-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-300 transition-all active:scale-95">{t('issues.waived')}</button>
                               </>
                             ) : (
                               <>
-                                <button onClick={() => handleUpdateResolution(item.id!, 'billing')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-sm">{t('issues.mark_as_billing')}</button>
-                                <button onClick={() => handleUpdateResolution(item.id!, 'waived')} className="px-4 py-2 bg-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-300 transition-all active:scale-95">{t('issues.mark_as_waived')}</button>
+                                <button onClick={() => handleCreateAndResolveIssue(item.booking_id, item.issue_type, 'billing')} disabled={isProcessing} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-sm">{t('issues.mark_as_billing')}</button>
+                                <button onClick={() => handleCreateAndResolveIssue(item.booking_id, item.issue_type, 'waived')} disabled={isProcessing} className="px-4 py-2 bg-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-300 transition-all active:scale-95">{t('issues.mark_as_waived')}</button>
                               </>
                             )}
                           </>
-                        ) : (
-                          <button onClick={() => handleUpdateResolution(item.id!, 'pending')} className="p-2 text-slate-300 hover:text-orange-500 rounded-lg hover:bg-orange-50 transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                          </button>
-                        )}
+                        ) : null}
                       </div>
                     </td>
                   </tr>

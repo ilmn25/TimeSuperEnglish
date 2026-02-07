@@ -30,9 +30,9 @@ const AdminStudents: React.FC = () => {
   // Access Management State
   const [accessModalStudent, setAccessModalStudent] = useState<Student | null>(null);
   const [accessEmail, setAccessEmail] = useState('');
-  const [linkedEmails, setLinkedEmails] = useState<string[]>([]);
+  const [linkedAccounts, setLinkedAccounts] = useState<string[]>([]);
   const [isAccessLoading, setIsAccessLoading] = useState(false);
-  const [confirmUnlinkEmail, setConfirmUnlinkEmail] = useState<string | null>(null);
+  const [confirmUnlinkId, setConfirmUnlinkId] = useState<string | null>(null);
 
   const fetchStudents = useCallback(async () => {
     if (!orgId) return;
@@ -55,13 +55,13 @@ const AdminStudents: React.FC = () => {
   useEffect(() => {
     const fetchAccess = async () => {
       if (!accessModalStudent) {
-        setLinkedEmails([]);
+        setLinkedAccounts([]);
         return;
       }
       setIsAccessLoading(true);
       try {
-        const emails = await api.getStudentAccessList(accessModalStudent.id);
-        setLinkedEmails(emails);
+        const ids = await api.getStudentAccessList(accessModalStudent.id);
+        setLinkedAccounts(ids);
       } catch (err) {
         console.error('Failed to fetch access list', err);
       } finally {
@@ -145,8 +145,8 @@ const AdminStudents: React.FC = () => {
     setIsProcessing(true);
     try {
       await api.linkUserToStudent(accessModalStudent.id, accessEmail.trim());
-      const updatedEmails = await api.getStudentAccessList(accessModalStudent.id);
-      setLinkedEmails(updatedEmails);
+      const updatedIds = await api.getStudentAccessList(accessModalStudent.id);
+      setLinkedAccounts(updatedIds);
       setAccessEmail('');
     } catch (err: any) {
       alert(err.message || 'Failed to link user.');
@@ -156,14 +156,15 @@ const AdminStudents: React.FC = () => {
   };
 
   const handleUnlinkAccess = async () => {
-    if (!accessModalStudent || !confirmUnlinkEmail) return;
+    const unlinkId = confirmUnlinkId || (linkedAccounts.length > 0 ? linkedAccounts[0] : null);
+    if (!accessModalStudent || !unlinkId) return;
     
     setIsProcessing(true);
     try {
-      await api.unlinkUserFromStudent(accessModalStudent.id, confirmUnlinkEmail);
-      const updatedEmails = await api.getStudentAccessList(accessModalStudent.id);
-      setLinkedEmails(updatedEmails);
-      setConfirmUnlinkEmail(null);
+      await api.unlinkUserFromStudent(accessModalStudent.id, unlinkId);
+      const updatedIds = await api.getStudentAccessList(accessModalStudent.id);
+      setLinkedAccounts(updatedIds);
+      setConfirmUnlinkId(null);
     } catch (err: any) {
       alert(err.message || 'Failed to unlink user.');
     } finally {
@@ -388,80 +389,80 @@ const AdminStudents: React.FC = () => {
             
             <div className="p-6 sm:p-10 space-y-6 sm:space-y-10">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 sm:mb-4 ml-1">{t('students.authorized_parents')}</label>
-                <div className="space-y-2 sm:space-y-3">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 sm:mb-4 ml-1">Current Portal Association</label>
+                <div className="min-h-[120px] flex flex-col items-center justify-center">
                   {isAccessLoading ? (
-                    <div className="py-8 flex justify-center">
-                      <div className="w-6 h-6 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="py-8">
+                      <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                     </div>
-                  ) : linkedEmails.length > 0 ? (
-                    linkedEmails.map(email => (
-                      <div key={email} className="flex items-center justify-between px-4 py-3 sm:px-5 sm:py-4 bg-slate-50 border-2 border-slate-100 rounded-xl sm:rounded-2xl group">
-                        <div className="flex items-center space-x-2 sm:space-x-3">
-                           <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500" />
-                           <span className="text-xs sm:text-sm font-bold text-slate-700 truncate max-w-[150px] sm:max-w-none">{email}</span>
+                  ) : linkedAccounts.length > 0 ? (
+                    <div className="w-full flex flex-col items-center space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="w-full flex items-center justify-between px-5 py-4 bg-indigo-50 border-2 border-indigo-100 rounded-2xl group">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Authorized User ID</span>
+                                    <span className="text-xs sm:text-sm font-mono font-bold text-slate-700 truncate max-w-[200px] sm:max-w-none">{linkedAccounts[0]}</span>
+                                </div>
+                            </div>
                         </div>
                         <button 
-                          onClick={() => setConfirmUnlinkEmail(email)}
-                          disabled={isProcessing}
-                          className="p-2 text-slate-300 hover:text-red-500 transition-all"
+                            onClick={handleUnlinkAccess}
+                            disabled={isProcessing}
+                            className="w-full py-4 bg-white border-2 border-red-100 hover:border-red-200 text-red-500 hover:bg-red-50 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 disabled:opacity-50 shadow-sm flex items-center justify-center space-x-2"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                            {isProcessing ? <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" /> : (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    <span>{t('students.unlink')} User</span>
+                                </>
+                            )}
                         </button>
-                      </div>
-                    ))
+                    </div>
                   ) : (
-                    <div className="py-10 sm:py-12 text-center bg-slate-50/50 rounded-2xl sm:rounded-3xl border-2 border-dashed border-slate-200">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('students.no_accounts')}</p>
+                    <div className="w-full space-y-6 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="py-10 text-center bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-200">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('students.no_accounts')}</p>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <label className="block text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-1">{t('students.invite')}</label>
+                            <div className="flex flex-col gap-3">
+                                <input 
+                                    type="email" 
+                                    value={accessEmail}
+                                    onChange={(e) => setAccessEmail(e.target.value)}
+                                    placeholder="parent@email.com"
+                                    className="flex-1 px-5 py-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 text-sm font-bold shadow-sm text-slate-900"
+                                />
+                                <button 
+                                    onClick={handleLinkAccess}
+                                    disabled={isProcessing || !accessEmail.trim()}
+                                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 disabled:opacity-50 shadow-xl shadow-indigo-100 flex items-center justify-center space-x-2"
+                                >
+                                    {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : (
+                                        <>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                                            <span>{t('students.link')} Portal User</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                   )}
                 </div>
               </div>
-
-              <div className="pt-6 sm:pt-8 border-t border-slate-100">
-                <div className="bg-indigo-50/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border-2 border-indigo-100/50">
-                  <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3 sm:mb-4 ml-1">{t('students.invite')}</p>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                    <input 
-                      type="email" 
-                      value={accessEmail}
-                      onChange={(e) => setAccessEmail(e.target.value)}
-                      placeholder="parent@email.com"
-                      className="flex-1 px-4 py-3 sm:px-5 sm:py-4 bg-white border border-slate-200 rounded-xl sm:rounded-2xl outline-none focus:ring-4 focus:ring-indigo-100 text-xs sm:text-sm font-bold shadow-sm text-slate-900"
-                    />
-                    <button 
-                      onClick={handleLinkAccess}
-                      disabled={isProcessing || !accessEmail.trim()}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-black px-6 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl text-[10px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-                    >
-                      {isProcessing ? '...' : t('students.link')}
-                    </button>
-                  </div>
-                </div>
-              </div>
+            </div>
+            
+            <div className="px-10 py-6 bg-slate-50 border-t border-slate-100 text-center">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Association allows the user to view schedules and attendance logs</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Confirmation Modals */}
-      {confirmUnlinkEmail && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm" onClick={() => setConfirmUnlinkEmail(null)}>
-          <div className="bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl w-full max-sm overflow-hidden p-8 sm:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-2">{t('students.unlink_title')}</h3>
-            <p className="text-slate-500 text-xs sm:text-sm mb-8 sm:mb-10 leading-relaxed">{t('students.unlink_msg')}<br/><span className="font-bold text-slate-900">{confirmUnlinkEmail}</span>?</p>
-            <div className="flex space-x-3">
-              <button onClick={() => setConfirmUnlinkEmail(null)} className="flex-1 px-4 py-3 text-[10px] font-black text-slate-500 bg-slate-50 rounded-xl uppercase tracking-widest">{t('common.cancel')}</button>
-              <button onClick={handleUnlinkAccess} disabled={isProcessing} className="flex-1 px-4 py-3 text-[10px] font-black text-white rounded-xl bg-red-600 hover:bg-red-700 transition-all shadow-lg uppercase tracking-widest">
-                {isProcessing ? '...' : t('students.unlink')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {confirmDeleteId && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
           <div className="bg-white rounded-[2rem] shadow-2xl w-full max-sm overflow-hidden p-8 sm:p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>

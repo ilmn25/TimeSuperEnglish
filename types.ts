@@ -44,13 +44,10 @@ export interface Booking {
 export interface Issue {
   id: string;
   booking_id: string;
-  issue_type: 'missed_booking' | 'adhoc_booking';
-  resolution: 'pending' | 'reschedule' | 'refund' | 'waived' | 'billing';
-  billing_status?: 'unpaid' | 'paid' | null;
-  amount?: number | null;
+  issue_type: 'missed_booking' | 'unpaid_booking';
+  resolution: 'reschedule' | 'refund' | 'waived' | 'billing';
   created_at: string;
   resolved_at?: string | null;
-  notes?: string | null;
   bookings?: Booking & { students: Student; courses: Course };
 }
 

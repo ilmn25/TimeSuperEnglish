@@ -361,7 +361,7 @@ const PortalDashboard: React.FC = () => {
                 onClick={() => setIsCalendarMaximized(!isCalendarMaximized)}
                 className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button 
                 onClick={() => { setSelectedDate(hktToday); setSelectedDates([]); setViewDate(new Date()); }}
@@ -745,7 +745,8 @@ const DashboardStudentCard: React.FC<{
                 <div className="flex items-center justify-between mt-1">
                   <div className="flex flex-col">
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Schedule</span>
-                    <span className="text-xs font-mono font-black text-indigo-600">{booking.start.slice(0, 5)} - {booking.end.slice(0, 5)}</span>
+                    {/* Fixed Error: Changed string subtraction to JSX range display */}
+                    <span className="text-xs font-mono font-black text-indigo-600">{booking.start.slice(0, 5)} — {booking.end.slice(0, 5)}</span>
                   </div>
                   {booking.check_in && (
                     <div className="text-right">

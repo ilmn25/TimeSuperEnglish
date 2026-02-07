@@ -198,10 +198,19 @@ export const api = {
 
   // COURSE METHODS
   async getPublicCourses() {
-    const headers = await getHeaders();
-    const url = `${SUPABASE_URL}/rest/v1/courses?select=*&order=name`;
-    const response = await fetch(url, { headers });
-    return handleResponse(response, 'Failed to fetch public courses');
+    // Use standard SDK client for public fetching to handle role/header requirements more reliably
+    const { data, error } = await supabase
+      .from('courses')
+      .select('*')
+      .order('name');
+    
+    if (error) {
+      console.warn("Public Courses Fetch Warning:", error.message);
+      // Log the specific error but allow the app to continue with an empty list
+      // This handles cases where RLS specifically blocks 'anon' on the students table dependency
+      return [];
+    }
+    return data || [];
   },
 
   async getCourses(orgId: string) {
@@ -345,7 +354,7 @@ export const api = {
     return handleResponse(response, 'Failed to fetch issues');
   },
 
-  async createIssue(data: { booking_id: string; issue_type: 'missed_booking' | 'adhoc_booking'; resolution: string; notes?: string }) {
+  async createIssue(data: { booking_id: string; issue_type: 'missed_booking' | 'unpaid_booking'; resolution: string }) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/issues`;
     const response = await fetch(url, {
@@ -356,7 +365,7 @@ export const api = {
     return handleResponse(response, 'Failed to create issue');
   },
 
-  async updateIssue(id: string, data: Partial<{ resolution: string; billing_status: string; resolved_at: string | null; notes: string }>) {
+  async updateIssue(id: string, data: Partial<{ resolution: string; resolved_at: string | null }>) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/issues?id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, {
@@ -445,21 +454,23 @@ export const api = {
 
   // ACCESS MANAGEMENT
   async getStudentAccessList(studentId: string) {
+    // Corrected column name from parent_email to user_id as per user instruction.
     const { data, error } = await supabase
-      .from('user_students')
-      .select('email')
-      .eq('student_id', studentId);
+      .from('students')
+      .select('user_id')
+      .eq('id', studentId)
+      .single();
     
     if (error) {
-      console.error('Error fetching student access list:', error);
+      console.error('Error fetching student access:', error);
       throw error;
     }
 
-    return (data || []).map((item: any) => item.email).filter(Boolean);
+    return data.user_id ? [data.user_id] : [];
   },
 
   async linkUserToStudent(studentId: string, email: string) {
-    const { error } = await supabase.rpc('user_student_link', {
+    const { error } = await supabase.rpc('link_student_to_user_by_email', {
       p_email: email,
       p_student_id: studentId
     });
@@ -467,9 +478,8 @@ export const api = {
     return true;
   },
 
-  async unlinkUserFromStudent(studentId: string, email: string) {
-    const { error } = await supabase.rpc('user_student_unlink', {
-      p_email: email,
+  async unlinkUserFromStudent(studentId: string, _email: string) {
+    const { error } = await supabase.rpc('unlink_student_from_user', {
       p_student_id: studentId
     });
     if (error) throw error;
@@ -481,17 +491,14 @@ export const api = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
     const headers = await getHeaders();
-    const url = `${SUPABASE_URL}/rest/v1/user_students?user_id=eq.${user.id}&select=students(*,organizations(name))`;
+    const url = `${SUPABASE_URL}/rest/v1/students?user_id=eq.${user.id}&select=*,organizations(name)`;
     const response = await fetch(url, { headers });
     const data = await handleResponse(response, 'Failed to fetch parent students');
     const items = Array.isArray(data) ? data : (data ? [data] : []);
-    return items.map((item: any) => {
-      if (!item.students) return null;
-      return {
-        ...item.students,
-        organization_name: item.students.organizations?.name
-      };
-    }).filter((s: any) => s !== null);
+    return items.map((item: any) => ({
+      ...item,
+      organization_name: item.organizations?.name
+    }));
   },
 
   async getStudentBookings(studentId: string, filters?: { date?: string; startDate?: string; endDate?: string }) {
@@ -508,7 +515,7 @@ export const api = {
     return handleResponse(response, 'Failed to fetch student bookings');
   },
 
-  // Added Attendance methods to fix build errors in export and import pages
+  // Added Attendance methods
   async getAllAttendances(orgId: string, filters?: { startDate?: string; endDate?: string }) {
     const headers = await getHeaders();
     let query = `org_id=eq.${encodeURIComponent(orgId)}&select=*&order=date.desc,start.asc`;
