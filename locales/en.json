@@ -423,6 +423,8 @@
     "column_duration": "Duration (Mins)",
     "column_course": "Course",
     "column_status": "Status",
+    "column_check_in": "Check-in Time",
+    "column_check_out": "Check-out Time",
     "empty_state": "No data available to export. Please return to Bookings and filter your results.",
     "more_rows": "... and {{count}} more rows ..."
   },

@@ -11,6 +11,8 @@ interface CSVRow {
   start: string;
   duration: number;
   course: string;
+  check_in?: string; // New: Optional check-in time
+  check_out?: string; // New: Optional check-out time
 }
 
 interface ResolvedBooking {
@@ -21,15 +23,17 @@ interface ResolvedBooking {
   date: string;
   start: string;
   end: string;
+  check_in?: string; // New: Optional resolved check-in time
+  check_out?: string; // New: Optional resolved check-out time
 }
 
-const EXAMPLE_CSV = `student,date,start,duration,course
-Liam Wong,2026-03-02,14:00,60,Mathematics
-Liam Wong,2026-03-09,14:00,60,Physics
-Maya Tan,2026-03-02,15:30,60,English Writing 
-Noah Lim,2026-03-03,10:00,90,Chemistry
-Noah Lim,2026-03-10,10:00,60,Biology
-Maya Tan,2026-03-09,15:30,60,History`;
+const EXAMPLE_CSV = `student,date,start,duration,course,check_in,check_out
+Liam Wong,2026-03-02,14:00,60,Mathematics,13:55,15:05
+Liam Wong,2026-03-09,14:00,60,Physics,,
+Maya Tan,2026-03-02,15:30,60,English Writing,15:28,16:35
+Noah Lim,2026-03-03,10:00,90,Chemistry,10:00,11:30
+Noah Lim,2026-03-10,10:00,60,Biology,,
+Maya Tan,2026-03-09,15:30,60,History,15:32,16:31`;
 
 const AdminImport: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
@@ -85,7 +89,9 @@ const AdminImport: React.FC = () => {
           date: obj.date,
           start: obj.start,
           duration: parseInt(obj.duration) || 60,
-          course: obj.course
+          course: obj.course,
+          check_in: obj.check_in || undefined, // New
+          check_out: obj.check_out || undefined // New
         };
       }).filter(r => r.student && r.date && r.start);
 
@@ -188,13 +194,16 @@ const AdminImport: React.FC = () => {
         courseId: resolvedCourses[row.course],
         date: row.date,
         start: `${row.start}:00`,
-        end: calculateEndTime(row.start, row.duration)
+        end: calculateEndTime(row.start, row.duration),
+        check_in: row.check_in ? `${row.date}T${row.check_in}:00Z` : undefined, // Format as ISO for API
+        check_out: row.check_out ? `${row.date}T${row.check_out}:00Z` : undefined // Format as ISO for API
       }));
       setResolvedBookings(resolved);
 
       const allExistingBookings: Booking[] = (await api.getAllBookings(orgId)) || [];
       const existingBookingsMap = new Map<string, Booking>();
       allExistingBookings.forEach(b => {
+        // Key for duplicate detection: student, course, date, start, end (without check-in/out)
         const key = `${b.student_id}|${b.course_id}|${b.date}|${b.start}|${b.end}`;
         existingBookingsMap.set(key, b);
       });
@@ -258,13 +267,22 @@ const AdminImport: React.FC = () => {
     let successCount = 0;
     try {
       for (const booking of resolvedBookings) {
-        await api.createBooking(orgId, {
+        const newBooking = await api.createBooking(orgId, {
           student_id: booking.studentId,
           course_id: booking.courseId,
           date: booking.date,
           start: booking.start,
           end: booking.end
         });
+
+        // If check_in or check_out are provided, update the newly created booking
+        if (newBooking && (booking.check_in || booking.check_out)) {
+          await api.updateBooking(orgId, newBooking.id, {
+            check_in: booking.check_in || null,
+            check_out: booking.check_out || null
+          });
+        }
+
         successCount++;
         setImportSuccessCount(successCount);
         updateImportProgress(successCount);
@@ -312,7 +330,7 @@ const AdminImport: React.FC = () => {
             <div className="text-center space-y-4 w-full flex flex-col items-center">
               <div className="space-y-1">
                 <h3 className="text-xl font-black text-slate-900">{t('import_page.step1_title')}</h3>
-                <p className="text-slate-400 text-sm">{t('import_page.step1_headers')} <code className="bg-slate-50 px-1 rounded text-[10px]">student, date, start, duration, course</code></p>
+                <p className="text-slate-400 text-sm">{t('import_page.step1_headers')} <code className="bg-slate-50 px-1 rounded text-[10px]">student, date, start, duration, course, check_in, check_out</code></p>
               </div>
 
               {/* Example Section */}
@@ -432,6 +450,8 @@ const AdminImport: React.FC = () => {
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.course')}</th>
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.date')}</th>
                     <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.time')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('export_page.column_check_in')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('export_page.column_check_out')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -441,6 +461,8 @@ const AdminImport: React.FC = () => {
                       <td className="px-6 py-4 text-xs font-bold text-slate-600">{b.courseName}</td>
                       <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.date}</td>
                       <td className="px-6 py-4 text-[10px] font-mono font-black text-indigo-600">{b.start.slice(0,5)} - {b.end.slice(0,5)}</td>
+                      <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.check_in ? b.check_in.slice(11, 16) : '-'}</td>
+                      <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.check_out ? b.check_out.slice(11, 16) : '-'}</td>
                     </tr>
                   ))}
                 </tbody>

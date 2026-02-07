@@ -136,6 +136,7 @@
     "parent_message": "家長留言",
     "academy_feedback": "學院回饋",
     "your_note": "您的備註",
+    "no_note": "未留備註",
     "request_hub": "請求中心",
     "manage_pending": "管理您孩子的待處理課程。",
     "approve_session": "批准課程",
@@ -422,6 +423,8 @@
     "column_duration": "時長（分鐘）",
     "column_course": "課程",
     "column_status": "狀態",
+    "column_check_in": "報到時間",
+    "column_check_out": "簽退時間",
     "empty_state": "目前無可匯出的資料。請回到預約頁面並調整篩選條件。",
     "more_rows": "... 還有 {{count}} 筆 ..."
   },

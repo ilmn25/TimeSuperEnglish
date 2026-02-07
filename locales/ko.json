@@ -421,6 +421,8 @@
     "column_duration": "소요 시간 (분)",
     "column_course": "강좌",
     "column_status": "상태",
+    "column_check_in": "체크인 시간",
+    "column_check_out": "체크아웃 시간",
     "empty_state": "내보낼 데이터가 없습니다. 예약 페이지로 돌아가 필터를 조정하십시오.",
     "more_rows": "... 그리고 {{count}} 행 더 ..."
   },

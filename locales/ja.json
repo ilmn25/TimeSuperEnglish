@@ -421,6 +421,8 @@
     "column_duration": "所要時間（分）",
     "column_course": "コース",
     "column_status": "ステータス",
+    "column_check_in": "チェックイン時間",
+    "column_check_out": "チェックアウト時間",
     "empty_state": "エクスポートするデータがありません。予約ページに戻り、フィルターを調整してください。",
     "more_rows": "... 他に{{count}} 行 ..."
   },

@@ -170,7 +170,13 @@ export const api = {
       headers,
       body: JSON.stringify(payload)
     });
-    return handleResponse(response, 'Failed to create booking');
+    const result = await handleResponse(response, 'Failed to create booking');
+    // Supabase returns an array of objects for 'return=representation' on POST.
+    // We expect a single booking creation, so return the first item.
+    if (Array.isArray(result) && result.length > 0) {
+      return result[0];
+    }
+    return null; // Return null if nothing was created or response format is unexpected
   },
 
   async updateBooking(orgId: string, id: string, data: Partial<{ student_id: string; course_id: string; date: string; start: string; end: string; check_in: string | null; check_out: string | null }>) {
