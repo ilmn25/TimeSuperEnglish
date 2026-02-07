@@ -41,6 +41,19 @@ export interface Booking {
   courses?: Course;
 }
 
+export interface BookingRequest {
+  id: string;
+  student_id: string;
+  course_id: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  message?: string;
+  created_at: string;
+  students?: Student;
+  courses?: Course;
+}
+
 export interface Issue {
   id: string;
   booking_id: string;

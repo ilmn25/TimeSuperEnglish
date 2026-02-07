@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Booking, Course, Student } from '../types';
+import { supabase } from '../services/supabaseClient';
+import { Booking, Course, Student, BookingRequest } from '../types';
 import TimelinePanel from '../components/TimelinePanel';
 import { useTranslation } from 'react-i18next';
 
@@ -36,8 +37,9 @@ const AdminBookings: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
-  // Raw Data State (Entire Month)
+  // Raw Data State
   const [monthBookings, setMonthBookings] = useState<Booking[]>([]);
+  const [bookingRequestsCount, setBookingRequestsCount] = useState(0);
   const [courses, setCourses] = useState<Course[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   
@@ -126,13 +128,15 @@ const AdminBookings: React.FC = () => {
       const startDate = new Date(year, month, 1).toLocaleDateString('en-CA');
       const endDate = new Date(year, month + 1, 0).toLocaleDateString('en-CA');
 
-      const [bookingsData, coursesData, studentsData] = await Promise.all([
+      const [bookingsData, requestsData, coursesData, studentsData] = await Promise.all([
         api.getAllBookings(orgId, { startDate, endDate }),
+        api.getBookingRequests(orgId, 'pending'),
         api.getCourses(orgId),
         api.getStudents(orgId)
       ]);
 
       setMonthBookings(bookingsData);
+      setBookingRequestsCount(requestsData?.length || 0);
       setCourses(coursesData);
       setStudents(studentsData);
     } catch (err) {
@@ -325,8 +329,8 @@ const AdminBookings: React.FC = () => {
       setIsFormOpen(false);
       setEditingBooking(null);
       fetchData();
-    } catch (err) {
-      alert('Failed to save booking');
+    } catch (err: any) {
+      alert('Failed to save booking: ' + (err.message || 'Unknown error'));
     } finally {
       setIsProcessing(false);
     }
@@ -339,8 +343,8 @@ const AdminBookings: React.FC = () => {
       await api.deleteBooking(orgId, confirmDeleteId);
       setConfirmDeleteId(null);
       fetchData();
-    } catch (err) {
-      alert('Failed to delete booking');
+    } catch (err: any) {
+      alert('Failed to delete booking: ' + (err.message || 'Unknown error'));
     } finally {
       setIsProcessing(false);
     }
@@ -449,6 +453,18 @@ const AdminBookings: React.FC = () => {
           <p className="text-slate-500 text-xs font-medium">{t('bookings.subtitle')}</p>
         </div>
         <div className="flex items-center space-x-3">
+          <button 
+            onClick={() => navigate(`/org/${orgId}/booking-requests`)}
+            className="relative flex items-center space-x-2 px-6 py-2.5 bg-indigo-50 border-2 border-indigo-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-100 transition-all active:scale-95"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <span>{t('bookings.pending_requests')}</span>
+            {bookingRequestsCount > 0 && (
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-md">
+                {bookingRequestsCount}
+              </span>
+            )}
+          </button>
           <button 
             onClick={() => navigate(`/org/${orgId}/import`)}
             className="flex items-center space-x-2 px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50 transition-all active:scale-95"

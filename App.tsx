@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, createContext, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from './services/supabaseClient';
@@ -7,6 +8,7 @@ import AdminCourses from './pages/AdminCourses';
 import AdminCourseSchedule from './pages/AdminCourseSchedule';
 import AdminStudents from './pages/AdminStudents';
 import AdminBookings from './pages/AdminBookings';
+import AdminBookingRequests from './pages/AdminBookingRequests';
 import AdminIssues from './pages/AdminIssues';
 import AdminExport from './pages/AdminExport';
 import AdminBackup from './pages/AdminBackup';
@@ -17,6 +19,8 @@ import PortalAttendance from './pages/PortalAttendance';
 import PortalBookings from './pages/PortalBookings';
 import PortalStudents from './pages/PortalStudents';
 import PortalCourses from './pages/PortalCourses';
+import PortalCourseDetail from './pages/PortalCourseDetail';
+import PortalBookingRequests from './pages/PortalBookingRequests';
 import ContactUs from './pages/ContactUs';
 import AuthPage from './pages/AuthPage';
 import HomePage from './pages/HomePage';
@@ -146,6 +150,7 @@ const UserProfile: React.FC<{ email: string; onLogout: () => void }> = ({ email,
           </Link>
 
           <button 
+            /* Fix: Call onLogout prop instead of undefined handleLogout */
             onClick={onLogout}
             className="w-full flex items-center space-x-3 px-6 py-4 text-red-500 hover:bg-red-50 transition-colors text-sm font-black uppercase tracking-widest"
           >
@@ -166,11 +171,11 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const { isImporting, importProgress, importTotal } = useImportStatus();
   
-  const portalRoutes = ['/portal/attendance', '/portal/bookings', '/portal/courses', '/portal/students'];
+  const portalRoutes = ['/portal/attendance', '/portal/bookings', '/portal/courses', '/portal/students', '/portal/requests'];
   const homeRoutes = ['/', '/about', '/pricing', '/contact'];
   const counterPages = ['/about', '/pricing'];
   
-  const isPortalView = portalRoutes.includes(location.pathname);
+  const isPortalView = portalRoutes.some(route => location.pathname.startsWith(route));
   const isHomeView = homeRoutes.includes(location.pathname);
   const isCounterPage = counterPages.includes(location.pathname);
   const isLandingRoot = location.pathname === '/';
@@ -190,13 +195,15 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
     if (isLandingRoot) return t('nav.home');
     if (location.pathname === '/portal/attendance') return t('nav.attendance');
     if (location.pathname === '/portal/bookings') return t('nav.bookings');
-    if (location.pathname === '/portal/courses') return t('nav.courses');
+    if (location.pathname.startsWith('/portal/courses')) return t('nav.courses');
     if (location.pathname === '/portal/students') return t('nav.students');
+    if (location.pathname === '/portal/requests') return t('bookings.pending_requests');
     if (location.pathname === '/subscriptions') return t('nav.subscriptions');
     if (location.pathname === '/about') return t('nav.about');
     if (location.pathname === '/pricing') return t('nav.pricing');
     if (location.pathname === '/contact') return t('nav.contact');
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
+    if (location.pathname.includes('/booking-requests')) return t('bookings.pending_requests');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
     if (location.pathname.includes('/issues')) return t('nav.issues');
     if (location.pathname.includes('/export')) return t('nav.export');
@@ -443,11 +450,14 @@ const App: React.FC = () => {
             <Route path="/login" element={!user ? <AuthPage /> : <Navigate to="/" />} />
             <Route path="/portal/attendance" element={user ? <PortalAttendance /> : <Navigate to="/login" />} />
             <Route path="/portal/bookings" element={user ? <PortalBookings /> : <Navigate to="/login" />} />
+            <Route path="/portal/requests" element={user ? <PortalBookingRequests /> : <Navigate to="/login" />} />
             <Route path="/portal/courses" element={user ? <PortalCourses /> : <Navigate to="/login" />} />
+            <Route path="/portal/courses/:courseId" element={user ? <PortalCourseDetail /> : <Navigate to="/login" />} />
             <Route path="/portal/students" element={user ? <PortalStudents /> : <Navigate to="/login" />} />
             <Route path="/subscriptions" element={user ? <AdminSubscriptions /> : <Navigate to="/login" />} />
             <Route path="/org" element={user ? <AdminOrgSelection /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/attendance" element={user ? <AdminAttendance /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/booking-requests" element={user ? <AdminBookingRequests /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/bookings" element={user ? <AdminBookings /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/issues" element={user ? <AdminIssues /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/courses" element={user ? <AdminCourses /> : <Navigate to="/login" />} />

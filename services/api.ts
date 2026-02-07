@@ -1,3 +1,4 @@
+
 import { supabase, SUPABASE_URL, SUPABASE_KEY, SUPABASE_ORG_ID } from './supabaseClient';
 
 const getHeaders = async (isMutation = false) => {
@@ -103,25 +104,23 @@ export const api = {
   },
 
   async updateOrganization(id: string, name: string) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/organizations?id=eq.${encodeURIComponent(id)}`;
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({ name })
-    });
-    return handleResponse(response, 'Failed to update organization');
+    const { data, error } = await supabase
+      .from('organizations')
+      .update({ name })
+      .eq('id', id);
+    
+    if (error) throw new Error(`Failed to update organization: ${error.message}`);
+    return data;
   },
 
   async updateOrganizationBackupTime(id: string, backupTime: string | null) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/organizations?id=eq.${encodeURIComponent(id)}`;
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({ backup_time: backupTime })
-    });
-    return handleResponse(response, 'Failed to update organization backup point');
+    const { data, error } = await supabase
+      .from('organizations')
+      .update({ backup_time: backupTime })
+      .eq('id', id);
+
+    if (error) throw new Error(`Failed to update backup point: ${error.message}`);
+    return data;
   },
 
   async deleteOrganization(id: string) {
@@ -175,14 +174,14 @@ export const api = {
   },
 
   async updateBooking(orgId: string, id: string, data: Partial<{ student_id: string; course_id: string; date: string; start: string; end: string; check_in: string | null; check_out: string | null }>) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/bookings?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response, 'Failed to update booking');
+    const { data: updated, error } = await supabase
+      .from('bookings')
+      .update(data)
+      .eq('id', id)
+      .eq('org_id', orgId);
+
+    if (error) throw new Error(`Failed to update booking: ${error.message}`);
+    return updated;
   },
 
   async deleteBooking(orgId: string, id: string) {
@@ -233,14 +232,14 @@ export const api = {
   },
 
   async updateCourse(orgId: string, id: string, name: string, color: string) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/courses?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({ name, color })
-    });
-    return handleResponse(response, 'Failed to update course');
+    const { data, error } = await supabase
+      .from('courses')
+      .update({ name, color })
+      .eq('id', id)
+      .eq('org_id', orgId);
+
+    if (error) throw new Error(`Failed to update course: ${error.message}`);
+    return data;
   },
 
   async deleteCourse(orgId: string, id: string) {
@@ -285,14 +284,13 @@ export const api = {
     starts_on: string | null;
     biweekly: boolean;
   }>) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/course_schedule?id=eq.${encodeURIComponent(id)}`;
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response, 'Failed to update course schedule');
+    const { data: updated, error } = await supabase
+      .from('course_schedule')
+      .update(data)
+      .eq('id', id);
+
+    if (error) throw new Error(`Failed to update schedule: ${error.message}`);
+    return updated;
   },
 
   async deleteCourseSchedule(id: string) {
@@ -335,14 +333,14 @@ export const api = {
   },
 
   async updateStudent(orgId: string, id: string, name: string, contact: string, level?: string) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/students?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({ name, contact, level })
-    });
-    return handleResponse(response, 'Failed to update student');
+    const { data, error } = await supabase
+      .from('students')
+      .update({ name, contact, level })
+      .eq('id', id)
+      .eq('org_id', orgId);
+
+    if (error) throw new Error(`Failed to update student: ${error.message}`);
+    return data;
   },
 
   async deleteStudent(orgId: string, id: string) {
@@ -372,14 +370,13 @@ export const api = {
   },
 
   async updateIssue(id: string, data: Partial<{ resolution: string; resolved_at: string | null }>) {
-    const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/issues?id=eq.${encodeURIComponent(id)}`;
-    const response = await fetch(url, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response, 'Failed to update issue');
+    const { data: updated, error } = await supabase
+      .from('issues')
+      .update(data)
+      .eq('id', id);
+
+    if (error) throw new Error(`Failed to update issue: ${error.message}`);
+    return updated;
   },
 
   // BACKUP METHODS (EDGE FUNCTIONS)
@@ -518,6 +515,71 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/bookings?${query}`;
     const response = await fetch(url, { headers });
     return handleResponse(response, 'Failed to fetch student bookings');
+  },
+
+  async createBookingRequest(data: { student_id: string; course_id: string; date: string; start_time: string; end_time: string; message?: string; org_id: string }) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/booking_requests`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ...data, requester_id: user.id })
+    });
+    return handleResponse(response, 'Failed to create booking request');
+  },
+
+  async getBookingRequests(orgId: string, status?: string) {
+    const headers = await getHeaders();
+    let query = `select=*,students!inner(name,org_id),courses(name)&students.org_id=eq.${encodeURIComponent(orgId)}&order=created_at.desc`;
+    if (status) query += `&status=eq.${status}`;
+    const url = `${SUPABASE_URL}/rest/v1/booking_requests?${query}`;
+    const response = await fetch(url, { headers });
+    return handleResponse(response, 'Failed to fetch booking requests');
+  },
+
+  async getPortalBookingRequests(status?: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+    const headers = await getHeaders();
+    let query = `requester_id=eq.${user.id}&select=*,students!inner(name,org_id),courses(name)&order=created_at.desc`;
+    if (status) query += `&status=eq.${status}`;
+    const url = `${SUPABASE_URL}/rest/v1/booking_requests?${query}`;
+    const response = await fetch(url, { headers });
+    return handleResponse(response, 'Failed to fetch portal booking requests');
+  },
+
+  async getAllBookingRequests(orgId: string) {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/rest/v1/booking_requests?select=*,students!inner(name,org_id),courses(name)&students.org_id=eq.${encodeURIComponent(orgId)}&order=created_at.desc`;
+    const response = await fetch(url, { headers });
+    return handleResponse(response, 'Failed to fetch all booking requests');
+  },
+
+  async getBookingRequestsForContext(orgId: string, date: string, courseId: string) {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/rest/v1/booking_requests?select=*,students!inner(name,org_id),courses(name)&students.org_id=eq.${encodeURIComponent(orgId)}&date=eq.${date}&course_id=eq.${courseId}&order=start_time.asc`;
+    const response = await fetch(url, { headers });
+    return handleResponse(response, 'Failed to fetch contextual booking requests');
+  },
+
+  // Added 'message' to the allowed properties in updateBookingRequest
+  async updateBookingRequest(id: string, data: Partial<{ status: string; response_message: string; responded_at: string; responded_by: string; message: string }>) {
+    const { data: updated, error } = await supabase
+      .from('booking_requests')
+      .update(data)
+      .eq('id', id);
+
+    if (error) throw new Error(`Failed to update booking request: ${error.message}`);
+    return updated;
+  },
+
+  async deleteBookingRequest(id: string) {
+    const headers = await getHeaders(true);
+    const url = `${SUPABASE_URL}/rest/v1/booking_requests?id=eq.${encodeURIComponent(id)}`;
+    const response = await fetch(url, { method: 'DELETE', headers });
+    return handleResponse(response, 'Failed to delete booking request');
   },
 
   // Added Attendance methods

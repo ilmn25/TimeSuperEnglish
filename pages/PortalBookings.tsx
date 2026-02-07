@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Student, Booking, Course } from '../types';
 import TimelinePanel from '../components/TimelinePanel';
@@ -36,6 +38,7 @@ interface StudentDetailedData {
 
 const PortalBookings: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [viewDate, setViewDate] = useState(new Date()); 
   const [childrenData, setChildrenData] = useState<StudentDetailedData[]>([]);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
@@ -44,6 +47,7 @@ const PortalBookings: React.FC = () => {
   const [dragEnd, setDragEnd] = useState<string | null>(null);
   const [isCalendarMaximized, setIsCalendarMaximized] = useState(false);
   const [isLoadingMain, setIsLoadingMain] = useState(true);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
   // Filters & Sorting
   const [filterStudent, setFilterStudent] = useState('');
@@ -72,7 +76,12 @@ const PortalBookings: React.FC = () => {
   const fetchDashboardData = useCallback(async () => {
     setIsLoadingMain(true);
     try {
-      const students = await api.getParentStudents();
+      const [students, requests] = await Promise.all([
+        api.getParentStudents(),
+        api.getPortalBookingRequests('pending')
+      ]);
+      setPendingRequestsCount(requests?.length || 0);
+
       const year = viewDate.getFullYear();
       const month = viewDate.getMonth();
       const startDate = new Date(year, month, 1).toLocaleDateString('en-CA');
@@ -102,7 +111,6 @@ const PortalBookings: React.FC = () => {
 
   useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
-  // Bug Fix: Enhanced drag selection lifecycle to support single-day toggle
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging && dragStart && dragEnd) {
@@ -122,8 +130,6 @@ const PortalBookings: React.FC = () => {
   }, [isDragging, dragStart, dragEnd]);
 
   const handleMouseDown = (dateStr: string, e: React.MouseEvent) => {
-    // Note: Admin bookings resets selection on mouseDown if no shift is held, 
-    // but here we allow toggling and range creation naturally.
     setIsDragging(true);
     setDragStart(dateStr);
     setDragEnd(dateStr);
@@ -276,34 +282,69 @@ const PortalBookings: React.FC = () => {
   return (
     <div className={`space-y-6 pb-20 transition-all duration-500 ease-in-out ${(selectedTimelineInfo && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0'}`}>
       
-      {/* Main Control Panel (Smaller like AdminBookings) */}
-      <div className={`bg-white border border-slate-200 rounded-[2.5rem] shadow-sm overflow-hidden transition-all duration-500 w-full ${isCalendarMaximized ? 'max-w-none' : 'max-w-3xl mx-auto'}`}>
-          <div className="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between bg-white gap-y-4">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('bookings.title')}</h2>
+          <p className="text-slate-500 text-xs font-medium">{t('bookings.subtitle')}</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button 
+            onClick={() => navigate('/portal/requests')}
+            className="relative flex items-center space-x-2 px-6 py-2.5 bg-indigo-50 border-2 border-indigo-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-100 transition-all active:scale-95"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <span>{t('bookings.pending_requests')}</span>
+            {pendingRequestsCount > 0 && (
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-md">
+                {pendingRequestsCount}
+              </span>
+            )}
+          </button>
+          <Link 
+            to="/portal/courses"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M12 4v16m8-8H4" /></svg>
+            Create Booking Request
+          </Link>
+        </div>
+      </div>
+
+      {/* Main Control Panel */}
+      <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-w-none' : 'max-w-2xl mx-auto'}`}>
+          <div className="px-5 py-2 border-b border-slate-100 flex flex-wrap items-center justify-between bg-white gap-y-2">
             <div className="flex items-center space-x-1">
-              <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1))} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg></button>
-              <span className="text-lg font-black text-slate-900 w-32 text-center uppercase tracking-tight">{monthName}</span>
-              <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 1))} className="p-2 hover:bg-slate-50 rounded-xl text-slate-400"><svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M9 5l7 7-7 7" /></svg></button>
+              <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1))} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <div className="px-2">
+                <span className="text-sm font-black text-slate-800 w-20 text-center uppercase tracking-tighter block">{monthName}</span>
+              </div>
+              <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 1))} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M9 5l7 7-7 7" /></svg>
+              </button>
             </div>
             
             <div className="flex items-center space-x-2">
-              <button onClick={() => setIsCalendarMaximized(!isCalendarMaximized)} className="p-2.5 hover:bg-indigo-50 rounded-xl text-slate-400 hover:text-indigo-600 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+              <button onClick={() => setIsCalendarMaximized(!isCalendarMaximized)} className="p-1 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
-              <button onClick={handleSelectMonth} className="px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 transition-all">{t('bookings.select_month')}</button>
-              <button onClick={clearFilters} className="px-4 py-2 bg-white text-slate-400 border border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:text-red-500 hover:bg-red-50 transition-all">{t('bookings.reset')}</button>
+              <button onClick={handleSelectMonth} className="px-2 py-1 bg-slate-50 text-slate-600 rounded-lg text-[8px] font-black uppercase tracking-widest border border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 transition-all">{t('bookings.select_month')}</button>
+              <button onClick={clearFilters} className="px-2 py-1 bg-white text-slate-400 border border-slate-100 rounded-lg text-[8px] font-black uppercase tracking-widest hover:text-red-500 hover:bg-red-50 transition-all">{t('bookings.reset')}</button>
             </div>
           </div>
 
-          <div className="px-8 py-6 select-none">
-            <div className="grid grid-cols-[24px_repeat(7,1fr)] gap-2 mb-3">
+          <div className="px-4 py-3 bg-white select-none">
+            <div className="grid grid-cols-[20px_repeat(7,1fr)] gap-1 mb-2">
               <div />
-              {WEEKDAYS.map(d => <div key={d} className="text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">{d}</div>)}
+              {WEEKDAYS.map(d => <div key={d} className="text-center text-[7px] font-black text-slate-300 uppercase tracking-widest">{d}</div>)}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {calendarWeeks.map((week, wIdx) => (
-                <div key={wIdx} className="grid grid-cols-[24px_repeat(7,1fr)] gap-2 items-stretch">
-                   <button onClick={() => handleSelectWeek(week)} className={`h-7 w-5 mt-1 rounded-md flex items-center justify-center transition-all ${week.filter(d => d !== null).every(d => selectedDates.includes(d!.toLocaleDateString('en-CA'))) ? 'text-indigo-600 bg-indigo-50' : 'text-slate-200 hover:text-indigo-400'}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                <div key={wIdx} className="grid grid-cols-[20px_repeat(7,1fr)] gap-1 items-stretch">
+                   <button onClick={() => handleSelectWeek(week)} className={`h-6 w-4 mt-0.5 rounded-md flex items-center justify-center transition-all ${week.filter(d => d !== null).every(d => selectedDates.includes(d!.toLocaleDateString('en-CA'))) ? 'text-indigo-600 bg-indigo-50' : 'text-slate-200 hover:text-indigo-400'}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-2 w-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                    </button>
                    {week.map((dateObj, dIdx) => {
                      if (!dateObj) return <div key={dIdx} />;
@@ -318,20 +359,20 @@ const PortalBookings: React.FC = () => {
                          key={dateStr} 
                          onMouseDown={(e) => handleMouseDown(dateStr, e)} 
                          onMouseEnter={() => handleMouseEnter(dateStr)} 
-                         className={`rounded-lg transition-all border font-black flex flex-col items-center justify-start p-1.5 ${isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'} ${isSelected || isPreviewed ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : isToday ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200'}`}
+                         className={`rounded-lg transition-all border font-black flex flex-col items-center justify-start p-1 ${isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-8'} ${isSelected || isPreviewed ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg shadow-indigo-100' : isToday ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200'}`}
                        >
-                         <span className={`text-[11px] ${isCalendarMaximized ? 'mb-1 self-start ml-0.5' : ''}`}>{dateObj.getDate()}</span>
+                         <span className={`text-[10px] ${isCalendarMaximized ? 'mb-1 self-start ml-0.5' : ''}`}>{dateObj.getDate()}</span>
                          {isCalendarMaximized ? (
                            <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
                              {studentStatuses.map((s, i) => (
-                               <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/10 rounded px-1.5 py-0.5">
-                                 <div className={`w-2 h-2 rounded-full shrink-0 ring-1 ring-white/20 ${statusColors[s.status]}`} />
+                               <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/10 rounded px-1 py-0.5">
+                                 <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/20 ${statusColors[s.status]}`} />
                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected || isPreviewed ? 'text-indigo-100' : 'text-slate-500'}`}>{s.name}</span>
                                </div>
                              ))}
                            </div>
                          ) : (
-                           dayStatus && <div className={`w-1 h-1 rounded-full mt-0.5 ${statusColors[dayStatus]}`} />
+                           dayStatus && <div className={`w-0.5 h-0.5 rounded-full mt-0.5 ${statusColors[dayStatus]}`} />
                          )}
                        </button>
                      );
@@ -341,24 +382,23 @@ const PortalBookings: React.FC = () => {
             </div>
           </div>
 
-          {/* Integrated Filter Bar (Inside calendar panel) */}
-          <div className="px-8 py-5 bg-slate-50/40 border-t border-slate-100 flex flex-col sm:flex-row gap-6">
-            <div className="flex-1 space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">{t('bookings.filter_student')}</label>
-              <select value={filterStudent} onChange={e => setFilterStudent(e.target.value)} className="w-full px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-indigo-50"><option value="">{t('bookings.all_students')}</option>{childrenData.map(c => <option key={c.student.id} value={c.student.id}>{c.student.name}</option>)}</select>
+          <div className="px-5 py-3 bg-slate-50/40 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 space-y-1">
+              <label className="text-[8px] font-black text-slate-300 uppercase tracking-widest ml-1 block">{t('bookings.filter_student')}</label>
+              <select value={filterStudent} onChange={e => setFilterStudent(e.target.value)} className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 transition-all appearance-none cursor-pointer"><option value="">{t('bookings.all_students')}</option>{childrenData.map(c => <option key={c.student.id} value={c.student.id}>{c.student.name}</option>)}</select>
             </div>
-            <div className="flex-1 space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">{t('bookings.filter_course')}</label>
-              <select value={filterCourse} onChange={e => setFilterCourse(e.target.value)} className="w-full px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-indigo-50"><option value="">{t('bookings.all_courses')}</option>{uniqueCourses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+            <div className="flex-1 space-y-1">
+              <label className="text-[8px] font-black text-slate-300 uppercase tracking-widest ml-1 block">{t('bookings.filter_course')}</label>
+              <select value={filterCourse} onChange={e => setFilterCourse(e.target.value)} className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 transition-all appearance-none cursor-pointer"><option value="">{t('bookings.all_courses')}</option>{uniqueCourses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
             </div>
-            <div className="flex-1 space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">{t('bookings.filter_status')}</label>
-              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="w-full px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-indigo-50"><option value="">{t('bookings.all_statuses')}</option><option value="red">{t('status.missed')}</option><option value="green">{t('status.attended')}</option><option value="blue">{t('status.future')}</option></select>
+            <div className="flex-1 space-y-1">
+              <label className="text-[8px] font-black text-slate-300 uppercase tracking-widest ml-1 block">{t('bookings.filter_status')}</label>
+              <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-100 transition-all appearance-none cursor-pointer"><option value="">{t('bookings.all_statuses')}</option><option value="red">{t('status.missed')}</option><option value="green">{t('status.attended')}</option><option value="blue">{t('status.future')}</option></select>
             </div>
           </div>
       </div>
 
-      {/* Filtered Summary Section (Same layout and position as AdminBookings) */}
+      {/* Filtered Summary Section */}
       <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
         <div className="flex items-center space-x-3 mb-6">
           <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
