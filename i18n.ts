@@ -4,8 +4,11 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 Promise.all([
   fetch('./locales/en.json').then(res => res.json()),
-  fetch('./locales/zh-CN.json').then(res => res.json())
-]).then(([en, zhCN]) => {
+  fetch('./locales/zh-CN.json').then(res => res.json()),
+  fetch('./locales/zh-TW.json').then(res => res.json()),
+  fetch('./locales/ja.json').then(res => res.json()),
+  fetch('./locales/ko.json').then(res => res.json())
+]).then(([en, zhCN, zhTW, ja, ko]) => {
   i18n
     .use(LanguageDetector)
     .use(initReactI18next)
@@ -16,6 +19,15 @@ Promise.all([
         },
         "zh-CN": {
           translation: zhCN
+        },
+        "zh-TW": {
+          translation: zhTW
+        },
+        ja: {
+          translation: ja
+        },
+        ko: {
+          translation: ko
         }
       },
       fallbackLng: 'en',
