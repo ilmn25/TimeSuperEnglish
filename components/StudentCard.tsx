@@ -1,3 +1,4 @@
+
 import React, { useCallback } from 'react';
 import { StudentGroupedData, Booking } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -36,7 +37,6 @@ const StudentCard: React.FC<StudentCardProps> = ({
     return (yiq >= 128) ? '#1e293b' : '#ffffff';
   };
 
-  // Added explicit return type 'blue' | 'green' | 'yellow' | 'red' to satisfy TypeScript checks in the JSX below
   const getBookingStatus = useCallback((booking: Booking): 'blue' | 'green' | 'yellow' | 'red' => {
     if (booking.check_in) return 'green';
     const hktNow = getHKTNow();
@@ -86,7 +86,6 @@ const StudentCard: React.FC<StudentCardProps> = ({
               
               return (
                 <div key={booking.id} className="relative flex flex-col p-5 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-slate-50 hover:border-slate-200">
-                  {/* Top: Course & Manual Trigger */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3 min-w-0">
                       <div 
@@ -98,7 +97,7 @@ const StudentCard: React.FC<StudentCardProps> = ({
                       <div className="min-w-0">
                         <p className="font-black text-slate-900 text-sm truncate leading-tight">{booking.courses?.name}</p>
                         <div className="mt-1">
-                          <span className={`${statusColors[status as keyof typeof statusColors]} inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-black uppercase ring-1 ring-inset tracking-tighter transition-all`}>
+                          <span className={`${statusColors[status]} inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-black uppercase ring-1 ring-inset tracking-tighter transition-all`}>
                             {status === 'red' ? t('status.missed') : 
                              status === 'yellow' ? t('status.partial') :
                              status === 'green' ? t('status.attended') : t('status.future')}
@@ -111,11 +110,10 @@ const StudentCard: React.FC<StudentCardProps> = ({
                       className="p-2.5 bg-white border border-slate-100 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 rounded-xl transition-all shadow-sm active:scale-90"
                       title={t('card.manual')}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                     </button>
                   </div>
 
-                  {/* Details: Scheduled Time & Actual Record */}
                   <div className="flex flex-col space-y-3">
                     <div className="flex items-center space-x-2">
                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">Schedule:</span>
@@ -132,7 +130,6 @@ const StudentCard: React.FC<StudentCardProps> = ({
                     )}
                   </div>
 
-                  {/* Actions: In/Out Buttons */}
                   {isToday && (
                     <div className="flex space-x-2 mt-4">
                       {!booking.check_in ? (
@@ -155,11 +152,6 @@ const StudentCard: React.FC<StudentCardProps> = ({
                 </div>
               );
             })}
-            {bookings.length === 0 && (
-              <div className="py-6 text-center">
-                <p className="text-[11px] text-slate-400 font-bold italic">{t('card.no_bookings')}</p>
-              </div>
-            )}
           </div>
         </div>
       </div>

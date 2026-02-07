@@ -1,23 +1,55 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { BookingRequest } from '../types';
+import { BookingRequest, Booking } from '../types';
 import { useTranslation } from 'react-i18next';
+
+type SortField = 'student' | 'course' | 'date' | 'status';
+type SortOrder = 'asc' | 'desc';
+
+const hexToRgba = (hex: string, alpha: number) => {
+  let h = hex.replace('#', '');
+  if (h.length === 3) h = h.split('').map(s => s + s).join('');
+  const r = parseInt(h.slice(0, 2), 16) || 0;
+  const g = parseInt(h.slice(2, 4), 16) || 0;
+  const b = parseInt(h.slice(4, 6), 16) || 0;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
 
 const PortalBookingRequests: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const [allRequests, setAllRequests] = useState<BookingRequest[]>([]);
+  const [studentDayBookings, setStudentDayBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<'pending' | 'handled'>('pending');
+  const [isLoadingTimeline, setIsLoadingTimeline] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentTime, setCurrentTime] = useState<string>('');
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<any | null>(null);
 
-  // Edit/Delete State
+  const [sortField, setSortField] = useState<SortField>('status');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
   const [editingRequest, setEditingRequest] = useState<BookingRequest | null>(null);
   const [editMessage, setEditMessage] = useState('');
   const [deletingRequestId, setDeletingRequestId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(new Date().toLocaleTimeString("en-US", {
+        timeZone: "Asia/Hong_Kong",
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit"
+      }));
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchRequests = useCallback(async () => {
     setIsLoading(true);
@@ -35,17 +67,62 @@ const PortalBookingRequests: React.FC = () => {
     fetchRequests();
   }, [fetchRequests]);
 
-  const displayedRequests = useMemo(() => {
-    if (statusFilter === 'pending') {
-      return allRequests.filter(r => (r as any).status === 'pending');
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
     }
-    return allRequests.filter(r => (r as any).status !== 'pending');
-  }, [allRequests, statusFilter]);
-
-  const handleOpenEdit = (req: BookingRequest) => {
-    setEditingRequest(req);
-    setEditMessage(req.message || '');
   };
+
+  const displayedRequests = useMemo(() => {
+    return [...allRequests].sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'student':
+          comparison = (a.students?.name || '').localeCompare(b.students?.name || '');
+          break;
+        case 'course':
+          comparison = (a.courses?.name || '').localeCompare(b.courses?.name || '');
+          break;
+        case 'date':
+          comparison = a.date.localeCompare(b.date);
+          if (comparison === 0) comparison = a.start_time.localeCompare(b.start_time);
+          break;
+        case 'status':
+          comparison = ((a as any).status || '').localeCompare((b as any).status || '');
+          if (comparison === 0) {
+            comparison = a.date.localeCompare(b.date);
+            if (comparison === 0) comparison = a.start_time.localeCompare(b.start_time);
+            return -comparison;
+          }
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  }, [allRequests, sortField, sortOrder]);
+
+  const selectedRequest = useMemo(() => 
+    allRequests.find(r => r.id === selectedRequestId),
+    [allRequests, selectedRequestId]
+  );
+
+  useEffect(() => {
+    const fetchTimeline = async () => {
+      if (!selectedRequest) return;
+      setIsLoadingTimeline(true);
+      try {
+        const bookings = await api.getStudentBookings(selectedRequest.student_id, { date: selectedRequest.date });
+        setStudentDayBookings(bookings || []);
+      } catch (err) {
+        console.error('Failed to fetch student timeline', err);
+      } finally {
+        setIsLoadingTimeline(false);
+      }
+    };
+    fetchTimeline();
+  }, [selectedRequest]);
 
   const handleUpdateMessage = async () => {
     if (!editingRequest) return;
@@ -75,182 +152,274 @@ const PortalBookingRequests: React.FC = () => {
     }
   };
 
+  const timeToPercent = (timeStr: string) => {
+    if (!timeStr) return 100;
+    const parts = timeStr.includes('T') ? timeStr.split('T')[1].split(':') : timeStr.split(':');
+    const h = Number(parts[0]);
+    const m = Number(parts[1]) || 0;
+    const totalMinutes = h * 60 + m;
+    const startMinutes = 8 * 60; 
+    const endMinutes = 22 * 60;
+    const percent = ((totalMinutes - startMinutes) / (endMinutes - startMinutes)) * 100;
+    return Math.max(0, Math.min(100, percent));
+  };
+
+  // LANE ALGORITHM
+  const timelineLanes = useMemo(() => {
+    if (!selectedRequest) return [];
+
+    const items = [
+      {
+        ...selectedRequest,
+        start: selectedRequest.start_time,
+        end: selectedRequest.end_time,
+        type: 'target' as const
+      },
+      ...studentDayBookings.map(b => ({
+        ...b,
+        start: b.start,
+        end: b.end,
+        type: 'booking' as const
+      }))
+    ].sort((a, b) => a.start.localeCompare(b.start));
+
+    const lanes: any[][] = [];
+    items.forEach(item => {
+      let placed = false;
+      for (let lane of lanes) {
+        const last = lane[lane.length - 1];
+        if (item.start >= last.end) {
+          lane.push(item);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) lanes.push([item]);
+    });
+
+    return lanes;
+  }, [studentDayBookings, selectedRequest]);
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20 max-w-6xl mx-auto">
+    <div className={`space-y-8 animate-in fade-in duration-500 pb-20 max-w-7xl mx-auto transition-all ${selectedRequestId ? 'xl:pr-[450px]' : ''}`}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center space-x-4">
-           <button onClick={() => navigate('/portal/bookings')} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90">
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+           <button onClick={() => navigate('/portal/bookings')} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90 shadow-sm">
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
            </button>
            <div>
              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Request Hub</h2>
-             <p className="text-slate-500 font-medium text-xs">Track your session requests and academy feedback.</p>
+             <p className="text-slate-500 font-medium text-xs">Manage your child's pending sessions.</p>
            </div>
-        </div>
-
-        <div className="flex p-1 bg-slate-100 rounded-2xl">
-          <button 
-            onClick={() => setStatusFilter('pending')}
-            className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${statusFilter === 'pending' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            Awaiting
-          </button>
-          <button 
-            onClick={() => setStatusFilter('handled')}
-            className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${statusFilter === 'handled' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            History
-          </button>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-24 space-y-4">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] animate-pulse">Syncing Hub...</p>
+      <div className="bg-white border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-sm">
+        <div className="overflow-x-auto no-scrollbar">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-slate-900 border-b border-slate-800">
+              <tr>
+                <th onClick={() => toggleSort('student')} className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white transition-colors">
+                  Student {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => toggleSort('course')} className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white transition-colors">
+                  Course {sortField === 'course' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th onClick={() => toggleSort('date')} className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center cursor-pointer hover:text-white transition-colors">
+                  Date {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Time</th>
+                <th onClick={() => toggleSort('status')} className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right cursor-pointer hover:text-white transition-colors">
+                  Status {sortField === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {isLoading ? (
+                <tr><td colSpan={5} className="py-20 text-center"><div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" /></td></tr>
+              ) : displayedRequests.map((req) => {
+                const isSelected = selectedRequestId === req.id;
+                const status = (req as any).status;
+                return (
+                  <tr key={req.id} onClick={() => setSelectedRequestId(req.id)} className={`group cursor-pointer transition-all duration-200 ${isSelected ? 'bg-indigo-50/50' : 'hover:bg-slate-50'}`}>
+                    <td className="px-8 py-5"><span className="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors">{req.students?.name}</span></td>
+                    <td className="px-8 py-5"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{req.courses?.name}</span></td>
+                    <td className="px-8 py-5 text-center"><span className="text-[11px] font-mono font-bold text-slate-500">{req.date}</span></td>
+                    <td className="px-8 py-5 text-center"><span className="text-xs font-mono font-black text-indigo-600">{req.start_time.slice(0,5)}—{req.end_time.slice(0,5)}</span></td>
+                    <td className="px-8 py-5 text-right">
+                       <div className={`inline-flex px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${status === 'accepted' ? 'bg-green-100 text-green-700' : status === 'declined' ? 'bg-red-100 text-red-700' : 'bg-orange-50 text-orange-600'}`}>
+                          {status}
+                       </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedRequests.map((req) => {
-            const status = (req as any).status;
-            const responseMsg = (req as any).response_message;
-            const isPending = status === 'pending';
+      </div>
 
-            return (
-              <div 
-                key={req.id} 
-                className={`group relative bg-white border-2 rounded-[2rem] p-6 shadow-sm hover:shadow-xl transition-all duration-300 border-slate-100 overflow-hidden flex flex-col h-full`}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-base font-black text-slate-900 truncate">{req.students?.name}</h4>
-                    <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-0.5">{req.courses?.name}</p>
-                  </div>
-                  <div className="shrink-0 text-right ml-4">
-                    <p className="text-[10px] font-mono font-black text-slate-400">{req.date}</p>
-                    <p className="text-[11px] font-mono font-bold text-indigo-600">{req.start_time.slice(0,5)}—{req.end_time.slice(0,5)}</p>
-                  </div>
-                </div>
+      {selectedRequestId && selectedRequest && createPortal(
+        <aside className="fixed top-0 right-0 bottom-0 w-full max-w-[450px] bg-slate-900 shadow-2xl z-[200] flex flex-col animate-in slide-in-from-right duration-500 border-l border-slate-800">
+          <div className="p-8 pt-12 pb-4 shrink-0 flex items-center justify-between">
+             <div>
+               <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">{selectedRequest.date}</span>
+               <h3 className="text-2xl font-black text-white mt-1 leading-tight">{selectedRequest.students?.name.split(' ')[0]}'s Lesson</h3>
+             </div>
+             <button onClick={() => setSelectedRequestId(null)} className="p-3 text-slate-500 hover:text-white hover:bg-white/10 rounded-2xl transition-all">
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M6 18L18 6M6 6l12 12" /></svg>
+             </button>
+          </div>
 
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`inline-flex px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${status === 'accepted' ? 'bg-green-100 text-green-700' : status === 'declined' ? 'bg-red-100 text-red-700' : 'bg-orange-50 text-orange-600'}`}>
-                    {status}
-                  </div>
-                  {isPending && (
-                    <div className="flex items-center space-x-2">
-                       <button 
-                        onClick={() => handleOpenEdit(req)}
-                        className="p-2 text-slate-300 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                        title="Edit Message"
-                       >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                       </button>
-                       <button 
-                        onClick={() => setDeletingRequestId(req.id)}
-                        className="p-2 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                        title="Delete Request"
-                       >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                       </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-1 space-y-2">
-                  {req.message && (
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <span className="block text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Your Message</span>
-                      <p className="text-[10px] text-slate-600 font-bold italic line-clamp-3">"{req.message}"</p>
-                    </div>
-                  )}
-
-                  {status !== 'pending' && responseMsg && (
-                    <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                      <span className="block text-[8px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">Academy Response</span>
-                      <p className="text-[10px] text-indigo-700 font-bold italic line-clamp-3">"{responseMsg}"</p>
-                    </div>
-                  )}
-                </div>
+          <div className="flex-1 min-h-0 px-8 py-4 overflow-y-auto no-scrollbar flex flex-col">
+            <div className="bg-[#0f172a] rounded-[2.5rem] border border-slate-800 flex-1 relative flex p-6 overflow-hidden">
                 
-                {isPending && (
-                  <div className="mt-6 pt-4 border-t border-slate-50 flex items-center justify-between shrink-0">
-                     <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Awaiting school approval</span>
-                     <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                  </div>
+                {hoveredItem && (
+                   <div className="absolute top-6 right-6 w-52 bg-slate-800 border border-slate-700 shadow-2xl rounded-2xl p-4 z-[250] pointer-events-none animate-in fade-in slide-in-from-top-4 slide-in-from-right-4 duration-300">
+                      <div className="space-y-2">
+                         <div className="flex flex-col">
+                            <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">{hoveredItem.type === 'target' ? 'CURRENT REQUEST' : 'BOOKED'}</span>
+                            <span className="text-sm font-black text-white leading-tight">{hoveredItem.courses?.name || hoveredItem.courseName}</span>
+                         </div>
+                         <div className="h-px bg-slate-700/50 w-full" />
+                         <div className="flex flex-col">
+                            <span className="text-[10px] font-mono font-black text-indigo-500">{hoveredItem.start.slice(0,5)} — {hoveredItem.end.slice(0,5)}</span>
+                         </div>
+                      </div>
+                   </div>
                 )}
-              </div>
-            );
-          })}
-          {displayedRequests.length === 0 && (
-            <div className="col-span-full py-32 bg-white border-2 border-dashed border-slate-200 rounded-[3rem] text-center">
-               <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-               </div>
-               <h3 className="text-xl font-black text-slate-900">No {statusFilter} requests.</h3>
-               <p className="text-slate-400 font-medium text-sm mt-2">You haven't made any requests recently.</p>
+
+                <div className="w-10 shrink-0 flex flex-col justify-between py-2 border-r border-slate-800/50">
+                   {Array.from({ length: 8 }, (_, i) => 8 + (i * 2)).map(hour => (
+                     <div key={hour} className="text-[10px] font-mono font-black text-slate-600">{hour}:00</div>
+                   ))}
+                   <div className="text-[10px] font-mono font-black text-slate-600">22:00</div>
+                </div>
+
+                <div className="flex-1 relative ml-4">
+                  <div className="absolute inset-0 flex flex-col justify-between opacity-10 pointer-events-none">
+                    {Array.from({ length: 15 }, (_, i) => 8 + i).map(hour => (
+                      <div key={hour} className="w-full border-t border-white h-0" />
+                    ))}
+                  </div>
+
+                  <div className="relative h-full w-full z-10 flex space-x-1">
+                    {isLoadingTimeline ? (
+                      <div className="absolute inset-0 flex items-center justify-center"><div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>
+                    ) : timelineLanes.map((lane, lIdx) => (
+                      <div key={lIdx} className="relative h-full flex-1 min-w-[24px]">
+                        {lane.map(item => {
+                          const top = timeToPercent(item.start);
+                          const height = timeToPercent(item.end) - top;
+                          const color = item.courses?.color || '#6366f1';
+                          const isTarget = item.type === 'target';
+                          
+                          // Attendance details for existing bookings
+                          const attTop = item.check_in ? timeToPercent(item.check_in) : 0;
+                          const attBottom = item.check_in ? (item.check_out ? timeToPercent(item.check_out) : timeToPercent(currentTime)) : 0;
+                          const attHeight = attBottom - attTop;
+
+                          return (
+                            <div 
+                              key={item.id || lIdx} 
+                              className={`absolute left-0 right-0 transition-all ${isTarget ? 'z-30' : 'z-10 hover:z-40'}`}
+                              style={{ top: `${top}%`, height: `${height}%` }}
+                              onMouseEnter={() => setHoveredItem(item)}
+                              onMouseLeave={() => setHoveredItem(null)}
+                            >
+                              <div 
+                                className={`absolute inset-0 rounded-xl border-2 transition-all ${isTarget ? 'border-dashed border-[#6366f1] bg-indigo-500/20 ring-2 ring-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.3)] animate-pulse' : 'border-dashed'}`}
+                                style={{ 
+                                  backgroundColor: !isTarget ? hexToRgba(color, 0.1) : undefined, 
+                                  borderColor: !isTarget ? hexToRgba(color, 0.3) : undefined 
+                                }}
+                              />
+                              {item.type === 'booking' && item.check_in && (
+                                <div 
+                                  className={`absolute left-1 right-1 rounded-lg border-l-4 shadow-xl ${!item.check_out ? 'animate-pulse' : ''}`} 
+                                  style={{ 
+                                    top: `${attTop - top}%`, 
+                                    height: `${attHeight}%`, 
+                                    backgroundColor: hexToRgba(color, 0.8), 
+                                    borderLeftColor: color, 
+                                    borderTopColor: hexToRgba(color, 0.2), 
+                                    borderRightColor: hexToRgba(color, 0.2), 
+                                    borderBottomColor: hexToRgba(color, 0.2) 
+                                  }} 
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+
+                    {/* NOW line */}
+                    {selectedRequest.date === new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Hong_Kong" }) && (
+                      <div className="absolute left-0 right-0 border-t border-red-500/50 z-[100] flex items-center pointer-events-none" style={{ top: `${timeToPercent(currentTime)}%` }}>
+                        <div className="w-2 h-2 rounded-full bg-red-500 -ml-1" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+            </div>
+
+            <div className="mt-8 space-y-6">
+              {selectedRequest.message && (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Your Note</h4>
+                  <div className="p-6 bg-white/5 border border-white/10 rounded-[2rem]">
+                    <p className="text-sm font-medium text-slate-300 leading-relaxed italic">"{selectedRequest.message}"</p>
+                  </div>
+                </div>
+              )}
+              {(selectedRequest as any).response_message && (
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Academy Feedback</h4>
+                  <div className="p-6 bg-indigo-500/20 border border-indigo-500/30 rounded-[2rem]">
+                    <p className="text-sm font-black text-white leading-relaxed italic">"{(selectedRequest as any).response_message}"</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {(selectedRequest as any).status === 'pending' && (
+            <div className="p-8 border-t border-slate-800 bg-slate-900 shrink-0 flex items-center space-x-3">
+               <button onClick={() => { setEditingRequest(selectedRequest); setEditMessage(selectedRequest.message || ''); }} className="flex-1 py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95">Edit Message</button>
+               <button onClick={() => setDeletingRequestId(selectedRequest.id)} className="p-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-2xl transition-all active:scale-95"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
             </div>
           )}
-        </div>
+        </aside>,
+        document.body
       )}
 
-      {/* Edit Message Modal */}
-      {editingRequest && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setEditingRequest(null)}>
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
-            <div className="px-10 py-8 border-b border-slate-50 bg-slate-50/30">
-               <h3 className="text-2xl font-black text-slate-900 tracking-tight">Modify Request</h3>
-               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Update message for your booking</p>
-            </div>
-            
-            <div className="p-10 space-y-8">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Your Message</label>
-                <textarea 
-                  value={editMessage}
-                  onChange={(e) => setEditMessage(e.target.value)}
-                  placeholder="e.g. Please let us know if we need to bring anything..."
-                  rows={4}
-                  className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all resize-none text-slate-900"
-                />
-              </div>
-
-              <div className="flex items-center justify-end space-x-3 pt-2">
-                <button onClick={() => setEditingRequest(null)} className="px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">{t('common.cancel')}</button>
-                <button 
-                  onClick={handleUpdateMessage} 
-                  disabled={isProcessing}
-                  className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center"
-                >
-                  {isProcessing && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />}
-                  Save Updates
-                </button>
-              </div>
-            </div>
+      {editingRequest && createPortal(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden p-10 animate-in zoom-in duration-200">
+             <h3 className="text-2xl font-black text-slate-900 tracking-tight">Modify Request</h3>
+             <textarea value={editMessage} onChange={(e) => setEditMessage(e.target.value)} rows={4} className="w-full mt-6 px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all resize-none text-slate-900" />
+             <div className="flex space-x-3 mt-8">
+               <button onClick={() => setEditingRequest(null)} className="flex-1 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cancel</button>
+               <button onClick={handleUpdateMessage} disabled={isProcessing} className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest">Save Updates</button>
+             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Delete Confirmation Modal */}
-      {deletingRequestId && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDeletingRequestId(null)}>
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-sm overflow-hidden p-10 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </div>
-            <h3 className="text-xl font-black text-slate-900 mb-2">Delete Request?</h3>
-            <p className="text-slate-500 text-sm mb-10 leading-relaxed">Are you sure you want to withdraw this session request? This action cannot be undone.</p>
+      {deletingRequestId && createPortal(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDeletingRequestId(null)}>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-sm overflow-hidden p-10 text-center animate-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-black text-slate-900 mb-2">Withdraw Request?</h3>
+            <p className="text-slate-500 text-sm mb-10 leading-relaxed">This action cannot be undone.</p>
             <div className="flex space-x-3">
-              <button onClick={() => setDeletingRequestId(null)} className="flex-1 px-6 py-3 text-xs font-black text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors uppercase tracking-widest">{t('common.cancel')}</button>
-              <button 
-                onClick={handleDeleteRequest} 
-                disabled={isProcessing} 
-                className="flex-1 px-6 py-3 text-xs font-black text-white rounded-xl bg-red-600 hover:bg-red-700 transition-all shadow-lg shadow-red-100 uppercase tracking-widest flex items-center justify-center"
-              >
-                {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" /> : 'Confirm Withdraw'}
-              </button>
+              <button onClick={() => setDeletingRequestId(null)} className="flex-1 px-4 py-3 text-[10px] font-black text-slate-500 bg-slate-50 rounded-xl uppercase tracking-widest">Cancel</button>
+              <button onClick={handleDeleteRequest} disabled={isProcessing} className="flex-1 px-4 py-3 text-[10px] font-black text-white rounded-xl bg-red-600 uppercase">Confirm</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

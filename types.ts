@@ -1,4 +1,3 @@
-
 export interface Student {
   id: string;
   name: string;
@@ -49,6 +48,8 @@ export interface BookingRequest {
   start_time: string;
   end_time: string;
   message?: string;
+  status: 'pending' | 'accepted' | 'declined';
+  response_message?: string;
   created_at: string;
   students?: Student;
   courses?: Course;

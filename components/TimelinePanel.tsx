@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Booking } from '../types';
 
 interface TimelinePanelProps {
@@ -54,16 +54,16 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ studentName, bookings, da
   const hours = Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => START_HOUR + i);
   if (!studentName) return null;
 
-  return (
-    <div className={`fixed right-0 top-0 bottom-0 z-[100] bg-slate-900 shadow-2xl transition-transform duration-500 flex flex-col w-[85vw] sm:w-96 ${isExpanded ? 'translate-x-0' : 'translate-x-full'}`}>
+  return createPortal(
+    <div className={`fixed right-0 top-0 bottom-0 z-[200] bg-slate-900 shadow-2xl transition-transform duration-500 flex flex-col w-[85vw] sm:w-96 ${isExpanded ? 'translate-x-0' : 'translate-x-full'}`}>
       <button 
         onClick={onToggle} 
-        className="absolute -left-10 top-1/2 -translate-y-1/2 w-10 h-24 bg-slate-900 text-white rounded-l-2xl flex items-center justify-center hover:bg-indigo-600 transition-all z-[105] border-l border-t border-b border-slate-800"
+        className="absolute -left-10 top-1/2 -translate-y-1/2 w-10 h-24 bg-slate-900 text-white rounded-l-2xl flex items-center justify-center hover:bg-indigo-600 transition-all z-[205] border-l border-t border-b border-slate-800"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
       </button>
 
-      <div className="px-8 pt-10 pb-8 bg-slate-900 text-white shrink-0 border-b border-slate-800">
+      <div className="px-8 pt-12 pb-8 bg-slate-900 text-white shrink-0 border-b border-slate-800">
         <span className="text-[10px] font-black tracking-[0.3em] uppercase opacity-40">System Timeline</span>
         <h4 className="font-black text-2xl text-white truncate mt-2">{studentName}</h4>
         <div className="flex items-center space-x-3 mt-4">
@@ -167,7 +167,8 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ studentName, bookings, da
            </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

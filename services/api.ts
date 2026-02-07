@@ -564,15 +564,15 @@ export const api = {
     return handleResponse(response, 'Failed to fetch contextual booking requests');
   },
 
-  // Added 'message' to the allowed properties in updateBookingRequest
   async updateBookingRequest(id: string, data: Partial<{ status: string; response_message: string; responded_at: string; responded_by: string; message: string }>) {
     const { data: updated, error } = await supabase
       .from('booking_requests')
       .update(data)
-      .eq('id', id);
+      .eq('id', id)
+      .select();
 
     if (error) throw new Error(`Failed to update booking request: ${error.message}`);
-    return updated;
+    return updated ? updated[0] : null;
   },
 
   async deleteBookingRequest(id: string) {
