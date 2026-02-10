@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
@@ -44,75 +45,55 @@ const PortalCourses: React.FC = () => {
     );
   }, [courses, searchQuery]);
 
-  const getContrastColor = (hexcolor: string) => {
-    if (!hexcolor) return '#ffffff';
-    const hex = hexcolor.replace("#", "");
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    return (yiq >= 128) ? '#1e293b' : '#ffffff';
-  };
-
   return (
-    <div className="space-y-10 animate-in fade-in duration-500 pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('courses.title')}</h2>
-          <p className="text-slate-500 mt-1 font-medium">{t('courses.explore_classes')}</p>
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-20 max-w-4xl mx-auto px-4 sm:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
+        <div className="space-y-0.5 sm:space-y-1">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{t('courses.title')}</h2>
+          <p className="text-slate-500 font-medium text-xs sm:text-sm">{t('courses.explore_classes')}</p>
         </div>
-        <div className="relative w-full sm:w-72">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        <div className="relative w-full sm:w-64">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </div>
           <input 
             type="text" 
             placeholder={t('courses.search_classes')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-6 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold transition-all text-sm"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold transition-all text-xs"
           />
         </div>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-white border border-slate-100 rounded-[2.5rem] animate-pulse" />)}
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-white border border-slate-100 rounded-xl animate-pulse" />)}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="space-y-2">
           {filteredCourses.map(course => (
             <Link 
               to={`/portal/courses/${course.id}`}
               key={course.id}
-              className="group relative bg-white border-2 border-slate-100 rounded-[2.5rem] p-8 hover:border-indigo-500 hover:shadow-2xl hover:shadow-indigo-50 transition-all duration-500 cursor-pointer overflow-hidden flex flex-col"
+              className="group bg-white border border-slate-100 rounded-xl p-4 hover:border-indigo-500 hover:shadow-md transition-all duration-200 flex items-center gap-4"
             >
-              <div 
-                className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full opacity-10 group-hover:scale-150 transition-transform duration-700"
-                style={{ backgroundColor: course.color || '#e2e8f0' }}
-              />
-              <div className="flex-1">
-                <div 
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black shadow-inner mb-6 transition-transform group-hover:rotate-6"
-                  style={{ backgroundColor: course.color || '#e2e8f0', color: getContrastColor(course.color) }}
-                >
-                  {course.name.charAt(0).toUpperCase()}
-                </div>
-                <h3 className="text-xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-tight mb-1">
-                  {course.name}
-                </h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{course.org_name}</p>
+              <div className="w-1.5 h-10 rounded-full shrink-0" style={{ backgroundColor: course.color }} />
+              
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate">{course.name}</h3>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{course.org_name}</p>
               </div>
               
-              <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between text-slate-400 font-black text-[9px] uppercase tracking-[0.1em] group-hover:text-indigo-600 transition-colors">
-                <span>{t('courses.view_detail')}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+              <div className="flex items-center text-slate-400 font-black text-[8px] uppercase tracking-widest group-hover:text-indigo-600 transition-colors">
+                <span className="hidden sm:inline mr-2">Details</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M9 5l7 7-7 7" /></svg>
               </div>
             </Link>
           ))}
           {filteredCourses.length === 0 && (
-            <div className="col-span-full py-24 text-center bg-white border-2 border-dashed border-slate-200 rounded-[3rem]">
-              <p className="text-slate-400 font-bold italic">{t('bookings.no_match')}</p>
+            <div className="py-12 text-center bg-white border border-dashed border-slate-200 rounded-xl">
+              <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest italic">{t('bookings.no_match')}</p>
             </div>
           )}
         </div>

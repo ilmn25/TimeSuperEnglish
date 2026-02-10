@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -25,11 +26,15 @@ interface DerivedIssue {
   studentName: string;
   courseName: string;
   date: string;
+  start: string;
+  end: string;
   attendanceStatus: AttendanceStatus;
   invoiceStatus: InvoiceStatus;
 }
 
-const AdminIssues: React.FC = () => {
+type PaymentView = 'discrepancies' | 'resolved' | 'upcoming';
+
+const AdminPayments: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -37,20 +42,18 @@ const AdminIssues: React.FC = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const [activeView, setActiveView] = useState<PaymentView>('discrepancies');
 
-  // Advanced Filters
+  // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAttendance, setFilterAttendance] = useState<AttendanceStatus | ''>('');
   const [filterInvoice, setFilterInvoice] = useState<InvoiceStatus | ''>('');
 
-  // Modal State
-  const [billingModalItem, setBillingModalItem] = useState<DerivedIssue | null>(null);
-  const [billingFormData, setBillingFormData] = useState({
-    method: 'cash', 
-    amount: 0,
-    currency: 'HKD',
-    status: 'paid' as 'paid' | 'issued'
+  const [rescheduleModalItem, setRescheduleModalItem] = useState<DerivedIssue | null>(null);
+  const [rescheduleFormData, setRescheduleFormData] = useState({
+    date: '',
+    start: '',
+    end: ''
   });
 
   const fetchData = useCallback(async () => {
@@ -60,7 +63,7 @@ const AdminIssues: React.FC = () => {
       const data = await api.getAllBookings(orgId);
       setBookings(data || []);
     } catch (err) {
-      console.error('Failed to load bookings for issues', err);
+      console.error('Failed to load bookings for audit', err);
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +73,6 @@ const AdminIssues: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // Added clearFilters to fix the "Cannot find name 'clearFilters'" errors on lines 234 and 240
   const clearFilters = () => {
     setSearchQuery('');
     setFilterAttendance('');
@@ -91,12 +93,10 @@ const AdminIssues: React.FC = () => {
       const bookingEndWithSec = b.end.length === 5 ? `${b.end}:00` : b.end;
       const isPast = (b.date < hktToday) || (b.date === hktToday && bookingEndWithSec < hktNowTime);
 
-      // Derive Attendance Status
       let attendanceStatus: AttendanceStatus = 'upcoming';
       if (hasAttendance) attendanceStatus = 'attended';
       else if (isPast) attendanceStatus = 'missed';
 
-      // Derive Invoice Status
       let invoiceStatus: InvoiceStatus = 'unbilled';
       if (invoiceStatusRaw === 'paid') {
         invoiceStatus = invoiceAmount === 0 ? 'waived' : 'paid';
@@ -110,31 +110,30 @@ const AdminIssues: React.FC = () => {
         studentName: b.students?.name || 'Unknown',
         courseName: b.courses?.name || 'Unknown',
         date: b.date,
+        start: b.start,
+        end: b.end,
         attendanceStatus,
         invoiceStatus
       } as DerivedIssue;
     });
   }, [bookings]);
 
-  // SPLIT INTO TABS AND FILTER
   const processedIssues = useMemo(() => {
     return derivedIssues.filter(item => {
-      // 1. Tab Split: History is only Paid/Waived. Active is everything else.
-      const isHistory = item.invoiceStatus === 'paid' || item.invoiceStatus === 'waived';
-      if (activeTab === 'active' && isHistory) return false;
-      if (activeTab === 'history' && !isHistory) return false;
-
-      // 2. Hide "Clean" future bookings that are unbilled from detected problems 
-      // unless we want an "audit" view of everything.
-      // Usually, detected problems are discrepancies like: (Attended + Unbilled) or (Attended + Awaiting Payment)
-      if (activeTab === 'active') {
-        const isProblem = (item.attendanceStatus === 'attended' && item.invoiceStatus !== 'paid') ||
-                          (item.attendanceStatus === 'missed' && item.invoiceStatus === 'awaiting_payment') ||
-                          (item.attendanceStatus === 'missed' && item.invoiceStatus === 'unbilled');
+      // 1. View Selection Filter
+      if (activeView === 'upcoming') {
+        if (item.attendanceStatus !== 'upcoming') return false;
+      } else if (activeView === 'resolved') {
+        const isClean = item.attendanceStatus === 'attended' && (item.invoiceStatus === 'paid' || item.invoiceStatus === 'waived');
+        if (!isClean) return false;
+      } else if (activeView === 'discrepancies') {
+        const isProblem = 
+          (item.attendanceStatus === 'attended' && item.invoiceStatus !== 'paid' && item.invoiceStatus !== 'waived') ||
+          (item.attendanceStatus === 'missed');
         if (!isProblem) return false;
       }
 
-      // 3. Search & Dimension Filters
+      // 2. Multi-Dimension Filters
       const matchesSearch = item.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            item.courseName.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesAttendance = !filterAttendance || item.attendanceStatus === filterAttendance;
@@ -142,72 +141,44 @@ const AdminIssues: React.FC = () => {
 
       return matchesSearch && matchesAttendance && matchesInvoice;
     }).sort((a, b) => b.date.localeCompare(a.date));
-  }, [derivedIssues, activeTab, searchQuery, filterAttendance, filterInvoice]);
+  }, [derivedIssues, activeView, searchQuery, filterAttendance, filterInvoice]);
 
-  const openResolveBilling = (item: DerivedIssue) => {
-    const invoiceData = item.booking.invoices;
-    const inv = Array.isArray(invoiceData) ? invoiceData[0] : invoiceData;
-    setBillingModalItem(item);
-    setBillingFormData({
-      method: inv?.method || 'cash', 
-      amount: inv?.amount || item.booking.courses?.price || 0,
-      currency: inv?.currency || 'HKD',
-      status: 'paid'
-    });
-  };
-
-  const handleConfirmResolveBilling = async (e: React.FormEvent) => {
+  const handleApproveReschedule = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!billingModalItem) return;
+    if (!rescheduleModalItem || !orgId) return;
     setIsProcessing(true);
     try {
-      if (billingModalItem.booking.invoice_id) {
-        await api.updateInvoice(billingModalItem.booking.invoice_id, {
-          method: billingFormData.status === 'paid' ? billingFormData.method : 'none',
-          amount: billingFormData.amount,
-          status: billingFormData.status,
-          paid_at: billingFormData.status === 'paid' ? new Date().toISOString() : null
-        });
-      } else {
-        // Fix: Use 'booking_ids' as an array instead of 'booking_id' as a single string
-        await api.createInvoice({
-          booking_ids: [billingModalItem.id],
-          method: billingFormData.status === 'paid' ? billingFormData.method : 'none',
-          amount: billingFormData.amount,
-          currency: billingFormData.currency,
-          status: billingFormData.status
-        });
-      }
-      setBillingModalItem(null);
+      await api.updateBooking(orgId, rescheduleModalItem.id, {
+        date: rescheduleFormData.date,
+        start: rescheduleFormData.start,
+        end: rescheduleFormData.end,
+        check_in: null,
+        check_out: null
+      });
+      setRescheduleModalItem(null);
       await fetchData();
     } catch (err) {
-      alert(t('common.error'));
+      alert('Reschedule failed');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleWaive = async (item: DerivedIssue) => {
+  const handleCancelBooking = async (id: string) => {
+    if (!window.confirm("Permanently delete this missed booking?")) return;
     setIsProcessing(true);
     try {
-        if (item.booking.invoice_id) {
-            await api.updateInvoice(item.booking.invoice_id, { status: 'paid', amount: 0 });
-        } else {
-            // Fix: Use 'booking_ids' as an array instead of 'booking_id' as a single string
-            await api.createInvoice({
-                booking_ids: [item.id],
-                method: 'none',
-                amount: 0,
-                currency: 'HKD',
-                status: 'paid'
-            });
-        }
-        await fetchData();
+      await api.deleteBooking(orgId!, id);
+      await fetchData();
     } catch (err) {
-        alert(t('common.error'));
+      alert('Deletion failed');
     } finally {
-        setIsProcessing(false);
+      setIsProcessing(false);
     }
+  };
+
+  const navigateToCreateInvoice = (item: DerivedIssue) => {
+    navigate(`/org/${orgId}/invoices/new?studentId=${item.booking.student_id}&bookingId=${item.id}`);
   };
 
   const getAttendanceStyle = (status: AttendanceStatus) => {
@@ -231,29 +202,33 @@ const AdminIssues: React.FC = () => {
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('issues.title')}</h2>
-          <p className="text-slate-500 mt-1 font-medium">Audit and align workspace records</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Payments & Audit</h2>
+          <p className="text-slate-500 mt-1 font-medium">Verify attendance against billing and resolve discrepancies</p>
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6">
-        {/* Tab Switcher */}
         <div className="flex p-1.5 bg-white border border-slate-200 rounded-[1.75rem] shadow-sm w-full lg:w-auto shrink-0">
           <button 
-            onClick={() => { setActiveTab('active'); clearFilters(); }}
-            className={`px-8 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'active' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+            onClick={() => { setActiveView('discrepancies'); clearFilters(); }}
+            className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'discrepancies' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            Detected Problems
+            Discrepancies
           </button>
           <button 
-            onClick={() => { setActiveTab('history'); clearFilters(); }}
-            className={`px-8 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+            onClick={() => { setActiveView('upcoming'); clearFilters(); }}
+            className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'upcoming' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            Resolved History
+            Upcoming
+          </button>
+          <button 
+            onClick={() => { setActiveView('resolved'); clearFilters(); }}
+            className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'resolved' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            Resolved
           </button>
         </div>
 
-        {/* Granular Filters */}
         <div className="bg-white border border-slate-200 rounded-[2rem] p-4 shadow-sm flex flex-col md:flex-row items-center gap-4 flex-1 w-full">
           <div className="relative flex-1 w-full">
              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
@@ -263,42 +238,23 @@ const AdminIssues: React.FC = () => {
                type="text"
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
-               placeholder="Search..."
+               placeholder="Search student or course..."
                className="w-full pl-11 pr-6 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all text-xs font-bold text-slate-700"
              />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <select 
-              value={filterAttendance}
-              onChange={(e) => setFilterAttendance(e.target.value as any)}
-              className="px-4 py-2.5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-100 text-[10px] font-black uppercase tracking-widest text-slate-600 cursor-pointer"
-            >
-              <option value="">All Attendance</option>
-              <option value="attended">Attended</option>
-              <option value="missed">Missed</option>
-              <option value="upcoming">Upcoming</option>
-            </select>
-
-            <select 
-              value={filterInvoice}
-              onChange={(e) => setFilterInvoice(e.target.value as any)}
-              className="px-4 py-2.5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-100 text-[10px] font-black uppercase tracking-widest text-slate-600 cursor-pointer"
-            >
-              <option value="">All Invoices</option>
-              {activeTab === 'history' ? (
-                <>
-                  <option value="paid">Paid</option>
-                  <option value="waived">Waived</option>
-                </>
-              ) : (
-                <>
-                  <option value="awaiting_payment">Awaiting Payment</option>
-                  <option value="unbilled">Unbilled</option>
-                </>
-              )}
-            </select>
-
+            {activeView === 'discrepancies' && (
+              <select 
+                value={filterAttendance}
+                onChange={(e) => setFilterAttendance(e.target.value as any)}
+                className="px-4 py-2.5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-100 text-[10px] font-black uppercase tracking-widest text-slate-600 cursor-pointer"
+              >
+                <option value="">All Statuses</option>
+                <option value="attended">Attended</option>
+                <option value="missed">Missed</option>
+              </select>
+            )}
             <button 
               onClick={clearFilters}
               className="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
@@ -344,29 +300,88 @@ const AdminIssues: React.FC = () => {
                     </td>
                     <td className="px-8 py-5">
                        <div className={`inline-flex px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight border ${getInvoiceStyle(item.invoiceStatus)}`}>
-                          {item.invoiceStatus === 'awaiting_payment' ? 'Awaiting Payment' : item.invoiceStatus}
+                          {item.invoiceStatus === 'awaiting_payment' ? 'Awaiting' : item.invoiceStatus}
                        </div>
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        {activeTab === 'active' && (
+                        {activeView === 'discrepancies' && (
                           <>
-                            {item.invoiceStatus === 'unbilled' ? (
-                              <button onClick={() => openResolveBilling(item)} disabled={isProcessing} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-sm">Create Invoice</button>
-                            ) : (
+                            {/* CASE: PAID + MISSED */}
+                            {item.attendanceStatus === 'missed' && (item.invoiceStatus === 'paid' || item.invoiceStatus === 'waived') && (
+                              <>
+                                <button 
+                                  onClick={() => { setRescheduleModalItem(item); setRescheduleFormData({ date: item.date, start: item.start.slice(0,5), end: item.end.slice(0,5) }); }}
+                                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm"
+                                >
+                                  Reschedule
+                                </button>
+                                <button 
+                                  onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
+                                  className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
+                                >
+                                  Refund / Edit
+                                </button>
+                              </>
+                            )}
+
+                            {/* CASE: UNPAID + MISSED */}
+                            {item.attendanceStatus === 'missed' && (item.invoiceStatus === 'unbilled' || item.invoiceStatus === 'awaiting_payment') && (
+                              <>
+                                <button 
+                                  onClick={() => handleCancelBooking(item.id)}
+                                  className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-100 transition-all"
+                                >
+                                  Cancel Booking
+                                </button>
+                                <button 
+                                  onClick={() => { setRescheduleModalItem(item); setRescheduleFormData({ date: item.date, start: item.start.slice(0,5), end: item.end.slice(0,5) }); }}
+                                  className="px-4 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all"
+                                >
+                                  Reschedule
+                                </button>
+                              </>
+                            )}
+
+                            {/* CASE: ATTENDED + UNBILLED */}
+                            {item.attendanceStatus === 'attended' && item.invoiceStatus === 'unbilled' && (
+                              <button onClick={() => navigateToCreateInvoice(item)} disabled={isProcessing} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-sm">Create Invoice</button>
+                            )}
+                            
+                            {/* CASE: ATTENDED + AWAITING */}
+                            {item.attendanceStatus === 'attended' && item.invoiceStatus === 'awaiting_payment' && (
                               <button 
                                 onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
-                                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-sm"
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm"
                               >
                                 View Invoice
                               </button>
                             )}
-                            {item.invoiceStatus !== 'waived' && (
-                              <button onClick={() => handleWaive(item)} disabled={isProcessing} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">Waive</button>
-                            )}
                           </>
                         )}
-                        {activeTab === 'history' && (
+                        
+                        {activeView === 'upcoming' && (
+                          <>
+                            {item.invoiceStatus === 'unbilled' ? (
+                              <button onClick={() => navigateToCreateInvoice(item)} disabled={isProcessing} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all">Pre-bill</button>
+                            ) : (
+                              <button 
+                                onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm"
+                              >
+                                View Invoice
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => { setRescheduleModalItem(item); setRescheduleFormData({ date: item.date, start: item.start.slice(0,5), end: item.end.slice(0,5) }); }}
+                              className="px-4 py-2 bg-white border border-slate-200 text-slate-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-indigo-600 transition-all"
+                            >
+                              Edit
+                            </button>
+                          </>
+                        )}
+
+                        {activeView === 'resolved' && (
                            <button 
                              onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
                              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-sm"
@@ -381,7 +396,7 @@ const AdminIssues: React.FC = () => {
                 {processedIssues.length === 0 && !isLoading && (
                   <tr>
                     <td colSpan={6} className="px-8 py-24 text-center text-slate-400 font-bold italic text-sm bg-slate-50/20">
-                      {activeTab === 'active' ? 'Everything looks perfectly aligned!' : 'No resolution history found.'}
+                      {activeView === 'discrepancies' ? 'Everything looks perfectly aligned!' : activeView === 'upcoming' ? 'No upcoming sessions scheduled.' : 'No resolution history found.'}
                     </td>
                   </tr>
                 )}
@@ -391,76 +406,56 @@ const AdminIssues: React.FC = () => {
         )}
       </div>
 
-      {/* Resolve Billing Modal */}
-      {billingModalItem && (
+      {/* Reschedule Modal */}
+      {rescheduleModalItem && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="px-10 py-8 border-b border-slate-50 bg-slate-50/30">
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight">Generate Billing</h3>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="px-10 py-8 border-b border-slate-50 bg-indigo-50/30">
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight">Reschedule Session</h3>
               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
-                For {billingModalItem.studentName} ({billingModalItem.courseName})
+                For {rescheduleModalItem.studentName}
               </p>
             </div>
             
-            <form onSubmit={handleConfirmResolveBilling} className="p-10 space-y-6">
+            <form onSubmit={handleApproveReschedule} className="p-10 space-y-6">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">New Date</label>
+                <input 
+                  type="date" 
+                  required
+                  value={rescheduleFormData.date}
+                  onChange={(e) => setRescheduleFormData({ ...rescheduleFormData, date: e.target.value })}
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold text-slate-900"
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Amount</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Start</label>
                   <input 
-                    type="number" 
+                    type="time" 
                     required
-                    value={billingFormData.amount}
-                    onChange={(e) => setBillingFormData({ ...billingFormData, amount: parseFloat(e.target.value) })}
+                    value={rescheduleFormData.start}
+                    onChange={(e) => setRescheduleFormData({ ...rescheduleFormData, start: e.target.value })}
                     className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold text-slate-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Currency</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">End</label>
                   <input 
-                    type="text" 
+                    type="time" 
                     required
-                    value={billingFormData.currency}
-                    onChange={(e) => setBillingFormData({ ...billingFormData, currency: e.target.value })}
+                    value={rescheduleFormData.end}
+                    onChange={(e) => setRescheduleFormData({ ...rescheduleFormData, end: e.target.value })}
                     className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold text-slate-900"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Payment Status</label>
-                <select 
-                  required
-                  value={billingFormData.status}
-                  onChange={(e) => setBillingFormData({ ...billingFormData, status: e.target.value as any })}
-                  className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold text-slate-900"
-                >
-                  <option value="paid">Paid Immediately</option>
-                  <option value="issued">Issued (Awaiting Payment)</option>
-                </select>
-              </div>
-
-              {billingFormData.status === 'paid' && (
-                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Method</label>
-                  <select 
-                    required
-                    value={billingFormData.method} 
-                    onChange={(e) => setBillingFormData({ ...billingFormData, method: e.target.value })} 
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold text-slate-900"
-                  >
-                    <option value="cash">Cash</option>
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="credit_card">Credit Card</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-              )}
-
               <div className="flex items-center justify-end space-x-4 pt-4">
-                <button type="button" onClick={() => setBillingModalItem(null)} className="px-4 py-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">Cancel</button>
-                <button type="submit" disabled={isProcessing} className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black shadow-xl shadow-emerald-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center">
+                <button type="button" onClick={() => setRescheduleModalItem(null)} className="px-4 py-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">Cancel</button>
+                <button type="submit" disabled={isProcessing} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center">
                   {isProcessing && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />}
-                  Confirm
+                  Save Reschedule
                 </button>
               </div>
             </form>
@@ -471,4 +466,4 @@ const AdminIssues: React.FC = () => {
   );
 };
 
-export default AdminIssues;
+export default AdminPayments;

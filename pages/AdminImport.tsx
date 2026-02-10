@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -11,8 +12,8 @@ interface CSVRow {
   start: string;
   duration: number;
   course: string;
-  check_in?: string; // New: Optional check-in time
-  check_out?: string; // New: Optional check-out time
+  check_in?: string;
+  check_out?: string;
 }
 
 interface ResolvedBooking {
@@ -23,9 +24,19 @@ interface ResolvedBooking {
   date: string;
   start: string;
   end: string;
-  check_in?: string; // New: Optional resolved check-in time
-  check_out?: string; // New: Optional resolved check-out time
+  check_in?: string;
+  check_out?: string;
 }
+
+const normalizeTime = (timeStr: string | undefined | null): string => {
+  if (!timeStr) return '';
+  const cleanTime = timeStr.trim().split(' ')[0]; // Remove potential timezone or extra text
+  const parts = cleanTime.split(':');
+  if (parts.length < 2) return cleanTime;
+  const hours = parts[0].padStart(2, '0');
+  const minutes = parts[1].padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
 
 const EXAMPLE_CSV = `student,date,start,duration,course,check_in,check_out
 Liam Wong,2026-03-02,14:00,60,Mathematics,13:55,15:05
@@ -90,8 +101,8 @@ const AdminImport: React.FC = () => {
           start: obj.start,
           duration: parseInt(obj.duration) || 60,
           course: obj.course,
-          check_in: obj.check_in || undefined, // New
-          check_out: obj.check_out || undefined // New
+          check_in: obj.check_in || undefined,
+          check_out: obj.check_out || undefined
         };
       }).filter(r => r.student && r.date && r.start);
 
@@ -154,11 +165,13 @@ const AdminImport: React.FC = () => {
   };
 
   const calculateEndTime = (startTime: string, duration: number) => {
-    const [h, m] = startTime.split(':').map(Number);
+    const parts = startTime.split(':');
+    const h = Number(parts[0]);
+    const m = Number(parts[1]) || 0;
     const totalMins = h * 60 + m + duration;
     const endH = Math.floor(totalMins / 60);
     const endM = totalMins % 60;
-    return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}:00`;
+    return `${endH.toString().padStart(2, '0')}:${endM.toString().padStart(2, '0')}`;
   };
 
   const resolveEntities = async () => {
@@ -187,24 +200,26 @@ const AdminImport: React.FC = () => {
         }
       }
 
-      const resolved: ResolvedBooking[] = csvData.map(row => ({
-        studentName: row.student,
-        courseName: row.course,
-        studentId: resolvedStudents[row.student],
-        courseId: resolvedCourses[row.course],
-        date: row.date,
-        start: `${row.start}:00`,
-        end: calculateEndTime(row.start, row.duration),
-        check_in: row.check_in ? `${row.date}T${row.check_in}:00Z` : undefined, // Format as ISO for API
-        check_out: row.check_out ? `${row.date}T${row.check_out}:00Z` : undefined // Format as ISO for API
-      }));
+      const resolved: ResolvedBooking[] = csvData.map(row => {
+        const normStart = normalizeTime(row.start);
+        return {
+          studentName: row.student,
+          courseName: row.course,
+          studentId: resolvedStudents[row.student],
+          courseId: resolvedCourses[row.course],
+          date: row.date,
+          start: normStart,
+          end: calculateEndTime(normStart, row.duration),
+          check_in: normalizeTime(row.check_in) || undefined,
+          check_out: normalizeTime(row.check_out) || undefined
+        };
+      });
       setResolvedBookings(resolved);
 
       const allExistingBookings: Booking[] = (await api.getAllBookings(orgId)) || [];
       const existingBookingsMap = new Map<string, Booking>();
       allExistingBookings.forEach(b => {
-        // Key for duplicate detection: student, course, date, start, end (without check-in/out)
-        const key = `${b.student_id}|${b.course_id}|${b.date}|${b.start}|${b.end}`;
+        const key = `${b.student_id}|${b.course_id}|${b.date}|${normalizeTime(b.start)}|${normalizeTime(b.end)}`;
         existingBookingsMap.set(key, b);
       });
 
@@ -238,7 +253,7 @@ const AdminImport: React.FC = () => {
 
   const handleSkipDuplicates = () => {
     const duplicateKeys = new Set(
-      duplicateBookings.map(d => `${d.student_id}|${d.course_id}|${d.date}|${d.start}|${d.end}`)
+      duplicateBookings.map(d => `${d.student_id}|${d.course_id}|${d.date}|${normalizeTime(d.start)}|${normalizeTime(d.end)}`)
     );
     
     const nonDuplicates = resolvedBookings.filter(b => {
@@ -267,16 +282,17 @@ const AdminImport: React.FC = () => {
     let successCount = 0;
     try {
       for (const booking of resolvedBookings) {
-        const newBooking = await api.createBooking(orgId, {
+        const createResult = await api.createBooking(orgId, {
           student_id: booking.studentId,
           course_id: booking.courseId,
           date: booking.date,
           start: booking.start,
           end: booking.end
         });
+        
+        const newBooking = Array.isArray(createResult) ? createResult[0] : createResult;
 
-        // If check_in or check_out are provided, update the newly created booking
-        if (newBooking && (booking.check_in || booking.check_out)) {
+        if (newBooking?.id && (booking.check_in || booking.check_out)) {
           await api.updateBooking(orgId, newBooking.id, {
             check_in: booking.check_in || null,
             check_out: booking.check_out || null
@@ -333,7 +349,6 @@ const AdminImport: React.FC = () => {
                 <p className="text-slate-400 text-sm">{t('import_page.step1_headers')} <code className="bg-slate-50 px-1 rounded text-[10px]">student, date, start, duration, course, check_in, check_out</code></p>
               </div>
 
-              {/* Example Section */}
               <div className="w-full max-w-lg bg-slate-50 border border-slate-200 rounded-2xl p-5 text-left relative group">
                 <div className="flex items-center justify-between mb-3">
                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('import_page.example_title')}</span>
@@ -460,9 +475,9 @@ const AdminImport: React.FC = () => {
                       <td className="px-6 py-4 text-xs font-bold text-slate-900">{b.studentName}</td>
                       <td className="px-6 py-4 text-xs font-bold text-slate-600">{b.courseName}</td>
                       <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.date}</td>
-                      <td className="px-6 py-4 text-[10px] font-mono font-black text-indigo-600">{b.start.slice(0,5)} - {b.end.slice(0,5)}</td>
-                      <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.check_in ? b.check_in.slice(11, 16) : '-'}</td>
-                      <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.check_out ? b.check_out.slice(11, 16) : '-'}</td>
+                      <td className="px-6 py-4 text-[10px] font-mono font-black text-indigo-600">{b.start} - {b.end}</td>
+                      <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.check_in || '-'}</td>
+                      <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.check_out || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -494,11 +509,11 @@ const AdminImport: React.FC = () => {
               </div>
               {isProcessing && (
                 <div className="w-full mt-4">
-                  <div className="w-full bg-slate-100 rounded-full h-2">
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                     <div 
-                      className="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${resolvedBookings.length > 0 ? (importSuccessCount / resolvedBookings.length) * 100 : 0}%` }}>
-                    </div>
+                      className="bg-indigo-600 h-full transition-all duration-300" 
+                      style={{ width: `${(importSuccessCount / resolvedBookings.length) * 100}%` }}
+                    />
                   </div>
                 </div>
               )}
@@ -527,7 +542,7 @@ const AdminImport: React.FC = () => {
 
       {showBackupModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={handleCancelBackupDialog}>
-            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-lg overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <div className="px-10 py-8 border-b border-amber-100 bg-amber-50/30 shrink-0 flex items-start space-x-6">
                     <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -578,10 +593,10 @@ const AdminImport: React.FC = () => {
                             <tbody className="divide-y divide-slate-50">
                                 {duplicateBookings.map((b) => (
                                     <tr key={b.id} className="hover:bg-slate-50/50">
-                                        <td className="px-6 py-4 text-xs font-bold text-slate-900">{b.students?.name}</td>
-                                        <td className="px-6 py-4 text-xs font-bold text-slate-600">{b.courses?.name}</td>
+                                        <td className="px-6 py-4 text-xs font-bold text-slate-900">{existingStudents.find(s => s.id === b.student_id)?.name}</td>
+                                        <td className="px-6 py-4 text-xs font-bold text-slate-600">{existingCourses.find(c => c.id === b.course_id)?.name}</td>
                                         <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.date}</td>
-                                        <td className="px-6 py-4 text-[10px] font-mono font-black text-indigo-600">{b.start.slice(0,5)} - {b.end.slice(0,5)}</td>
+                                        <td className="px-6 py-4 text-[10px] font-mono font-black text-indigo-600">{normalizeTime(b.start)} - {normalizeTime(b.end)}</td>
                                     </tr>
                                 ))}
                             </tbody>

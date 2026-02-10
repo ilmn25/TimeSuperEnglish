@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -12,6 +13,16 @@ const getHKTNow = () => {
   return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Hong_Kong" }));
 };
 
+const getHKTTimeString = () => {
+  const now = new Date();
+  return now.toLocaleTimeString("en-GB", {
+    timeZone: "Asia/Hong_Kong",
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
 const getHKTDateString = (baseDate: Date = new Date()) => {
   return baseDate.toLocaleDateString("en-CA", { 
     timeZone: "Asia/Hong_Kong" 
@@ -22,7 +33,6 @@ type BookingStatus = 'blue' | 'green' | 'yellow' | 'red';
 
 const AdminAttendance: React.FC = () => {
   const { orgId } = useParams<{ orgId: string }>();
-  const navigate = useNavigate();
   const hktToday = getHKTDateString();
   const { t, i18n } = useTranslation();
 
@@ -43,13 +53,20 @@ const AdminAttendance: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
-  const [manualModalConfig, setManualModalConfig] = useState<{ 
+
+  const [manualModalConfig, setManualModalConfig] = useState<{
     bookingId: string, 
     name: string, 
     check_in?: string | null, 
     check_out?: string | null,
     scheduledStart?: string,
     scheduledEnd?: string
+  } | null>(null);
+
+  const [noteModalConfig, setNoteModalConfig] = useState<{
+    bookingId: string,
+    name: string,
+    comment: string
   } | null>(null);
 
   const isToday = date === hktToday;
@@ -171,7 +188,7 @@ const AdminAttendance: React.FC = () => {
   const handleCheckIn = async (bookingId: string) => {
     if (!orgId) return;
     try {
-      const now = new Date().toISOString();
+      const now = getHKTTimeString();
       await api.updateBooking(orgId, bookingId, { check_in: now });
       loadData();
     } catch (err) { alert(t('common.error')); }
@@ -180,7 +197,7 @@ const AdminAttendance: React.FC = () => {
   const handleCheckOut = async (bookingId: string) => {
     if (!orgId) return;
     try {
-      const now = new Date().toISOString();
+      const now = getHKTTimeString();
       await api.updateBooking(orgId, bookingId, { check_out: now });
       loadData();
     } catch (err) { alert(t('common.error')); }
@@ -189,12 +206,17 @@ const AdminAttendance: React.FC = () => {
   const handleManualAdd = async (bookingId: string, start: string, end: string) => {
     if (!orgId) return;
     try {
-      const booking = monthBookings.find(b => b.id === bookingId);
-      if (!booking) return;
-      const check_in = `${booking.date}T${start}:00Z`;
-      const check_out = `${booking.date}T${end}:00Z`;
-      await api.updateBooking(orgId, bookingId, { check_in, check_out });
+      await api.updateBooking(orgId, bookingId, { check_in: start, check_out: end });
       setManualModalConfig(null);
+      loadData();
+    } catch (err) { alert(t('common.error')); }
+  };
+
+  const handleSaveNote = async () => {
+    if (!orgId || !noteModalConfig) return;
+    try {
+      await api.updateBooking(orgId, noteModalConfig.bookingId, { comment: noteModalConfig.comment });
+      setNoteModalConfig(null);
       loadData();
     } catch (err) { alert(t('common.error')); }
   };
@@ -208,16 +230,12 @@ const AdminAttendance: React.FC = () => {
     } catch (err) { alert(t('common.error')); }
   };
 
-  const selectedStudentData = useMemo(() => dailyGroupedData.find(d => d.student.id === selectedStudentId), [dailyGroupedData, selectedStudentId]);
-
-  const gridColumnsClass = (selectedStudentData && isTimelineExpanded) 
-    ? 'grid-cols-1 md:grid-cols-2 2xl:grid-cols-3' 
-    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5';
+  const selectedStudentIdData = useMemo(() => dailyGroupedData.find(d => d.student.id === selectedStudentId), [dailyGroupedData, selectedStudentId]);
 
   const statusColors = { blue: 'bg-blue-400', green: 'bg-green-500', yellow: 'bg-yellow-400', red: 'bg-red-500' };
 
   return (
-    <div className={`space-y-6 pb-20 transition-all duration-500 ease-in-out ${(selectedStudentData && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0'}`}> 
+    <div className={`space-y-6 pb-20 transition-all duration-500 ease-in-out ${(selectedStudentIdData && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0'}`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('nav.attendance')}</h2>
@@ -328,11 +346,11 @@ const AdminAttendance: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className={`grid ${gridColumnsClass} gap-6 sm:gap-8`}>
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="bg-white border border-slate-200 rounded-3xl h-[450px] animate-pulse" />)}
+        <div className="space-y-6">
+          {[1, 2, 3].map(i => <div key={i} className="bg-white border border-slate-100 rounded-[2rem] h-64 animate-pulse" />)}
         </div>
       ) : (
-        <div className={`grid ${gridColumnsClass} gap-6 sm:gap-8 transition-all duration-500 ease-in-out`}>
+        <div className="space-y-6 transition-all duration-500 ease-in-out">
           {dailyGroupedData.map(studentGroup => (
             <StudentCard 
               key={studentGroup.student.id} 
@@ -350,23 +368,26 @@ const AdminAttendance: React.FC = () => {
                   scheduledEnd: b?.end
                 });
               }}
+              onOpenNoteModal={(bookingId, name, initialComment) => {
+                setNoteModalConfig({ bookingId, name, comment: initialComment });
+              }}
               isToday={isToday}
               isSelected={selectedStudentId === studentGroup.student.id}
               onSelect={setSelectedStudentId}
             />
           ))}
           {dailyGroupedData.length === 0 && !error && (
-            <div className="col-span-full py-20 text-center bg-white border border-slate-200 rounded-[3rem]">
+            <div className="py-20 text-center bg-white border border-slate-200 rounded-[3rem]">
               <p className="text-slate-400 font-bold italic">{t('attendance.no_students')}</p>
             </div>
           )}
         </div>
       )}
 
-      {selectedStudentId && selectedStudentData && (
+      {selectedStudentId && selectedStudentIdData && (
         <TimelinePanel 
-          studentName={selectedStudentData.student.name} 
-          bookings={selectedStudentData.bookings} 
+          studentName={selectedStudentIdData.student.name}
+          bookings={selectedStudentIdData.bookings}
           date={date}
           isExpanded={isTimelineExpanded}
           onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}
@@ -385,6 +406,42 @@ const AdminAttendance: React.FC = () => {
           onSubmit={(start, end) => handleManualAdd(manualModalConfig.bookingId, start, end)} 
           onClear={() => handleClearAttendance(manualModalConfig.bookingId)}
         />
+      )}
+
+      {noteModalConfig && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-md overflow-hidden animate-in zoom-in duration-200">
+            <div className="p-8">
+              <h3 className="text-2xl font-black text-slate-900 mb-2">Session Comment</h3>
+              <p className="text-slate-500 text-sm mb-6">Recording comments for <span className="text-indigo-600 font-bold">{noteModalConfig.name}</span></p>
+
+              <textarea
+                value={noteModalConfig.comment}
+                onChange={(e) => setNoteModalConfig({ ...noteModalConfig, comment: e.target.value })}
+                rows={5}
+                placeholder="How was the session?..."
+                className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium text-slate-900 transition-all resize-none"
+              />
+            </div>
+
+            <div className="p-8 bg-slate-50 flex items-center justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setNoteModalConfig(null)}
+                className="px-6 py-3 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveNote}
+                className="px-8 py-4 text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 rounded-2xl shadow-xl shadow-indigo-100 transition-all active:scale-95 uppercase tracking-widest"
+              >
+                {t('common.save')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

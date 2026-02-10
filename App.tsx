@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, createContext, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { supabase } from './services/supabaseClient';
@@ -8,12 +9,16 @@ import AdminCourseSchedule from './pages/AdminCourseSchedule';
 import AdminStudents from './pages/AdminStudents';
 import AdminBookings from './pages/AdminBookings';
 import AdminBookingRequests from './pages/AdminBookingRequests';
-import AdminIssues from './pages/AdminIssues';
+import AdminPayments from './pages/AdminPayments';
+import AdminInvoices from './pages/AdminInvoices';
+import AdminInvoiceDetail from './pages/AdminInvoiceDetail';
+import AdminInvoiceCreate from './pages/AdminInvoiceCreate'; // New Import
 import AdminExport from './pages/AdminExport';
 import AdminBackup from './pages/AdminBackup';
 import AdminImport from './pages/AdminImport';
 import AdminOrgSelection from './pages/AdminOrgSelection';
 import AdminSubscriptions from './pages/AdminSubscriptions';
+import AdminTeachers from './pages/AdminTeachers';
 import PortalAttendance from './pages/PortalAttendance';
 import PortalBookings from './pages/PortalBookings';
 import PortalStudents from './pages/PortalStudents';
@@ -22,6 +27,7 @@ import PortalCourseDetail from './pages/PortalCourseDetail';
 import PortalBookingRequests from './pages/PortalBookingRequests';
 import ContactUs from './pages/ContactUs';
 import AuthPage from './pages/AuthPage';
+import "./index.css"
 import HomePage from './pages/HomePage';
 import CounterAbout from './pages/CounterAbout';
 import CounterPricing from './pages/CounterPricing';
@@ -137,18 +143,18 @@ const UserProfile: React.FC<{ email: string; onLogout: () => void }> = ({ email,
             <p className="text-sm font-bold text-slate-900 break-all">{email}</p>
           </div>
           
-          <Link 
-            to="/subscriptions" 
-            className="flex items-center space-x-3 px-6 py-3 text-slate-700 hover:bg-slate-50 transition-colors text-xs font-black uppercase tracking-widest"
-            onClick={() => setIsOpen(false)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
-            <span>{t('nav.subscriptions')}</span>
-          </Link>
+          {/*<Link */}
+          {/*  to="/subscriptions" */}
+          {/*  className="flex items-center space-x-3 px-6 py-3 text-slate-700 hover:bg-slate-50 transition-colors text-xs font-black uppercase tracking-widest"*/}
+          {/*  onClick={() => setIsOpen(false)}*/}
+          {/*>*/}
+          {/*  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">*/}
+          {/*    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />*/}
+          {/*  </svg>*/}
+          {/*  <span>{t('nav.subscriptions')}</span>*/}
+          {/*</Link>*/}
 
-          <button 
+          <button
             onClick={onLogout}
             className="w-full flex items-center space-x-3 px-6 py-4 text-red-500 hover:bg-red-50 transition-colors text-sm font-black uppercase tracking-widest"
           >
@@ -203,10 +209,14 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
     if (location.pathname.includes('/booking-requests')) return t('bookings.pending_requests');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
-    if (location.pathname.includes('/issues')) return t('nav.issues');
+    if (location.pathname.includes('/payments')) return 'Payments & Audit'; 
+    if (location.pathname.match(/\/org\/[^/]+\/invoices\/new/)) return 'Create Invoice';
+    if (location.pathname.match(/\/org\/[^/]+\/invoices\/[^/]+/)) return 'Invoice Details';
+    if (location.pathname.includes('/invoices')) return t('nav.invoices');
     if (location.pathname.includes('/export')) return t('nav.export');
     if (location.pathname.includes('/courses')) return t('nav.courses');
     if (location.pathname.includes('/students')) return t('nav.students');
+    if (location.pathname.includes('/teachers')) return t('nav.teachers');
     if (location.pathname.includes('/backup')) return t('nav.backup');
     if (location.pathname.includes('/import')) return t('nav.import');
     if (location.pathname === '/org') return t('nav.organizations');
@@ -264,7 +274,6 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
           {(orgId || isPortalView || isHomeView) && (
             <div className="pb-3 sm:pb-6 lg:pb-8 overflow-hidden relative">
               <div className="flex items-center justify-between space-x-4">
-                {/* Scrollable Nav Area */}
                 <div className="flex-1 overflow-x-auto no-scrollbar mask-linear-right touch-pan-x pb-1 sm:pb-2">
                   <nav className="flex items-center space-x-1 sm:space-x-2 bg-slate-50/50 p-1 sm:p-1.5 rounded-2xl sm:rounded-[2rem] border-2 border-slate-100 min-w-max">
                     {orgId ? (
@@ -275,14 +284,20 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                         <NavLink to={`/org/${orgId}/bookings`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}>
                           {t('nav.bookings')}
                         </NavLink>
-                        <NavLink to={`/org/${orgId}/issues`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}>
-                          {t('nav.issues')}
+                        <NavLink to={`/org/${orgId}/payments`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}>
+                          Payments
+                        </NavLink>
+                        <NavLink to={`/org/${orgId}/invoices`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}>
+                          {t('nav.invoices')}
                         </NavLink>
                         <NavLink to={`/org/${orgId}/courses`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.246.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}>
                           {t('nav.courses')}
                         </NavLink>
                         <NavLink to={`/org/${orgId}/students`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" /></svg>}>
                           {t('nav.students')}
+                        </NavLink>
+                        <NavLink to={`/org/${orgId}/teachers`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" /></svg>}>
+                          {t('nav.teachers')}
                         </NavLink>
                         <NavLink to={`/org/${orgId}/backup`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}>
                           {t('nav.backup')}
@@ -316,7 +331,6 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                   </nav>
                 </div>
 
-                {/* Restore Portal Access Button for Home Views */}
                 {isHomeView && (
                   <div className="shrink-0 pl-4">
                     <Link 
@@ -338,17 +352,16 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
         {children}
       </main>
 
-      {/* Global Footer */}
       <footer className="max-w-[1700px] w-full mx-auto pt-12 border-t border-slate-100 flex flex-col items-center space-y-8 pb-12 px-4 mt-auto">
         <div className="flex flex-col items-center text-center space-y-3">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
             &copy; {new Date().getFullYear()} {isCounterPage ? t('app.educational_intelligence') : t('app.academy_management')}
           </p>
           <div className="flex items-center space-x-6">
-            <Link to="/about" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('nav.about')}</Link>
-            <span className="w-1 h-1 bg-slate-200 rounded-full" />
-            <Link to="/pricing" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('nav.pricing')}</Link>
-            <span className="w-1 h-1 bg-slate-200 rounded-full" />
+            {/*<Link to="/about" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('nav.about')}</Link>*/}
+            {/*<span className="w-1 h-1 bg-slate-200 rounded-full" />*/}
+            {/*<Link to="/pricing" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('nav.pricing')}</Link>*/}
+            {/*<span className="w-1 h-1 bg-slate-200 rounded-full" />*/}
             <Link to="/org" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('footer.admin')}</Link>
           </div>
         </div>
@@ -457,10 +470,14 @@ const App: React.FC = () => {
             <Route path="/org/:orgId/attendance" element={user ? <AdminAttendance /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/booking-requests" element={user ? <AdminBookingRequests /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/bookings" element={user ? <AdminBookings /> : <Navigate to="/login" />} />
-            <Route path="/org/:orgId/issues" element={user ? <AdminIssues /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/payments" element={user ? <AdminPayments /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/invoices" element={user ? <AdminInvoices /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/invoices/new" element={user ? <AdminInvoiceCreate /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/invoices/:invoiceId" element={user ? <AdminInvoiceDetail /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/courses" element={user ? <AdminCourses /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/courses/:courseId/schedule" element={user ? <AdminCourseSchedule /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/students" element={user ? <AdminStudents /> : <Navigate to="/login" />} />
+            <Route path="/org/:orgId/teachers" element={user ? <AdminTeachers /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/backup" element={user ? <AdminBackup /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/import" element={user ? <AdminImport /> : <Navigate to="/login" />} />
             <Route path="/org/:orgId/export" element={user ? <AdminExport /> : <Navigate to="/login" />} />
