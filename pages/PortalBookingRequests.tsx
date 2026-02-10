@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -403,7 +404,7 @@ const PortalBookingRequests: React.FC = () => {
 
       {editingRequest && createPortal(
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden p-10 animate-in zoom-in duration-200">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden p-10 animate-in fade-in zoom-in duration-200">
              <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t('bookings.modify_request')}</h3>
              <textarea value={editMessage} onChange={(e) => setEditMessage(e.target.value)} rows={4} className="w-full mt-6 px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium transition-all resize-none text-slate-900" />
              <div className="flex space-x-3 mt-8">
@@ -421,7 +422,7 @@ const PortalBookingRequests: React.FC = () => {
             <h3 className="text-xl font-black text-slate-900 mb-2">{t('bookings.withdraw_request')}</h3>
             <p className="text-slate-500 text-sm mb-10 leading-relaxed">{t('bookings.withdraw_msg')}</p>
             <div className="flex space-x-3">
-              <button onClick={() => setDeletingRequestId(null)} className="flex-1 px-4 py-3 text-[10px] font-black text-slate-500 bg-slate-50 rounded-xl uppercase tracking-widest">{t('common.cancel')}</button>
+              <button onClick={() => setDeletingRequestId(null)} className="flex-1 px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.cancel')}</button>
               <button onClick={handleDeleteRequest} disabled={isProcessing} className="flex-1 px-4 py-3 text-[10px] font-black text-white rounded-xl bg-red-600 uppercase tracking-widest">{t('common.confirm')}</button>
             </div>
           </div>

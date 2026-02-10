@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -444,6 +445,7 @@ const PortalBookings: React.FC = () => {
                   <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">{t('nav.attendance')}</th>
                   <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('student')}>{t('bookings.student')} {sortField==='student' && (sortOrder==='asc'?'↑':'↓')}</th>
                   <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('course')}>{t('bookings.course')} {sortField==='course' && (sortOrder==='asc'?'↑':'↓')}</th>
+                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.teacher')}</th>
                   <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('status')}>{t('bookings.status')} {sortField==='status' && (sortOrder==='asc'?'↑':'↓')}</th>
                 </tr>
               </thead>
@@ -477,7 +479,7 @@ const PortalBookings: React.FC = () => {
                         <span className="text-sm text-indigo-600 font-mono font-black">{b.start.slice(0, 5)} — {b.end.slice(0, 5)}</span>
                       </td>
                       <td className="px-8 py-5 whitespace-nowrap text-[10px] font-mono font-bold text-slate-500">
-                         {b.check_in ? `${b.check_in.slice(11, 16)} — ${b.check_out ? b.check_out.slice(11, 16) : '--:--'}` : '-'}
+                         {b.check_in ? `${b.check_in.slice(0, 5)} — ${b.check_out ? b.check_out.slice(0, 5) : '--:--'}` : '-'}
                       </td>
                       <td className="px-8 py-5 whitespace-nowrap">
                         <span className={`text-sm text-slate-900 font-bold group-hover:text-indigo-600 transition-colors duration-300 ${(sortField==='student' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>{b.students?.name}</span>
@@ -487,6 +489,9 @@ const PortalBookings: React.FC = () => {
                           <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: b.courses?.color }} />
                           <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest truncate max-w-[150px]">{b.courses?.name}</span>
                         </div>
+                      </td>
+                      <td className="px-8 py-5 whitespace-nowrap">
+                        <span className="text-sm text-slate-800 font-bold">{b.teachers?.name || '-'}</span>
                       </td>
                       <td className="px-8 py-5 whitespace-nowrap">
                         <div className="flex items-center space-x-2.5">
@@ -504,7 +509,7 @@ const PortalBookings: React.FC = () => {
                   );
                 })}
                 {processedAllBookings.length === 0 && !isLoadingMain && (
-                  <tr><td colSpan={6} className="px-8 py-24 text-center text-slate-400 font-bold italic text-base bg-slate-50/50">{t('bookings.no_match')}</td></tr>
+                  <tr><td colSpan={7} className="px-8 py-24 text-center text-slate-400 font-bold italic text-base bg-slate-50/50">{t('bookings.no_match')}</td></tr>
                 )}
               </tbody>
             </table>

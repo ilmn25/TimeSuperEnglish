@@ -1,8 +1,17 @@
+
 export interface Student {
   id: string;
   name: string;
   contact: string;
   level?: string;
+  org_id?: string;
+}
+
+export interface Teacher {
+  id: string;
+  name: string;
+  contact?: string;
+  user_id?: string;
   org_id?: string;
 }
 
@@ -25,19 +34,34 @@ export interface CourseSchedule {
   biweekly: boolean;
 }
 
+export interface Invoice {
+  id: string;
+  method: string; 
+  amount: number;
+  currency: string;
+  status: 'issued' | 'paid';
+  issued_at: string;
+  paid_at?: string | null;
+  bookings?: Booking & { students: Student; courses: Course };
+}
+
 export interface Booking {
   id: string;
   student_id: string;
+  teacher_id?: string | null;
   course_id: string;
   date: string;
   start: string;
   end: string;
   check_in?: string | null;
   check_out?: string | null;
+  comment?: string | null;
   org_id: string;
   invoice_id?: string | null;
   students?: Student;
   courses?: Course;
+  teachers?: Teacher;
+  invoices?: Invoice[];
 }
 
 export interface BookingRequest {
@@ -53,16 +77,6 @@ export interface BookingRequest {
   created_at: string;
   students?: Student;
   courses?: Course;
-}
-
-export interface Issue {
-  id: string;
-  booking_id: string;
-  issue_type: 'missed_booking' | 'unpaid_booking';
-  resolution: 'reschedule' | 'refund' | 'waived' | 'billing';
-  created_at: string;
-  resolved_at?: string | null;
-  bookings?: Booking & { students: Student; courses: Course };
 }
 
 export interface Attendance {

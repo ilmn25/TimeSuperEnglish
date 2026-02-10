@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { Student, Booking } from '../types';
@@ -191,7 +192,7 @@ const PortalAttendance: React.FC = () => {
                             {studentStatuses.map((s, i) => (
                               <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
                                 <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
-                                <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-500'}`}>{s.name}</span>
+                                <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-50'}`}>{s.name}</span>
                               </div>
                             ))}
                           </div>
@@ -243,30 +244,37 @@ const PortalAttendanceCard: React.FC<{
 
   return (
     <div onClick={onSelect} className={`relative bg-white border-2 rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.99] group ${isSelected ? 'border-indigo-500 ring-4 ring-indigo-50' : 'border-slate-100'}`}>
-      <div className={`p-6 border-b transition-colors ${isSelected ? 'border-indigo-100 bg-indigo-50/10' : 'border-slate-50'} flex items-start justify-between`}>
+      <div className={`p-5 border-b transition-colors ${isSelected ? 'border-indigo-100 bg-indigo-50/10' : 'border-slate-50'} flex items-start justify-between`}>
         <div className="min-w-0 flex-1 pr-2">
-          <h3 className="text-xl font-black text-slate-900 leading-tight truncate">{student.name}</h3>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{t('students.sort_level')}: {student.level || t('parent.unset')}</p>
+          <h3 className="text-base font-black text-slate-900 leading-tight truncate">{student.name}</h3>
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{t('students.sort_level')}: {student.level || t('parent.unset')}</p>
         </div>
-        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${isCurrentlyInClass ? 'bg-emerald-500 text-white animate-pulse' : 'bg-slate-100 text-slate-400'}`}>
+        <span className={`px-2 py-0.5 rounded-lg text-[7px] font-black uppercase tracking-wider transition-all ${isCurrentlyInClass ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
           {isCurrentlyInClass ? t('parent.in_class').toUpperCase() : t('parent.away').toUpperCase()}
         </span>
       </div>
-      <div className="p-6 space-y-4">
-        <label className="block text-[10px] font-black text-slate-300 uppercase tracking-widest">{t('card.todays_schedule')}</label>
+      <div className="p-5 space-y-3">
+        <label className="block text-[8px] font-black text-slate-300 uppercase tracking-widest">{t('card.todays_schedule')}</label>
         {bookings.map(b => (
-          <div key={b.id} className="p-4 rounded-2xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-slate-50">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-black text-slate-900 truncate">{b.courses?.name}</span>
-              <span className={`${statusColors[getBookingStatus(b)]} px-1.5 py-0.5 rounded text-[8px] font-black uppercase`}>{t(`status.${{red:'missed',yellow:'partial',green:'attended',blue:'future'}[getBookingStatus(b)]}`)}</span>
+          <div key={b.id} className="p-3 rounded-xl bg-slate-50/50 border border-slate-100 transition-all hover:bg-slate-50">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-black text-slate-900 truncate">{b.courses?.name}</span>
+              <span className={`${statusColors[getBookingStatus(b)]} px-1.5 py-0.5 rounded text-[7px] font-black uppercase`}>{t(`status.${{red:'missed',yellow:'partial',green:'attended',blue:'future'}[getBookingStatus(b)]}`)}</span>
             </div>
-            <div className="flex items-center justify-between text-[10px]">
+            {b.teachers?.name && (
+              <p className="text-[8px] font-bold text-slate-500 truncate mb-1">{t('bookings.teacher')}: {b.teachers.name}</p>
+            )}
+            <div className="flex items-center justify-between text-[9px]">
               <span className="font-mono font-black text-indigo-600">{b.start.slice(0, 5)} - {b.end.slice(0, 5)}</span>
-              {b.check_in && <span className="font-mono font-bold text-emerald-600">{t('timeline.actual').toUpperCase()}: {b.check_in.slice(11, 16)}</span>}
+              {b.check_in && (
+                <span className="font-mono font-bold text-emerald-600">
+                  {t('timeline.actual').toUpperCase()}: {b.check_in.slice(0, 5)} — {b.check_out ? b.check_out.slice(0, 5) : '--:--'}
+                </span>
+              )}
             </div>
           </div>
         ))}
-        {bookings.length === 0 && <p className="text-[11px] text-slate-400 font-bold italic text-center py-4">{t('card.no_bookings')}</p>}
+        {bookings.length === 0 && <p className="text-[10px] text-slate-400 font-bold italic text-center py-2">{t('card.no_bookings')}</p>}
       </div>
     </div>
   );

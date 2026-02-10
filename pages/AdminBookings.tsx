@@ -1,12 +1,13 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { supabase } from '../services/supabaseClient';
-import { Booking, Course, Student, BookingRequest } from '../types';
+import { Booking, Course, Student, Teacher } from '../types';
 import TimelinePanel from '../components/TimelinePanel';
 import { useTranslation } from 'react-i18next';
 
-type SortField = 'date' | 'time' | 'student' | 'course' | 'status';
+type SortField = 'date' | 'time' | 'student' | 'course' | 'teacher' | 'status';
 type SortOrder = 'asc' | 'desc';
 type BookingStatus = 'blue' | 'green' | 'yellow' | 'red';
 
@@ -48,6 +49,7 @@ const AdminBookings: React.FC = () => {
   const [bookingRequestsCount, setBookingRequestsCount] = useState(0);
   const [courses, setCourses] = useState<Course[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -61,6 +63,7 @@ const AdminBookings: React.FC = () => {
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [filterStudent, setFilterStudent] = useState('');
   const [filterCourse, setFilterCourse] = useState('');
+  const [filterTeacher, setFilterTeacher] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('');
 
   // Dragging State
@@ -78,6 +81,7 @@ const AdminBookings: React.FC = () => {
   const [formData, setFormData] = useState({
     student_id: '',
     course_id: '',
+    teacher_id: '',
     date: new Date().toISOString().split('T')[0],
     start: '09:00',
     end: '10:00'
@@ -134,17 +138,19 @@ const AdminBookings: React.FC = () => {
       const startDate = new Date(year, month, 1).toLocaleDateString('en-CA');
       const endDate = new Date(year, month + 1, 0).toLocaleDateString('en-CA');
 
-      const [bookingsData, requestsData, coursesData, studentsData] = await Promise.all([
+      const [bookingsData, requestsData, coursesData, studentsData, teachersData] = await Promise.all([
         api.getAllBookings(orgId, { startDate, endDate }),
         api.getBookingRequests(orgId, 'pending'),
         api.getCourses(orgId),
-        api.getStudents(orgId)
+        api.getStudents(orgId),
+        api.getTeachers(orgId)
       ]);
 
       setMonthBookings(bookingsData);
       setBookingRequestsCount(requestsData?.length || 0);
       setCourses(coursesData);
       setStudents(studentsData);
+      setTeachers(teachersData);
     } catch (err) {
       setError(t('common.error'));
       console.error(err);
@@ -191,8 +197,9 @@ const AdminBookings: React.FC = () => {
     let result = monthBookings.filter(b => {
       const matchesStudent = !filterStudent || b.student_id === filterStudent;
       const matchesCourse = !filterCourse || b.course_id === filterCourse;
+      const matchesTeacher = !filterTeacher || b.teacher_id === filterTeacher;
       const matchesDate = selectedDates.length === 0 || selectedDates.includes(b.date);
-      return matchesStudent && matchesCourse && matchesDate;
+      return matchesStudent && matchesCourse && matchesTeacher && matchesDate;
     }).map(b => {
       return { ...b, calculatedStatus: getBookingStatus(b) };
     });
@@ -206,6 +213,7 @@ const AdminBookings: React.FC = () => {
       const timeCompare = a.start.localeCompare(b.start);
       const studentCompare = (a.students?.name || '').localeCompare(b.students?.name || '');
       const courseCompare = (a.courses?.name || '').localeCompare(b.courses?.name || '');
+      const teacherCompare = (a.teachers?.name || '').localeCompare(b.teachers?.name || '');
       const statusPriority = { red: 0, yellow: 1, green: 2, blue: 3 };
       const statusCompare = (statusPriority[a.calculatedStatus] || 0) - (statusPriority[b.calculatedStatus] || 0);
 
@@ -223,13 +231,16 @@ const AdminBookings: React.FC = () => {
         case 'course':
           comparison = courseCompare !== 0 ? courseCompare : (dateCompare !== 0 ? dateCompare : timeCompare);
           break;
+        case 'teacher':
+          comparison = teacherCompare !== 0 ? teacherCompare : (dateCompare !== 0 ? dateCompare : timeCompare);
+          break;
         case 'status':
           comparison = statusCompare !== 0 ? statusCompare : (dateCompare !== 0 ? dateCompare : timeCompare);
           break;
       }
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-  }, [monthBookings, filterStudent, filterCourse, selectedDates, filterStatus, sortField, sortOrder, getBookingStatus]);
+  }, [monthBookings, filterStudent, filterCourse, filterTeacher, selectedDates, filterStatus, sortField, sortOrder, getBookingStatus]);
 
   const summaryStats = useMemo(() => {
     let totalMinutes = 0;
@@ -327,10 +338,18 @@ const AdminBookings: React.FC = () => {
     if (!orgId) return;
     setIsProcessing(true);
     try {
+      const payload = {
+        student_id: formData.student_id,
+        course_id: formData.course_id,
+        teacher_id: formData.teacher_id === '' ? null : formData.teacher_id,
+        date: formData.date,
+        start: formData.start,
+        end: formData.end
+      };
       if (editingBooking) {
-        await api.updateBooking(orgId, editingBooking.id, formData);
+        await api.updateBooking(orgId, editingBooking.id, payload);
       } else {
-        await api.createBooking(orgId, formData);
+        await api.createBooking(orgId, payload);
       }
       setIsFormOpen(false);
       setEditingBooking(null);
@@ -360,6 +379,7 @@ const AdminBookings: React.FC = () => {
     setSelectedDates([]);
     setFilterStudent('');
     setFilterCourse('');
+    setFilterTeacher('');
     setFilterStatus('');
   };
 
@@ -376,7 +396,8 @@ const AdminBookings: React.FC = () => {
     const dayBookings = monthBookings.filter(b => 
       b.date === dateStr && 
       (!filterStudent || b.student_id === filterStudent) && 
-      (!filterCourse || b.course_id === filterCourse)
+      (!filterCourse || b.course_id === filterCourse) &&
+      (!filterTeacher || b.teacher_id === filterTeacher)
     );
     
     if (dayBookings.length === 0) return null;
@@ -398,7 +419,8 @@ const AdminBookings: React.FC = () => {
     const dayBookings = monthBookings.filter(b => 
       b.date === dateStr && 
       (!filterStudent || b.student_id === filterStudent) && 
-      (!filterCourse || b.course_id === filterCourse)
+      (!filterCourse || b.course_id === filterCourse) &&
+      (!filterTeacher || b.teacher_id === filterTeacher)
     );
     
     const studentMap = new Map<string, { name: string; status: BookingStatus }>();
@@ -516,7 +538,7 @@ const AdminBookings: React.FC = () => {
                 className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
                 title={isCalendarMaximized ? t('common.minimize') : t('common.maximize')}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button 
                 onClick={handleSelectMonth}
@@ -610,10 +632,10 @@ const AdminBookings: React.FC = () => {
           </div>
         </div>
 
-        {/* Student, Course & Status Filters */}
+        {/* Student, Course, Teacher & Status Filters */}
         <div className="px-6 py-4 bg-slate-50/40 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
             <div className="flex-1 group">
-              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_student')}</label>
+              <label className="block text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1">{t('bookings.filter_student')}</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -633,7 +655,7 @@ const AdminBookings: React.FC = () => {
             </div>
 
             <div className="flex-1 group">
-              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_course')}</label>
+              <label className="block text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1">{t('bookings.filter_course')}</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.246.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
@@ -653,7 +675,27 @@ const AdminBookings: React.FC = () => {
             </div>
 
             <div className="flex-1 group">
-              <label className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1 block">{t('bookings.filter_status')}</label>
+              <label className="block text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1">{t('bookings.filter_teacher')}</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8zm11 10v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" /></svg>
+                </div>
+                <select 
+                  value={filterTeacher}
+                  onChange={(e) => setFilterTeacher(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-700 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">{t('bookings.all_teachers')}</option>
+                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-300">
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 group">
+              <label className="block text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1.5 ml-1">{t('bookings.filter_status')}</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -707,7 +749,7 @@ const AdminBookings: React.FC = () => {
       </div>
 
       {/* Bookings Table */}
-      <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="p-20 flex flex-col items-center justify-center space-y-4">
             <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -715,7 +757,7 @@ const AdminBookings: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full text-left min-w-[900px]">
+            <table className="w-full text-left min-w-[1100px]">
               <thead className="bg-slate-900 border-b border-slate-800">
                 <tr>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('date')}>{t('bookings.date')} {renderSortArrow('date')}</th>
@@ -723,6 +765,7 @@ const AdminBookings: React.FC = () => {
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('nav.attendance')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('student')}>{t('bookings.student')} {renderSortArrow('student')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('course')}>{t('bookings.course')} {renderSortArrow('course')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('teacher')}>{t('bookings.teacher')} {renderSortArrow('teacher')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:bg-slate-800 transition-colors" onClick={() => toggleSort('status')}>{t('bookings.status')} {renderSortArrow('status')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('bookings.actions')}</th>
                 </tr>
@@ -736,6 +779,7 @@ const AdminBookings: React.FC = () => {
                       case 'date': return b.date;
                       case 'student': return b.students?.id || b.students?.name || '';
                       case 'course': return b.course_id || b.courses?.name || '';
+                      case 'teacher': return b.teacher_id || b.teachers?.name || '';
                       case 'status': return b.calculatedStatus;
                       case 'time': return b.start;
                       default: return b.id;
@@ -764,13 +808,13 @@ const AdminBookings: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-indigo-600 font-mono font-black align-top">
                         <div className={`transition-opacity duration-200 ${(sortField === 'time' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
-                          {booking.start.slice(0, 5)} - {booking.end.slice(0, 5)}
+                          {booking.start.slice(0, 5)} — {booking.end.slice(0, 5)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] font-mono font-bold text-slate-500 align-top">
                         {booking.check_in ? (
                           <>
-                            {booking.check_in.slice(11, 16)} - {booking.check_out ? booking.check_out.slice(11, 16) : '--:--'}
+                            {booking.check_in.slice(0, 5)} — {booking.check_out ? booking.check_out.slice(0, 5) : '--:--'}
                           </>
                         ) : '-'}
                       </td>
@@ -786,7 +830,12 @@ const AdminBookings: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap align-top">
-                        <div className={`flex items-center space-x-2 transition-opacity duration-200 ${(sortField === 'status' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
+                        <div className={`transition-opacity duration-200 ${(sortField === 'teacher' && !isNewGroup) ? 'opacity-0' : 'opacity-100'}`}>
+                          <span className="text-xs text-slate-800 font-bold">{booking.teachers?.name || '-'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap align-top">
+                        <div className="flex items-center space-x-2 transition-opacity duration-200">
                            <div className={`w-2 h-2 rounded-full ${statusColors[status]}`} />
                            <span className={`text-[10px] font-black uppercase tracking-widest ${
                              status === 'red' ? 'text-red-500' :
@@ -801,7 +850,7 @@ const AdminBookings: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-right space-x-1 whitespace-nowrap align-top" onClick={(e) => e.stopPropagation()}>
                         <button 
-                          onClick={() => { setEditingBooking(booking); setFormData({ student_id: booking.student_id, course_id: booking.course_id, date: booking.date, start: booking.start.slice(0,5), end: booking.end.slice(0,5) }); setIsFormOpen(true); }} 
+                          onClick={() => { setEditingBooking(booking); setFormData({ student_id: booking.student_id, course_id: booking.course_id, teacher_id: booking.teacher_id || '', date: booking.date, start: booking.start.slice(0,5), end: booking.end.slice(0,5) }); setIsFormOpen(true); }} 
                           className="p-1.5 text-slate-300 hover:text-indigo-600 transition-all rounded-lg hover:bg-indigo-50"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -816,9 +865,9 @@ const AdminBookings: React.FC = () => {
                     </tr>
                   );
                 })}
-                {processedBookings.length === 0 && (
+                {processedBookings.length === 0 && !error && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-16 text-center">
+                    <td colSpan={8} className="px-6 py-16 text-center">
                       <p className="text-slate-400 font-bold text-xs italic">{t('bookings.no_match')}</p>
                     </td>
                   </tr>
@@ -863,6 +912,18 @@ const AdminBookings: React.FC = () => {
                     {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">{t('bookings.teacher')}</label>
+                <select 
+                  value={formData.teacher_id}
+                  onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm font-bold"
+                >
+                  <option value="">{t('teachers.select')}</option>
+                  {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
               </div>
 
               <div>
