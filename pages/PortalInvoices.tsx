@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Invoice } from '../types';
 import { useTranslation } from 'react-i18next';
@@ -8,8 +8,7 @@ import { useTranslation } from 'react-i18next';
 type SortField = 'date' | 'amount' | 'status' | 'student';
 type SortOrder = 'asc' | 'desc';
 
-const AdminInvoices: React.FC = () => {
-  const { orgId } = useParams<{ orgId: string }>();
+const PortalInvoices: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
@@ -22,17 +21,36 @@ const AdminInvoices: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   const fetchData = useCallback(async () => {
-    if (!orgId) return;
     setIsLoading(true);
     try {
-      const invoicesData = await api.getInvoices(orgId);
-      setInvoices(invoicesData || []);
+      const students = await api.getParentStudents();
+      const allInvoices: Invoice[] = [];
+      
+      for (const s of students) {
+        const bookings = await api.getStudentBookings(s.id);
+        bookings.forEach((b: any) => {
+          if (b.invoices) {
+            // b.invoices might be an object or an array depending on foreign key structure
+            const invs = Array.isArray(b.invoices) ? b.invoices : [b.invoices];
+            invs.forEach((inv: any) => {
+              if (inv && !allInvoices.find(ai => ai.id === inv.id)) {
+                allInvoices.push({
+                    ...inv,
+                    bookings: { ...b, students: s } // Correctly attach student info
+                });
+              }
+            });
+          }
+        });
+      }
+      
+      setInvoices(allInvoices);
     } catch (err) {
-      console.error('Failed to load invoices data', err);
+      console.error('Failed to load portal invoices', err);
     } finally {
       setIsLoading(false);
     }
-  }, [orgId]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -69,7 +87,7 @@ const AdminInvoices: React.FC = () => {
   };
 
   const getStatusColor = (status: string, amount: number) => {
-    if (status === 'paid' && amount === 0) return 'bg-indigo-100 text-indigo-700'; // Waived
+    if (status === 'paid' && amount === 0) return 'bg-indigo-100 text-indigo-700';
     switch (status) {
       case 'paid': return 'bg-emerald-100 text-emerald-700';
       case 'issued': return 'bg-amber-100 text-amber-700'; // Changed to yellow (amber)
@@ -78,11 +96,11 @@ const AdminInvoices: React.FC = () => {
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-500 pb-20">
+    <div className="space-y-10 animate-in fade-in duration-500 pb-20 max-w-6xl mx-auto px-4 sm:px-0">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('nav.invoices')}</h2>
-          <p className="text-slate-500 mt-1 font-medium">Manage student billing and payment records</p>
+          <p className="text-slate-500 mt-1 font-medium">Review and settle payments for your children</p>
         </div>
       </div>
 
@@ -109,8 +127,8 @@ const AdminInvoices: React.FC = () => {
             <table className="w-full text-left min-w-[1000px]">
               <thead className="bg-slate-900 border-b border-slate-800">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('date')}>Issued Date {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('student')}>Student {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('date')}>Date {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('student')}>Child {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Course</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('amount')}>Amount {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Method</th>
@@ -120,9 +138,9 @@ const AdminInvoices: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {processedInvoices.map(inv => (
-                  <tr key={inv.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/org/${orgId}/invoices/${inv.id}`)}>
+                  <tr key={inv.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/portal/invoices/${inv.id}`)}>
                     <td className="px-6 py-5 whitespace-nowrap">
-                       <span className="text-[11px] font-mono font-bold text-slate-500 uppercase">{new Date(inv.issued_at).toLocaleDateString()}</span>
+                       <span className="text-[11px] font-mono font-bold text-slate-500 uppercase">{inv.issued_at ? new Date(inv.issued_at).toLocaleDateString() : 'Unknown'}</span>
                     </td>
                     <td className="px-6 py-5">
                        <span className="text-sm font-black text-slate-900">{inv.bookings?.students?.name || 'Unknown'}</span>
@@ -130,7 +148,7 @@ const AdminInvoices: React.FC = () => {
                     <td className="px-6 py-5">
                        <span className="text-xs font-bold text-slate-600">{inv.bookings?.courses?.name || 'Unknown'}</span>
                     </td>
-                    <td className="px-8 py-5">
+                    <td className="px-6 py-5">
                        <span className="text-sm font-black text-indigo-600">{inv.currency} {inv.amount.toFixed(2)}</span>
                     </td>
                     <td className="px-6 py-5">
@@ -143,7 +161,7 @@ const AdminInvoices: React.FC = () => {
                     </td>
                     <td className="px-6 py-5 text-right">
                        <button 
-                         onClick={(e) => { e.stopPropagation(); navigate(`/org/${orgId}/invoices/${inv.id}`); }}
+                         onClick={(e) => { e.stopPropagation(); navigate(`/portal/invoices/${inv.id}`); }}
                          className="p-2 text-slate-300 hover:text-indigo-600 transition-all bg-slate-50 rounded-lg hover:bg-indigo-50"
                        >
                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -165,4 +183,4 @@ const AdminInvoices: React.FC = () => {
   );
 };
 
-export default AdminInvoices;
+export default PortalInvoices;

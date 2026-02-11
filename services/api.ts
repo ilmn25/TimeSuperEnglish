@@ -23,7 +23,7 @@ const handleResponse = async (response: Response, errorMessage: string) => {
     try {
       const errorData = await response.json();
       console.error(`API Error Detail [${response.status}]:`, errorData);
-      errorDetail = errorData.message || errorData.details || errorDetail;
+      errorDetail = errorData.message || errorDetail;
     } catch (e) {
       const text = await response.text();
       if (text) errorDetail = text;
@@ -42,7 +42,18 @@ const handleResponse = async (response: Response, errorMessage: string) => {
 };
 
 export const api = {
-  // STRIPE SUBSCRIPTION METHODS
+  // STRIPE PAYMENT METHODS
+  async createInvoicePaymentSession(invoiceIds: string[]) {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/functions/v1/stripe-create`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ invoiceIds })
+    });
+    return handleResponse(response, 'Failed to create payment session');
+  },
+
   async createStripeCheckout(planType: 'monthly' | 'lifetime') {
     const headers = await getHeaders();
     const url = `${SUPABASE_URL}/functions/v1/stripe-create`;
@@ -144,7 +155,7 @@ export const api = {
 
   async getAllBookings(orgId: string, filters?: { dates?: string[]; student_id?: string; course_id?: string; teacher_id?: string; startDate?: string; endDate?: string }) {
     const headers = await getHeaders();
-    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=id,date,start,end,check_in,check_out,comment,student_id,course_id,teacher_id,invoice_id,students(name,contact,id,level,org_id),courses(name,color,price),teachers(name),invoices:invoice_id(status,method,amount,currency)&order=date.desc,start.asc`;
+    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=id,date,start,end,check_in,check_out,comment,student_id,course_id,teacher_id,invoice_id,students(name,contact,id,level,org_id),courses(name,color,price),teachers(name),invoices:invoice_id(id,status,method,amount,currency,issued_at,paid_at)&order=date.desc,start.asc`;
     
     if (filters?.dates && filters.dates.length > 0) {
       const dateList = filters.dates.map(d => `"${d}"`).join(',');
@@ -207,7 +218,7 @@ export const api = {
 
   async getInvoice(id: string) {
     const headers = await getHeaders();
-    const url = `${SUPABASE_URL}/rest/v1/invoices?id=eq.${encodeURIComponent(id)}&select=id,method,amount,currency,status,issued_at,paid_at,bookings(id,date,start,end,students(name,contact),courses(name,color))`;
+    const url = `${SUPABASE_URL}/rest/v1/invoices?id=eq.${encodeURIComponent(id)}&select=id,method,amount,currency,status,issued_at,paid_at,bookings(id,date,start,end,org_id,students(name,contact),courses(name,color))`;
     const response = await fetch(url, { headers });
     const data = await handleResponse(response, 'Failed to fetch invoice detail');
     return Array.isArray(data) ? data[0] : null;
@@ -362,6 +373,14 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/teachers?org_id=eq.${encodeURIComponent(orgId)}&select=*&order=name`;
     const response = await fetch(url, { headers });
     return handleResponse(response, 'Failed to fetch teachers');
+  },
+
+  async getTeacherByUserId(userId: string): Promise<Teacher | null> {
+    const headers = await getHeaders();
+    const url = `${SUPABASE_URL}/rest/v1/teachers?user_id=eq.${encodeURIComponent(userId)}&select=*`;
+    const response = await fetch(url, { headers });
+    const data = await handleResponse(response, 'Failed to fetch teacher profile');
+    return Array.isArray(data) ? data[0] : null;
   },
 
   async createTeacher(orgId: string, name: string, contact?: string): Promise<Teacher> {
@@ -572,8 +591,8 @@ export const api = {
 
   async linkUserToTeacher(teacherId: string, email: string) {
     const { error } = await supabase.rpc('link_teacher_to_user_by_email', {
-      p_email: email,
-      p_teacher_id: teacherId
+      p_teacher_id: teacherId,
+      p_email: email
     });
     if (error) throw error;
     return true;
@@ -623,19 +642,20 @@ export const api = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
     const headers = await getHeaders();
-    const url = `${SUPABASE_URL}/rest/v1/students?user_id=eq.${user.id}&select=*,organizations(name)`;
+    const url = `${SUPABASE_URL}/rest/v1/students?user_id=eq.${user.id}&select=*,organizations(name,id)`;
     const response = await fetch(url, { headers });
     const data = await handleResponse(response, 'Failed to fetch parent students');
     const items = Array.isArray(data) ? data : (data ? [data] : []);
     return items.map((item: any) => ({
       ...item,
-      organization_name: item.organizations?.name
+      organization_name: item.organizations?.name,
+      org_id: item.organizations?.id
     }));
   },
 
   async getStudentBookings(studentId: string, filters?: { date?: string; startDate?: string; endDate?: string }) {
     const headers = await getHeaders();
-    let query = `student_id=eq.${encodeURIComponent(studentId)}&select=id,date,start,end,check_in,check_out,comment,student_id,course_id,teacher_id,courses(name,color),teachers(name)&order=date.desc,start.asc`;
+    let query = `student_id=eq.${encodeURIComponent(studentId)}&select=id,date,start,end,check_in,check_out,comment,student_id,course_id,teacher_id,org_id,courses(name,color),teachers(name),invoices:invoice_id(id,status,method,amount,currency,issued_at,paid_at)&order=date.desc,start.asc`;
     if (filters?.date) {
       query += `&date=eq.${encodeURIComponent(filters.date)}`;
     } else {
