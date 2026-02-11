@@ -2,25 +2,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Invoice, Booking } from '../types';
+import { Invoice } from '../types';
 import { useTranslation } from 'react-i18next';
 
-const AdminInvoiceDetail: React.FC = () => {
-  const { orgId, invoiceId } = useParams<{ orgId: string; invoiceId: string }>();
+const PortalInvoiceDetail: React.FC = () => {
+  const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-
-  const [formData, setFormData] = useState({
-    method: 'cash',
-    amount: 0,
-    status: 'issued' as Invoice['status']
-  });
+  const [isPaying, setIsPaying] = useState(false);
 
   const fetchInvoiceDetail = useCallback(async () => {
     if (!invoiceId) return;
@@ -30,14 +23,9 @@ const AdminInvoiceDetail: React.FC = () => {
       if (data) {
         setInvoice(data);
         setBookings(Array.isArray(data.bookings) ? data.bookings : (data.bookings ? [data.bookings] : []));
-        setFormData({
-          method: data.method,
-          amount: data.amount,
-          status: data.status
-        });
       }
     } catch (err) {
-      console.error('Failed to load invoice detail', err);
+      console.error('Failed to load portal invoice detail', err);
     } finally {
       setIsLoading(false);
     }
@@ -47,30 +35,21 @@ const AdminInvoiceDetail: React.FC = () => {
     fetchInvoiceDetail();
   }, [fetchInvoiceDetail]);
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePayNow = async () => {
     if (!invoiceId) return;
-    setIsProcessing(true);
+    setIsPaying(true);
     try {
-      const updateData: any = {
-        method: formData.method,
-        amount: formData.amount,
-        status: formData.status
-      };
-      
-      if (formData.status === 'paid' && invoice?.status !== 'paid') {
-        updateData.paid_at = new Date().toISOString();
-      } else if (formData.status !== 'paid' && invoice?.status === 'paid') {
-        updateData.paid_at = null;
+      const result = await api.createInvoicePaymentSession([invoiceId]);
+      if (result?.url) {
+        window.location.href = result.url;
+      } else {
+        throw new Error('No payment URL returned');
       }
-
-      await api.updateInvoice(invoiceId, updateData);
-      setIsEditMode(false);
-      await fetchInvoiceDetail();
-    } catch (err) {
-      alert(t('common.error'));
+    } catch (err: any) {
+      console.error('Payment initialization failed', err);
+      alert(err.message || "Failed to initialize payment. Please try again or contact the academy.");
     } finally {
-      setIsProcessing(false);
+      setIsPaying(false);
     }
   };
 
@@ -96,31 +75,21 @@ const AdminInvoiceDetail: React.FC = () => {
     return (
       <div className="text-center py-20">
         <h3 className="text-xl font-black text-slate-900">Invoice Not Found</h3>
-        <button onClick={() => navigate(`/org/${orgId}/invoices`)} className="mt-4 text-indigo-600 font-bold hover:underline">Back to Invoices</button>
+        <button onClick={() => navigate('/portal/invoices')} className="mt-4 text-indigo-600 font-bold hover:underline">Back to Invoices</button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500 pb-20">
+    <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500 pb-20 px-4 sm:px-0">
       <div className="flex items-center justify-between">
         <button 
-          onClick={() => navigate(`/org/${orgId}/invoices`)}
+          onClick={() => navigate('/portal/invoices')}
           className="flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           <span>{t('nav.back')}</span>
         </button>
-        
-        {!isEditMode && (
-          <button 
-            onClick={() => setIsEditMode(true)}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg active:scale-95 flex items-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            <span>{t('common.edit')}</span>
-          </button>
-        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -145,18 +114,18 @@ const AdminInvoiceDetail: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment Method</span>
-                  <p className="text-lg font-bold text-slate-700 capitalize">{invoice.method}</p>
+                  <p className="text-lg font-bold text-slate-700 capitalize">{invoice.method || 'Not specified'}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Issued At</span>
-                  <p className="text-sm font-bold text-slate-600">{new Date(invoice.issued_at).toLocaleString()}</p>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Issued Date</span>
+                  <p className="text-sm font-bold text-slate-600">{invoice.issued_at ? new Date(invoice.issued_at).toLocaleDateString() : 'Unknown'}</p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paid At</span>
-                  <p className="text-sm font-bold text-slate-600">{invoice.paid_at ? new Date(invoice.paid_at).toLocaleString() : '--'}</p>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment Date</span>
+                  <p className="text-sm font-bold text-slate-600">{invoice.paid_at ? new Date(invoice.paid_at).toLocaleDateString() : 'Pending'}</p>
                 </div>
               </div>
             </div>
@@ -165,7 +134,7 @@ const AdminInvoiceDetail: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-3">
               <div className="w-1.5 h-6 bg-slate-900 rounded-full" />
-              Linked Bookings
+              Session Details
             </h3>
             <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
               <table className="w-full text-left">
@@ -196,9 +165,6 @@ const AdminInvoiceDetail: React.FC = () => {
                       </td>
                     </tr>
                   ))}
-                  {bookings.length === 0 && (
-                    <tr><td colSpan={3} className="px-6 py-10 text-center text-slate-400 italic">No bookings linked.</td></tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -206,87 +172,54 @@ const AdminInvoiceDetail: React.FC = () => {
         </div>
 
         <div className="space-y-8">
-          {isEditMode ? (
-            <div className="bg-white border-2 border-indigo-500 rounded-[2.5rem] p-8 shadow-xl animate-in zoom-in duration-300">
-              <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">Edit Settings</h4>
-              <form onSubmit={handleUpdate} className="space-y-6">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Amount</label>
-                  <input 
-                    type="number" 
-                    required 
-                    value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: parseFloat(e.target.value)})}
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Method</label>
-                  <select 
-                    value={formData.method}
-                    onChange={(e) => setFormData({...formData, method: e.target.value})}
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-900"
-                  >
-                    <option value="cash">Cash</option>
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="credit_card">Credit Card</option>
-                    <option value="stripe">Stripe</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Status</label>
-                  <select 
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-900"
-                  >
-                    <option value="issued">Issued</option>
-                    <option value="paid">Paid</option>
-                  </select>
-                </div>
-                <div className="pt-4 space-y-3">
-                  <button type="submit" disabled={isProcessing} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center justify-center">
-                    {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Save Changes'}
-                  </button>
-                  <button type="button" onClick={() => setIsEditMode(false)} className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cancel</button>
-                </div>
-              </form>
-            </div>
-          ) : (
             <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white space-y-8 shadow-xl">
                <div>
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Quick Summary</span>
+                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Payment Status</span>
                   <div className="mt-6 space-y-4">
                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400 text-xs font-bold">Invoiced to</span>
+                        <span className="text-slate-400 text-xs font-bold">Child</span>
                         <span className="font-black text-sm">{bookings[0]?.students?.name || 'N/A'}</span>
                      </div>
                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400 text-xs font-bold">Main Course</span>
-                        <span className="font-black text-sm">{bookings[0]?.courses?.name || 'N/A'}</span>
+                        <span className="text-slate-400 text-xs font-bold">Total Sessions</span>
+                        <span className="font-black text-sm">{bookings.length}</span>
                      </div>
                      <div className="h-px bg-slate-800" />
                      <div className="flex items-center justify-between">
-                        <span className="text-indigo-400 text-xs font-black uppercase">Total</span>
+                        <span className="text-indigo-400 text-xs font-black uppercase">Total Amount</span>
                         <span className="text-xl font-black">{invoice.currency} {invoice.amount.toFixed(2)}</span>
                      </div>
                   </div>
                </div>
                
-               <button 
-                 onClick={() => window.print()}
-                 className="w-full py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3"
-               >
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                 Print Invoice
-               </button>
+               <div className="space-y-3">
+                 {invoice.status === 'issued' && (
+                    <button 
+                      onClick={handlePayNow}
+                      disabled={isPaying}
+                      className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                    >
+                      {isPaying ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                      )}
+                      {isPaying ? 'Processing...' : 'Pay Now'}
+                    </button>
+                 )}
+                 <button 
+                   onClick={() => window.print()}
+                   className="w-full py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3"
+                 >
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                   Print Receipt
+                 </button>
+               </div>
             </div>
-          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default AdminInvoiceDetail;
+export default PortalInvoiceDetail;
