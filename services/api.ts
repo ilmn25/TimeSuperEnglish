@@ -1,6 +1,6 @@
 
 import { supabase, SUPABASE_URL, SUPABASE_KEY, SUPABASE_ORG_ID } from './supabaseClient';
-import { Teacher, Invoice } from '../types';
+import { Teacher, Invoice, Course, CoursePackage, CourseSchedule } from '../types';
 
 const getHeaders = async (isMutation = false) => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -155,7 +155,7 @@ export const api = {
 
   async getAllBookings(orgId: string, filters?: { dates?: string[]; student_id?: string; course_id?: string; teacher_id?: string; startDate?: string; endDate?: string }) {
     const headers = await getHeaders();
-    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=id,date,start,end,check_in,check_out,comment,student_id,course_id,teacher_id,invoice_id,students(name,contact,id,level,org_id),courses(name,color,price),teachers(name),invoices:invoice_id(id,status,method,amount,currency,issued_at,paid_at)&order=date.desc,start.asc`;
+    let query = `org_id=eq.${encodeURIComponent(orgId)}&select=id,date,start,end,check_in,check_out,comment,student_id,course_id,teacher_id,invoice_id,students(name,contact,id,level,org_id),courses(name,color),teachers(name),invoices:invoice_id(id,status,method,amount,currency,issued_at,paid_at)&order=date.desc,start.asc`;
     
     if (filters?.dates && filters.dates.length > 0) {
       const dateList = filters.dates.map(d => `"${d}"`).join(',');
@@ -224,7 +224,7 @@ export const api = {
     return Array.isArray(data) ? data[0] : null;
   },
 
-  async createInvoice(data: { booking_ids: string[]; method: string; amount: number; currency?: string; status?: string }) {
+  async createInvoice(data: { org_id: string; booking_ids: string[]; method: string; amount: number; currency?: string; status?: string }) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/invoices`;
     const { booking_ids, ...invoicePayload } = data;
@@ -281,7 +281,7 @@ export const api = {
 
   async getCourse(orgId: string, courseId: string) {
     const headers = await getHeaders();
-    const url = `${SUPABASE_URL}/rest/v1/courses?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(courseId)}&select=*`;
+    const url = `${SUPABASE_URL}/rest/v1/courses?id=eq.${encodeURIComponent(courseId)}&org_id=eq.${encodeURIComponent(orgId)}&select=*`;
     const response = await fetch(url, { headers });
     const data = await handleResponse(response, 'Failed to fetch course');
     return Array.isArray(data) ? data[0] : null;
@@ -298,15 +298,16 @@ export const api = {
     return handleResponse(response, 'Failed to create course');
   },
 
-  async updateCourse(orgId: string, id: string, name: string, color: string) {
-    const { data, error } = await supabase
+  async updateCourse(orgId: string, id: string, data: Partial<Course>) {
+    const { data: updated, error } = await supabase
       .from('courses')
-      .update({ name, color })
+      .update(data)
       .eq('id', id)
-      .eq('org_id', orgId);
+      .eq('org_id', orgId)
+      .select();
 
     if (error) throw new Error(`Failed to update course: ${error.message}`);
-    return data;
+    return updated;
   },
 
   async deleteCourse(orgId: string, id: string) {
@@ -326,12 +327,16 @@ export const api = {
 
   async createCourseSchedule(data: { 
     course_id: string; 
+    is_recurring: boolean;
+    is_fixed: boolean;
+    is_in_person: boolean;
     start_time: string; 
     end_time: string; 
-    date?: string | null; 
-    days_of_week?: number[] | null; 
-    starts_on?: string | null; 
-    biweekly: boolean;
+    price: number;
+    cycle_pattern?: number[] | null;
+    anchor_date?: string | null;
+    days_of_week?: number[] | null;
+    one_off_dates?: string[] | null;
   }) {
     const headers = await getHeaders(true);
     const url = `${SUPABASE_URL}/rest/v1/course_schedule`;
@@ -343,14 +348,7 @@ export const api = {
     return handleResponse(response, 'Failed to create course schedule');
   },
 
-  async updateCourseSchedule(id: string, data: Partial<{
-    start_time: string;
-    end_time: string;
-    date: string | null;
-    days_of_week: number[] | null;
-    starts_on: string | null;
-    biweekly: boolean;
-  }>) {
+  async updateCourseSchedule(id: string, data: Partial<CourseSchedule>) {
     const { data: updated, error } = await supabase
       .from('course_schedule')
       .update(data)
@@ -365,6 +363,34 @@ export const api = {
     const url = `${SUPABASE_URL}/rest/v1/course_schedule?id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
     return handleResponse(response, 'Failed to delete course schedule');
+  },
+
+  // COURSE PACKAGE METHODS
+  async getCoursePackages(courseId: string) {
+    const { data, error } = await supabase
+      .from('course_packages')
+      .select('*')
+      .eq('course_id', courseId);
+    if (error) throw error;
+    return data;
+  },
+
+  async createCoursePackage(data: { course_id: string; name: string; count: number; price: number; unit: 'sessions' | 'hours' }) {
+    const { data: inserted, error } = await supabase
+      .from('course_packages')
+      .insert(data)
+      .select();
+    if (error) throw error;
+    return inserted[0];
+  },
+
+  async deleteCoursePackage(id: string) {
+    const { error } = await supabase
+      .from('course_packages')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
   },
 
   // TEACHER METHODS
@@ -459,7 +485,7 @@ export const api = {
 
   async deleteStudent(orgId: string, id: string) {
     const headers = await getHeaders(true);
-    const url = `${SUPABASE_URL}/rest/v1/students?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
+    const url = `${SUPABASE_URL}/rest/v1/bookings?org_id=eq.${encodeURIComponent(orgId)}&id=eq.${encodeURIComponent(id)}`;
     const response = await fetch(url, { method: 'DELETE', headers });
     return handleResponse(response, 'Failed to delete student');
   },

@@ -206,7 +206,7 @@ const AdminAttendanceImport: React.FC = () => {
     if (!orgId || resolvedAttendances.length === 0) {
         if (resolvedAttendances.length === 0) setStep(4);
         return;
-    };
+    }
     setIsProcessing(true);
     setImportSuccessCount(0);
     startImport(resolvedAttendances.length);
@@ -459,7 +459,7 @@ const AdminAttendanceImport: React.FC = () => {
                 </div>
             </div>
         </div>
-      )}
+        )}
     </div>
   );
 };

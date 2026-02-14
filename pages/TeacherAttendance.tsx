@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { supabase } from '../services/supabaseClient';
@@ -250,8 +251,8 @@ const TeacherAttendance: React.FC = () => {
   if (!isLoading && !teacher) {
     return (
       <div className="text-center py-20 bg-white border border-slate-200 rounded-[3rem] shadow-sm">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Teacher Profile Not Linked</h2>
-        <p className="text-slate-500 mt-2">Please contact your administrator to link your account.</p>
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('teacher_portal.not_linked_title')}</h2>
+        <p className="text-slate-500 mt-2">{t('teacher_portal.not_linked_msg')}</p>
       </div>
     );
   }
@@ -260,8 +261,8 @@ const TeacherAttendance: React.FC = () => {
     <div className={`space-y-6 pb-20 transition-all duration-500 ease-in-out ${(selectedStudentIdData && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0'}`}> 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Teacher Portal: {t('nav.attendance')}</h2>
-          <p className="text-slate-500 text-xs font-medium">Daily student attendance records for <span className="text-indigo-600 font-bold">{teacher?.name}</span></p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('teacher_portal.attendance_title')}</h2>
+          <p className="text-slate-500 text-xs font-medium">{t('teacher_portal.attendance_subtitle')} <span className="text-indigo-600 font-bold">{teacher?.name}</span></p>
         </div>
       </div>
       
@@ -351,7 +352,6 @@ const TeacherAttendance: React.FC = () => {
           </div>
         </div>
 
-        {/* Fix: Corrected syntax errors (escaped quotes) in the following block */}
         <div className="flex items-center space-x-4 bg-white border border-slate-200 rounded-[2rem] px-6 py-4 shadow-sm self-start">
           <div className="flex flex-col">
             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{t('attendance.booked')}</span>
@@ -401,7 +401,7 @@ const TeacherAttendance: React.FC = () => {
           ))}
           {dailyGroupedData.length === 0 && !error && (
             <div className="py-20 text-center bg-white border border-slate-200 rounded-[3rem]">
-              <p className="text-slate-400 font-bold italic">No students assigned to you for this date.</p>
+              <p className="text-slate-400 font-bold italic">{t('teacher_portal.no_assigned_students')}</p>
             </div>
           )}
         </div>
@@ -435,14 +435,14 @@ const TeacherAttendance: React.FC = () => {
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-[2rem] shadow-2xl w-full max-md overflow-hidden animate-in zoom-in duration-200">
             <div className="p-8">
-              <h3 className="text-2xl font-black text-slate-900 mb-2">Session Comment</h3>
-              <p className="text-slate-500 text-sm mb-6">Recording comments for <span className="text-indigo-600 font-bold">{noteModalConfig.name}</span></p>
+              <h3 className="text-2xl font-black text-slate-900 mb-2">{t('attendance.comment_title')}</h3>
+              <p className="text-slate-500 text-sm mb-6">{t('attendance.recording_for')} <span className="text-indigo-600 font-bold">{noteModalConfig.name}</span></p>
               
               <textarea 
                 value={noteModalConfig.comment}
                 onChange={(e) => setNoteModalConfig({ ...noteModalConfig, comment: e.target.value })}
                 rows={5}
-                placeholder="How was the session?..."
+                placeholder={t('attendance.comment_placeholder')}
                 className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium text-slate-900 transition-all resize-none"
               />
             </div>

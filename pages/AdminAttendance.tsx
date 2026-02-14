@@ -412,14 +412,14 @@ const AdminAttendance: React.FC = () => {
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-[2rem] shadow-2xl w-full max-md overflow-hidden animate-in zoom-in duration-200">
             <div className="p-8">
-              <h3 className="text-2xl font-black text-slate-900 mb-2">Session Comment</h3>
-              <p className="text-slate-500 text-sm mb-6">Recording comments for <span className="text-indigo-600 font-bold">{noteModalConfig.name}</span></p>
+              <h3 className="text-2xl font-black text-slate-900 mb-2">{t('attendance.comment_title')}</h3>
+              <p className="text-slate-500 text-sm mb-6">{t('attendance.recording_for')} <span className="text-indigo-600 font-bold">{noteModalConfig.name}</span></p>
               
               <textarea 
                 value={noteModalConfig.comment}
                 onChange={(e) => setNoteModalConfig({ ...noteModalConfig, comment: e.target.value })}
                 rows={5}
-                placeholder="How was the session?..."
+                placeholder={t('attendance.comment_placeholder')}
                 className="w-full px-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-medium text-slate-900 transition-all resize-none"
               />
             </div>

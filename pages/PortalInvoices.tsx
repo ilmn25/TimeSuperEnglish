@@ -14,6 +14,7 @@ const PortalInvoices: React.FC = () => {
   
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPayingAll, setIsPayingAll] = useState(false);
 
   // Filter & Sort State
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,13 +31,12 @@ const PortalInvoices: React.FC = () => {
         const bookings = await api.getStudentBookings(s.id);
         bookings.forEach((b: any) => {
           if (b.invoices) {
-            // b.invoices might be an object or an array depending on foreign key structure
             const invs = Array.isArray(b.invoices) ? b.invoices : [b.invoices];
             invs.forEach((inv: any) => {
               if (inv && !allInvoices.find(ai => ai.id === inv.id)) {
                 allInvoices.push({
                     ...inv,
-                    bookings: { ...b, students: s } // Correctly attach student info
+                    bookings: { ...b, students: s }
                 });
               }
             });
@@ -77,6 +77,32 @@ const PortalInvoices: React.FC = () => {
     });
   }, [invoices, searchQuery, sortField, sortOrder]);
 
+  const unpaidInvoices = useMemo(() => {
+    return invoices.filter(inv => inv.status === 'issued');
+  }, [invoices]);
+
+  const totalUnpaidAmount = useMemo(() => {
+    return unpaidInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+  }, [unpaidInvoices]);
+
+  const handlePayAll = async () => {
+    if (unpaidInvoices.length === 0) return;
+    setIsPayingAll(true);
+    try {
+      const invoiceIds = unpaidInvoices.map(inv => inv.id);
+      const result = await api.createInvoicePaymentSession(invoiceIds);
+      if (result?.url) {
+        window.location.href = result.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Payment processing failed');
+    } finally {
+      setIsPayingAll(false);
+    }
+  };
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -90,18 +116,33 @@ const PortalInvoices: React.FC = () => {
     if (status === 'paid' && amount === 0) return 'bg-indigo-100 text-indigo-700';
     switch (status) {
       case 'paid': return 'bg-emerald-100 text-emerald-700';
-      case 'issued': return 'bg-amber-100 text-amber-700'; // Changed to yellow (amber)
+      case 'issued': return 'bg-amber-100 text-amber-700';
       default: return 'bg-slate-100 text-slate-600';
     }
   };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20 max-w-6xl mx-auto px-4 sm:px-0">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('nav.invoices')}</h2>
           <p className="text-slate-500 mt-1 font-medium">Review and settle payments for your children</p>
         </div>
+        
+        {unpaidInvoices.length > 1 && (
+           <button 
+             onClick={handlePayAll}
+             disabled={isPayingAll}
+             className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-[0.15em] flex items-center gap-3 disabled:opacity-50"
+           >
+             {isPayingAll ? (
+               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+             ) : (
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+             )}
+             Pay All ({unpaidInvoices.length}) • HKD {totalUnpaidAmount.toFixed(2)}
+           </button>
+        )}
       </div>
 
       <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm flex flex-col md:flex-row items-center gap-4">

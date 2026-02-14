@@ -23,6 +23,7 @@ import PortalBookings from './pages/PortalBookings';
 import PortalPayments from './pages/PortalPayments';
 import PortalInvoices from './pages/PortalInvoices';
 import PortalInvoiceDetail from './pages/PortalInvoiceDetail';
+import PortalInvoiceSuccess from './pages/PortalInvoiceSuccess';
 import PortalStudents from './pages/PortalStudents';
 import PortalCourses from './pages/PortalCourses';
 import PortalCourseDetail from './pages/PortalCourseDetail';
@@ -195,7 +196,8 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
     if (isLandingRoot) return t('nav.home');
     if (location.pathname === '/portal/attendance') return t('nav.attendance');
     if (location.pathname === '/portal/bookings') return t('nav.bookings');
-    if (location.pathname === '/portal/payments') return 'Payments & Audit';
+    if (location.pathname === '/portal/payments') return t('nav.payments');
+    if (location.pathname.startsWith('/portal/invoices/success')) return t('common.success');
     if (location.pathname.startsWith('/portal/invoices')) return t('nav.invoices');
     if (location.pathname.startsWith('/portal/courses')) return t('nav.courses');
     if (location.pathname === '/portal/students') return t('nav.students');
@@ -212,9 +214,9 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
     if (location.pathname.includes('/attendance')) return t('nav.attendance');
     if (location.pathname.includes('/booking-requests')) return t('bookings.pending_requests');
     if (location.pathname.includes('/bookings')) return t('nav.bookings');
-    if (location.pathname.includes('/payments')) return 'Payments & Audit'; 
-    if (location.pathname.match(/\/org\/[^/]+\/invoices\/new/)) return 'Create Invoice';
-    if (location.pathname.match(/\/org\/[^/]+\/invoices\/[^/]+/)) return 'Invoice Details';
+    if (location.pathname.includes('/payments')) return t('nav.payments'); 
+    if (location.pathname.match(/\/org\/[^/]+\/invoices\/new/)) return t('invoices.detail_title');
+    if (location.pathname.match(/\/org\/[^/]+\/invoices\/[^/]+/)) return t('invoices.detail_title');
     if (location.pathname.includes('/invoices')) return t('nav.invoices');
     if (location.pathname.includes('/export')) return t('nav.export');
     if (location.pathname.includes('/courses')) return t('nav.courses');
@@ -288,7 +290,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                           {t('nav.bookings')}
                         </NavLink>
                         <NavLink to={`/org/${orgId}/payments`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}>
-                          Audit
+                          {t('nav.audit')}
                         </NavLink>
                         <NavLink to={`/org/${orgId}/invoices`} icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}>
                           {t('nav.invoices')}
@@ -315,7 +317,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                           {t('nav.bookings')}
                         </NavLink>
                         <NavLink to="/portal/payments" icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" className="h-4 w-4" strokeWidth={2.5}><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}>
-                          Audit
+                          {t('nav.audit')}
                         </NavLink>
                         <NavLink to="/portal/invoices" icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" className="h-4 w-4" strokeWidth={2.5}><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}>
                           {t('nav.invoices')}
@@ -358,13 +360,6 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
                 {isHomeView && (
                   <div className="shrink-0 pl-4 flex space-x-2">
                     <Link 
-                      to="/teacher/attendance"
-                      className="flex items-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 bg-slate-900 text-white rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-100"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.246.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                      <span>Teacher Portal</span>
-                    </Link>
-                    <Link 
                       to="/portal/attendance"
                       className="flex items-center space-x-2 px-4 py-2 sm:px-6 sm:py-3 bg-indigo-600 text-white rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-100"
                     >
@@ -391,7 +386,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
           <div className="flex items-center space-x-6">
             <Link to="/about" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('nav.about')}</Link>
             <span className="w-1 h-1 bg-slate-200 rounded-full" />
-            <Link to="/teacher/attendance" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">Teacher Portal</Link>
+            <Link to="/teacher/attendance" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">Teacher</Link>
             <span className="w-1 h-1 bg-slate-200 rounded-full" />
             <Link to="/org" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('footer.admin')}</Link>
           </div>
@@ -493,6 +488,7 @@ const App: React.FC = () => {
             <Route path="/portal/bookings" element={user ? <PortalBookings /> : <Navigate to="/login" />} />
             <Route path="/portal/payments" element={user ? <PortalPayments /> : <Navigate to="/login" />} />
             <Route path="/portal/invoices" element={user ? <PortalInvoices /> : <Navigate to="/login" />} />
+            <Route path="/portal/invoices/success" element={user ? <PortalInvoiceSuccess /> : <Navigate to="/login" />} />
             <Route path="/portal/invoices/:invoiceId" element={user ? <PortalInvoiceDetail /> : <Navigate to="/login" />} />
             <Route path="/portal/requests" element={user ? <PortalBookingRequests /> : <Navigate to="/login" />} />
             <Route path="/portal/courses" element={user ? <PortalCourses /> : <Navigate to="/login" />} />

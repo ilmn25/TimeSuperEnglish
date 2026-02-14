@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { Invoice, Booking } from '../types';
+import { Invoice } from '../types';
 import { useTranslation } from 'react-i18next';
 
 const AdminInvoiceDetail: React.FC = () => {
@@ -78,16 +78,21 @@ const AdminInvoiceDetail: React.FC = () => {
     if (status === 'paid' && amount === 0) return 'bg-indigo-100 text-indigo-700';
     switch (status) {
       case 'paid': return 'bg-emerald-100 text-emerald-700';
-      case 'issued': return 'bg-amber-100 text-amber-700'; // Changed to yellow (amber)
+      case 'issued': return 'bg-amber-100 text-amber-700';
       default: return 'bg-slate-100 text-slate-600';
     }
+  };
+
+  const getStatusLabelFormatted = (status: string, amount: number) => {
+    if (status === 'paid' && amount === 0) return t('status.waived');
+    return t(`status.${status}`);
   };
 
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Loading invoice details...</p>
+        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">{t('invoices.loading_detail')}</p>
       </div>
     );
   }
@@ -95,8 +100,8 @@ const AdminInvoiceDetail: React.FC = () => {
   if (!invoice) {
     return (
       <div className="text-center py-20">
-        <h3 className="text-xl font-black text-slate-900">Invoice Not Found</h3>
-        <button onClick={() => navigate(`/org/${orgId}/invoices`)} className="mt-4 text-indigo-600 font-bold hover:underline">Back to Invoices</button>
+        <h3 className="text-xl font-black text-slate-900">{t('invoices.not_found')}</h3>
+        <button onClick={() => navigate(`/org/${orgId}/invoices`)} className="mt-4 text-indigo-600 font-bold hover:underline">{t('invoices.back_to_list')}</button>
       </div>
     );
   }
@@ -130,32 +135,32 @@ const AdminInvoiceDetail: React.FC = () => {
             <div className="relative z-10 space-y-8">
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Invoice ID</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">{t('invoices.id')}</span>
                   <h2 className="text-2xl font-black text-slate-900 font-mono">#{invoice.id.slice(0, 8).toUpperCase()}</h2>
                 </div>
                 <div className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${getStatusColor(invoice.status, invoice.amount)}`}>
-                  {invoice.status === 'paid' && invoice.amount === 0 ? 'waived' : invoice.status}
+                  {getStatusLabelFormatted(invoice.status, invoice.amount)}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-8 pt-6 border-t border-slate-50">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount Due</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('invoices.amount_due')}</span>
                   <p className="text-3xl font-black text-indigo-600">{invoice.currency} {invoice.amount.toFixed(2)}</p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment Method</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('invoices.payment_method')}</span>
                   <p className="text-lg font-bold text-slate-700 capitalize">{invoice.method}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Issued At</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('invoices.issued_at')}</span>
                   <p className="text-sm font-bold text-slate-600">{new Date(invoice.issued_at).toLocaleString()}</p>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paid At</span>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('invoices.paid_at')}</span>
                   <p className="text-sm font-bold text-slate-600">{invoice.paid_at ? new Date(invoice.paid_at).toLocaleString() : '--'}</p>
                 </div>
               </div>
@@ -165,15 +170,15 @@ const AdminInvoiceDetail: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-3">
               <div className="w-1.5 h-6 bg-slate-900 rounded-full" />
-              Linked Bookings
+              {t('invoices.linked_bookings')}
             </h3>
             <div className="bg-white border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
               <table className="w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date & Time</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Course</th>
-                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Student</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.date')} & {t('bookings.time')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.course')}</th>
+                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('bookings.student')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -208,10 +213,10 @@ const AdminInvoiceDetail: React.FC = () => {
         <div className="space-y-8">
           {isEditMode ? (
             <div className="bg-white border-2 border-indigo-500 rounded-[2.5rem] p-8 shadow-xl animate-in zoom-in duration-300">
-              <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">Edit Settings</h4>
+              <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">{t('invoices.edit_settings')}</h4>
               <form onSubmit={handleUpdate} className="space-y-6">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Amount</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('invoices.column_amount')}</label>
                   <input 
                     type="number" 
                     required 
@@ -221,7 +226,7 @@ const AdminInvoiceDetail: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Method</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('invoices.column_method')}</label>
                   <select 
                     value={formData.method}
                     onChange={(e) => setFormData({...formData, method: e.target.value})}
@@ -235,7 +240,7 @@ const AdminInvoiceDetail: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Status</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('invoices.column_status')}</label>
                   <select 
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value as any})}
@@ -247,28 +252,28 @@ const AdminInvoiceDetail: React.FC = () => {
                 </div>
                 <div className="pt-4 space-y-3">
                   <button type="submit" disabled={isProcessing} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 flex items-center justify-center">
-                    {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Save Changes'}
+                    {isProcessing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : t('common.save_changes')}
                   </button>
-                  <button type="button" onClick={() => setIsEditMode(false)} className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cancel</button>
+                  <button type="button" onClick={() => setIsEditMode(false)} className="w-full py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.cancel')}</button>
                 </div>
               </form>
             </div>
           ) : (
             <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white space-y-8 shadow-xl">
                <div>
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Quick Summary</span>
+                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{t('invoices.summary')}</span>
                   <div className="mt-6 space-y-4">
                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400 text-xs font-bold">Invoiced to</span>
+                        <span className="text-slate-400 text-xs font-bold">{t('invoices.invoiced_to')}</span>
                         <span className="font-black text-sm">{bookings[0]?.students?.name || 'N/A'}</span>
                      </div>
                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400 text-xs font-bold">Main Course</span>
+                        <span className="text-slate-400 text-xs font-bold">{t('invoices.main_course')}</span>
                         <span className="font-black text-sm">{bookings[0]?.courses?.name || 'N/A'}</span>
                      </div>
                      <div className="h-px bg-slate-800" />
                      <div className="flex items-center justify-between">
-                        <span className="text-indigo-400 text-xs font-black uppercase">Total</span>
+                        <span className="text-indigo-400 text-xs font-black uppercase">{t('invoices.total')}</span>
                         <span className="text-xl font-black">{invoice.currency} {invoice.amount.toFixed(2)}</span>
                      </div>
                   </div>
@@ -279,7 +284,7 @@ const AdminInvoiceDetail: React.FC = () => {
                  className="w-full py-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3"
                >
                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                 Print Invoice
+                 {t('invoices.print')}
                </button>
             </div>
           )}

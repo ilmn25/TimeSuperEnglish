@@ -1,4 +1,3 @@
-
 export interface Student {
   id: string;
   name: string;
@@ -19,19 +18,32 @@ export interface Course {
   id: string;
   name: string;
   color: string;
-  price?: number;
+  org_id: string;
   description?: string;
+}
+
+export interface CoursePackage {
+  id: string;
+  course_id: string;
+  name: string;
+  count: number; // number of slots or hours
+  price: number; // total price in HKD
+  unit: 'sessions' | 'hours';
 }
 
 export interface CourseSchedule {
   id: string;
   course_id: string;
-  date?: string | null;
-  days_of_week?: number[] | null; // 0-6 (Sun-Sat)
+  is_recurring: boolean;
+  is_fixed: boolean;
+  is_in_person: boolean;
   start_time: string;
   end_time: string;
-  starts_on?: string | null;
-  biweekly: boolean;
+  price: number;
+  cycle_pattern?: number[] | null; // 1,2,3,4
+  anchor_date?: string | null;
+  days_of_week?: number[] | null; // 0-6
+  one_off_dates?: string[] | null;
 }
 
 export interface Invoice {

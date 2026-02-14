@@ -1,3 +1,4 @@
+
 {
   "app": {
     "name": "Time Super English",
@@ -269,8 +270,24 @@
     "select": "選擇老師",
     "no_contact": "無聯絡資訊",
     "delete_title": "刪除資料？",
-    "delete_msg": "永久刪除此老師？此操作無法復原，並可能影響歷史預約資料。",
+    "delete_msg": "永久刪除此老師？此動作無法復原，並可能影響歷史預約資料。",
     "add_now": "立即新增老師"
+  },
+  "teacher_portal": {
+    "attendance_title": "老師入口：出勤",
+    "attendance_subtitle": "以下學生的每日出勤紀錄：",
+    "bookings_title": "老師入口：預約",
+    "bookings_subtitle": "以下老師的月度日程總覽：",
+    "students_title": "您的學生",
+    "students_subtitle": "您班級中已入學的學生檔案",
+    "courses_title": "老師入口：課程",
+    "courses_subtitle": "管理以下老師的課程大綱與課時可用性：",
+    "not_linked_title": "老師檔案未關聯",
+    "not_linked_msg": "請聯絡管理員關聯您的帳戶。",
+    "no_assigned_students": "此日期沒有分配給您的學生。",
+    "search_students": "搜尋學生...",
+    "no_students_match": "沒有符合搜尋條件的學生。",
+    "cycle_position": "循環位置"
   },
   "backup": {
     "title": "歷史",

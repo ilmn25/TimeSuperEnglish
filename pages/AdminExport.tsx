@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Booking } from '../types';
@@ -77,8 +78,9 @@ const AdminExport: React.FC = () => {
       if (selectedColumnIds.has('course')) rowData.push(`"${b.courses?.name || ''}"`);
       if (selectedColumnIds.has('status')) rowData.push(getStatusLabel(b.calculatedStatus));
       if (selectedColumnIds.has('check_in_out')) {
-        const checkIn = b.check_in ? b.check_in.slice(11, 16) : '';
-        const checkOut = b.check_out ? b.check_out.slice(11, 16) : '';
+        // Fix: Use slice(0, 5) for HH:mm format consistency
+        const checkIn = b.check_in ? b.check_in.slice(0, 5) : '';
+        const checkOut = b.check_out ? b.check_out.slice(0, 5) : '';
         rowData.push(`"${checkIn}${checkIn && checkOut ? '-' : ''}${checkOut}"`);
       }
       return rowData.join(',');
@@ -101,6 +103,7 @@ const AdminExport: React.FC = () => {
         <button 
           onClick={() => navigate(`/org/${orgId}/bookings`)} 
           className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all shadow-sm active:scale-90"
+          title={t('nav.back')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
         </button>
@@ -134,64 +137,52 @@ const AdminExport: React.FC = () => {
             <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
             <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{t('export_page.preview_title')}</h3>
           </div>
-          <div className="bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden shadow-inner">
-            {bookings.length > 0 ? (
-              <div className="overflow-x-auto no-scrollbar">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-white/50 border-b border-slate-100">
-                    <tr>
-                      {columns.filter(c => selectedColumnIds.has(c.id)).map(c => (
-                        <th key={c.id} className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{c.label}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {bookings.slice(0, 5).map((b, idx) => (
-                      <tr key={idx}>
-                        {selectedColumnIds.has('student') && <td className="px-6 py-4 text-xs font-bold text-slate-900">{b.students?.name}</td>}
-                        {selectedColumnIds.has('date') && <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">{b.date}</td>}
-                        {selectedColumnIds.has('start') && <td className="px-6 py-4 text-[10px] font-mono font-black text-indigo-600">{b.start.slice(0, 5)}</td>}
-                        {selectedColumnIds.has('end') && <td className="px-6 py-4 text-[10px] font-mono font-black text-indigo-600">{b.end.slice(0, 5)}</td>}
-                        {selectedColumnIds.has('duration') && <td className="px-6 py-4 text-xs font-bold text-slate-600">{calculateDurationMinutes(b.start, b.end)}m</td>}
-                        {selectedColumnIds.has('course') && <td className="px-6 py-4 text-xs font-bold text-slate-600">{b.courses?.name}</td>}
-                        {selectedColumnIds.has('status') && <td className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-slate-500">{getStatusLabel(b.calculatedStatus)}</td>}
-                        {selectedColumnIds.has('check_in_out') && (
-                          <td className="px-6 py-4 text-[10px] font-mono font-bold text-slate-400">
-                            {b.check_in ? b.check_in.slice(11, 16) : ''} {b.check_out ? `- ${b.check_out.slice(11, 16)}` : ''}
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {bookings.length > 5 && (
-                  <div className="px-6 py-4 bg-white/30 text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
-                    {t('export_page.more_rows', { count: bookings.length - 5 })}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="py-20 text-center text-slate-400 font-bold italic text-sm">
-                {t('export_page.empty_state')}
-              </div>
-            )}
+          {/* Fix: Added table preview and download button to complete the truncated file */}
+          <div className="overflow-x-auto rounded-2xl border border-slate-100">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50">
+                <tr>
+                  {columns.filter(c => selectedColumnIds.has(c.id)).map(c => (
+                    <th key={c.id} className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">{c.label}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {bookings.slice(0, 5).map((b, i) => (
+                  <tr key={i}>
+                    {selectedColumnIds.has('student') && <td className="px-4 py-3 text-xs font-bold">{b.students?.name}</td>}
+                    {selectedColumnIds.has('date') && <td className="px-4 py-3 text-xs">{b.date}</td>}
+                    {selectedColumnIds.has('start') && <td className="px-4 py-3 text-xs">{b.start.slice(0, 5)}</td>}
+                    {selectedColumnIds.has('end') && <td className="px-4 py-3 text-xs">{b.end.slice(0, 5)}</td>}
+                    {selectedColumnIds.has('duration') && <td className="px-4 py-3 text-xs">{calculateDurationMinutes(b.start, b.end)}</td>}
+                    {selectedColumnIds.has('course') && <td className="px-4 py-3 text-xs">{b.courses?.name}</td>}
+                    {selectedColumnIds.has('status') && <td className="px-4 py-3 text-xs">{getStatusLabel(b.calculatedStatus)}</td>}
+                    {selectedColumnIds.has('check_in_out') && (
+                      <td className="px-4 py-3 text-xs">
+                        {b.check_in ? b.check_in.slice(0, 5) : ''}
+                        {b.check_in && b.check_out ? '-' : ''}
+                        {b.check_out ? b.check_out.slice(0, 5) : ''}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex justify-end pt-4">
+            <button 
+              onClick={handleDownload}
+              className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-3"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              {t('export_page.download_btn')}
+            </button>
           </div>
         </section>
-
-        <div className="flex items-center justify-end pt-4">
-          <button
-            onClick={handleDownload}
-            disabled={bookings.length === 0}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center space-x-3 disabled:opacity-50 disabled:grayscale"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            <span>{t('export_page.download_btn')}</span>
-          </button>
-        </div>
       </div>
     </div>
   );
 };
 
-// Fixed the missing default export
+// Fix: Added missing default export
 export default AdminExport;

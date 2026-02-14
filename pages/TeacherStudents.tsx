@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-// Added missing useNavigate import from react-router-dom
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { supabase } from '../services/supabaseClient';
@@ -9,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 
 const TeacherStudents: React.FC = () => {
   const { t } = useTranslation();
-  // Initialized navigate hook using useNavigate
   const navigate = useNavigate();
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
@@ -67,20 +65,20 @@ const TeacherStudents: React.FC = () => {
   }
 
   if (!teacher) {
-    return <div className="text-center py-20 font-black text-slate-400">Teacher profile not found.</div>;
+    return <div className="text-center py-20 font-black text-slate-400">{t('teacher_portal.not_linked_title')}</div>;
   }
 
   return (
     <div className="space-y-8 pb-20 max-w-4xl mx-auto px-4 sm:px-0">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Your Students</h2>
-          <p className="text-slate-500 font-medium text-xs">Profiles of students enrolled in your classes</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{t('teacher_portal.students_title')}</h2>
+          <p className="text-slate-500 font-medium text-xs">{t('teacher_portal.students_subtitle')}</p>
         </div>
         <div className="relative w-full sm:w-64">
           <input 
             type="text" 
-            placeholder="Search students..." 
+            placeholder={t('teacher_portal.search_students')} 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold text-xs transition-all"
@@ -99,11 +97,10 @@ const TeacherStudents: React.FC = () => {
                 <h3 className="text-sm font-black text-slate-900">{student.name}</h3>
                 <div className="flex items-center space-x-2 mt-1">
                    <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 text-[8px] font-black uppercase tracking-widest rounded border border-indigo-100">{student.level || 'N/A'}</span>
-                   <span className="text-[10px] text-slate-400 font-bold">{student.contact || 'No contact'}</span>
+                   <span className="text-[10px] text-slate-400 font-bold">{student.contact || t('students.no_contact')}</span>
                 </div>
               </div>
             </div>
-            {/* Fixed: Use navigate hook from react-router-dom to fix the 'navigate' undefined error */}
             <button 
                onClick={() => navigate(`/teacher/attendance?studentId=${student.id}`)}
                className="p-2 text-slate-300 hover:text-indigo-600 transition-colors"
@@ -114,7 +111,7 @@ const TeacherStudents: React.FC = () => {
         ))}
         {filteredStudents.length === 0 && (
           <div className="py-20 text-center bg-white border border-dashed border-slate-200 rounded-3xl">
-            <p className="text-slate-400 font-bold italic">No students matched your search.</p>
+            <p className="text-slate-400 font-bold italic">{t('teacher_portal.no_students_match')}</p>
           </div>
         )}
       </div>

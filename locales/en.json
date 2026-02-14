@@ -1,4 +1,3 @@
-
 {
   "app": {
     "name": "Time Super English",
@@ -24,7 +23,9 @@
     "about": "About",
     "pricing": "Pricing",
     "contact": "Contact",
-    "parent_dashboard_access": "Parent Dashboard Access"
+    "parent_dashboard_access": "Parent Dashboard Access",
+    "audit": "Audit",
+    "payments": "Payments & Audit"
   },
   "user": {
     "signed_in": "Signed in as",
@@ -53,8 +54,11 @@
     "name": "Organization Name",
     "owner": "Owner",
     "member": "Member",
+    "admin": "Admin",
     "delete_title": "Delete Workspace?",
-    "delete_msg": "This action is irreversible and will permanently delete the workspace. Please type the name of the organization to confirm."
+    "delete_msg": "This action is irreversible and will permanently delete the workspace. Please type the name of the organization to confirm.",
+    "error_save": "Failed to save organization. Please check your ownership permissions.",
+    "error_delete": "Failed to delete organization. Only owners can delete a workspace."
   },
   "common": {
     "cancel": "Cancel",
@@ -81,7 +85,15 @@
     "maximize": "Maximize",
     "toggle_sort": "Toggle Sort Order",
     "download_started": "Download started",
-    "resolution": "Resolution"
+    "resolution": "Resolution",
+    "comment": "Comment",
+    "no_note": "No note...",
+    "edit_settings": "Edit Settings",
+    "print": "Print",
+    "minutes_short": "mins",
+    "actual": "Actual",
+    "publish": "Publish Changes",
+    "new_rule": "Add New Rule"
   },
   "attendance": {
     "summary": "Attendance Summary",
@@ -93,7 +105,10 @@
     "retry": "Retry",
     "no_students": "No students booked for this date.",
     "remove_title": "Remove Record?",
-    "remove_msg": "Permanently remove this attendance record?"
+    "remove_msg": "Permanently remove this attendance record?",
+    "comment_title": "Session Comment",
+    "recording_for": "Recording comments for",
+    "comment_placeholder": "How was the session?..."
   },
   "bookings": {
     "title": "Bookings",
@@ -158,7 +173,13 @@
     "timeline_instruction": "Click on any block in the timeline to send a booking request for your child.",
     "only": "Only",
     "no_requests": "No requests found.",
-    "admin_subtitle": "Review and manage all incoming session requests."
+    "admin_subtitle": "Review and manage all incoming session requests.",
+    "pending_request": "Pending Request",
+    "approve_msg": "Review and manage all incoming session requests.",
+    "for": "for",
+    "message_placeholder": "Optional message to academy...",
+    "select_student": "Select Student",
+    "send_request": "Send Request"
   },
   "status": {
     "missed": "Missed",
@@ -167,7 +188,11 @@
     "future": "Future",
     "pending": "Pending",
     "accepted": "Accepted",
-    "declined": "Declined"
+    "declined": "Declined",
+    "waived": "Waived",
+    "upcoming": "Upcoming",
+    "paid": "Paid",
+    "issued": "Issued"
   },
   "courses": {
     "title": "Courses",
@@ -190,7 +215,10 @@
     "projected_class": "Projected Class",
     "sessions_count": "{{count}} Sessions",
     "view_detail": "View Schedule & Create Booking Request",
-    "not_found": "Course Not Found"
+    "not_found": "Course Not Found",
+    "error_fetch": "Failed to fetch courses",
+    "error_save": "Failed to save course",
+    "error_delete": "Failed to delete course"
   },
   "course_schedule": {
     "title": "Schedules",
@@ -215,7 +243,31 @@
     "delete_title": "Delete Schedule?",
     "delete_msg": "This will permanently remove this availability slot from the system.",
     "selected_dates": "Selected Dates ({{count}})",
-    "select_on_calendar": "Select on calendar"
+    "select_on_calendar": "Select on calendar",
+    "fixed_session": "Fixed Session",
+    "flexible_session": "Flexible Session",
+    "in_person": "In-Person",
+    "remote": "Remote",
+    "recommended_usage": "Recommended Usage",
+    "hourly_price": "Hourly Price (HKD)",
+    "slot_price": "Slot Price (HKD)",
+    "cycle_pattern": "4-Week Cycle Pattern",
+    "cycle_help": "Pick active weeks in the 4-week cycle (e.g. 1 & 3 for bi-weekly)",
+    "anchor_date": "Anchor Date",
+    "anchor_help": "Week 1 of the cycle starts on the Sunday relative to this date.",
+    "overlap_detected": "OVERLAP DETECTED",
+    "add_rule": "Add Rule",
+    "update_rule": "Update Rule",
+    "available_slots": "Available Slots",
+    "pricing_bundles": "Pricing & Bundles",
+    "add_package": "Add Package",
+    "package_name": "Package Name",
+    "create_bundle": "Create Bundle",
+    "no_bundles": "No bundles defined",
+    "delete_package": "Delete this package?",
+    "publish_success": "Schedule published successfully!",
+    "allowed_window": "Allowed Window",
+    "outside_window_error": "Selected time must be within the allowed window ({{start}} — {{end}})."
   },
   "students": {
     "title": "Student Directory",
@@ -272,7 +324,26 @@
     "no_contact": "No contact info",
     "delete_title": "Delete Profile?",
     "delete_msg": "Permanently remove this teacher? This action cannot be undone and might impact historical booking data.",
-    "add_now": "Add Teacher Now"
+    "add_now": "Add Teacher Now",
+    "admin_privileges": "Admin Privileges",
+    "admin_privileges_desc": "Manage organization data",
+    "invite_teacher": "Invite Teacher"
+  },
+  "teacher_portal": {
+    "attendance_title": "Teacher Portal: Attendance",
+    "attendance_subtitle": "Daily student attendance records for",
+    "bookings_title": "Teacher Portal: Bookings",
+    "bookings_subtitle": "Monthly schedule overview for",
+    "students_title": "Your Students",
+    "students_subtitle": "Profiles of students enrolled in your classes",
+    "courses_title": "Teacher Portal: Courses",
+    "courses_subtitle": "Manage curriculum and class availability for",
+    "not_linked_title": "Teacher Profile Not Linked",
+    "not_linked_msg": "Please contact your administrator to link your account.",
+    "no_assigned_students": "No students assigned to you for this date.",
+    "search_students": "Search students...",
+    "no_students_match": "No students matched your search.",
+    "cycle_position": "Cycle Position"
   },
   "backup": {
     "title": "History",
@@ -301,7 +372,8 @@
     "upload_failed": "Upload failed. Ensure the file is a valid backup JSON.",
     "delete_failed": "Failed to delete backup",
     "restore_failed": "Restore failed",
-    "download_link_failed": "Failed to generate download link"
+    "download_link_failed": "Failed to generate download link",
+    "error_fetch_data": "Failed to fetch data"
   },
   "timeline": {
     "title": "System Timeline",
@@ -405,6 +477,76 @@
     "unresolved": "UNRESOLVED",
     "search_placeholder": "Search by student or course..."
   },
+  "payments": {
+    "title": "Payments & Audit",
+    "subtitle": "Verify attendance against billing and resolve discrepancies",
+    "discrepancies": "Discrepancies",
+    "upcoming": "Upcoming",
+    "resolved": "Resolved",
+    "search_placeholder": "Search student or course...",
+    "all_statuses": "All Statuses",
+    "attended": "Attended",
+    "missed": "Missed",
+    "reschedule": "Reschedule",
+    "refund_edit": "Refund / Edit",
+    "cancel_booking": "Cancel Booking",
+    "create_invoice": "Create Invoice",
+    "view_invoice": "View Invoice",
+    "pre_bill": "Pre-bill",
+    "clean_state": "Everything looks perfectly aligned!",
+    "upcoming_empty": "No upcoming sessions scheduled.",
+    "resolved_empty": "No resolution history found.",
+    "reschedule_title": "Reschedule Session",
+    "new_date": "New Date",
+    "save_reschedule": "Save Reschedule",
+    "unbilled": "Unbilled",
+    "awaiting": "Awaiting",
+    "reschedule_fail": "Reschedule failed",
+    "cancel_msg": "Are you sure you want to cancel this booking?",
+    "deletion_fail": "Deletion failed"
+  },
+  "invoices": {
+    "title": "Invoices",
+    "subtitle": "Manage student billing and payment records",
+    "search_placeholder": "Search by student, course, or ID...",
+    "column_issued": "Issued Date",
+    "column_student": "Student",
+    "column_course": "Course",
+    "column_amount": "Amount",
+    "column_method": "Method",
+    "column_status": "Status",
+    "column_actions": "Actions",
+    "empty_state": "No invoices found.",
+    "not_found": "Invoice Not Found",
+    "back_to_list": "Back to Invoices",
+    "detail_title": "Invoice Details",
+    "edit_settings": "Edit Settings",
+    "summary": "Quick Summary",
+    "print": "Print Invoice",
+    "invoiced_to": "Invoiced to",
+    "main_course": "Main Course",
+    "total": "Total",
+    "preparing": "Preparing billing console...",
+    "select_sessions": "Select sessions to group into this invoice",
+    "group_summary": "Invoice Summary",
+    "selected_sessions": "Selected Sessions",
+    "total_amount": "Total Amount",
+    "reset_auto": "Reset to auto-sum",
+    "custom_amount": "Custom Total Amount (Optional)",
+    "custom_amount_placeholder": "Overwrite calculated sum...",
+    "payment_status": "Payment Status",
+    "pay_immediately": "Paid Immediately",
+    "issued_awaiting": "Issued (Awaiting Payment)",
+    "generate_btn": "Generate Invoice",
+    "linked_bookings": "Linked Bookings",
+    "id": "Invoice ID",
+    "amount_due": "Amount Due",
+    "payment_method": "Payment Method",
+    "issued_at": "Issued At",
+    "paid_at": "Paid At",
+    "loading_detail": "Loading invoice details...",
+    "select_at_least_one": "Please select at least one session."
+  },
   "import_page": {
     "subtitle": "Batch upload bookings from CSV files",
     "step1_title": "Upload your CSV",
@@ -437,7 +579,8 @@
     "backup_title": "Backup Recommended",
     "backup_subtitle": "Before importing new data, it's a good idea to create a backup of your current workspace to prevent accidental data loss.",
     "continue_anyway": "Continue without Backup",
-    "go_to_backup": "Go to Backup Page"
+    "go_to_backup": "Go to Backup Page",
+    "resolution_failed": "Resolution failed"
   },
   "export_page": {
     "title": "Export Bookings",
@@ -475,7 +618,9 @@
     "custom_range": "Custom Range",
     "start_date": "Start Date",
     "end_date": "End Date",
-    "download_btn": "Export Logs"
+    "download_btn": "Export Logs",
+    "empty_logs": "No attendance records found for the selected period.",
+    "error_export": "Failed to export data. Please try again."
   },
   "attendance_import_page": {
     "title": "Attendance Import",
@@ -483,7 +628,7 @@
     "step1_headers": "Required Headers:",
     "records_count": "{{count}} Records",
     "view_attendances": "View Attendances",
-    "complete_subtitle": "{{count}} records successfully synchronized."
+    "complete_subtitle": "已成功同步 {{count}} 笔记录。"
   },
   "contact_page": {
     "title": "Contact Us",

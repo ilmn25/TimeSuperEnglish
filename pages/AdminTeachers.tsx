@@ -273,7 +273,7 @@ const AdminTeachers: React.FC = () => {
                    <h3 className="text-sm font-black text-slate-900 truncate tracking-tight">{teacher.name}</h3>
                    {teacher.user_id && orgAdmins.includes(teacher.user_id) && (
                      <span className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[8px] font-black uppercase tracking-widest rounded border border-amber-100">
-                       Admin
+                       {t('org.admin')}
                      </span>
                    )}
                 </div>
@@ -357,8 +357,8 @@ const AdminTeachers: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Teacher Access</h3>
-                  <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mt-0.5">Manage link for <span className="text-indigo-600">{accessModalTeacher.name}</span></p>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">{t('students.dashboard_access')}</h3>
+                  <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest mt-0.5">{t('students.manage_links')} <span className="text-indigo-600">{accessModalTeacher.name}</span></p>
                 </div>
                 <button onClick={() => setAccessModalTeacher(null)} className="p-2 text-slate-400 hover:text-slate-600">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M6 18L18 6M6 6l12 12" /></svg>
@@ -375,7 +375,7 @@ const AdminTeachers: React.FC = () => {
                           <div className="flex items-center space-x-3">
                               <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-sm" />
                               <div className="flex flex-col">
-                                  <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">Authorized User ID</span>
+                                  <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">{t('teachers.authorized_user_id')}</span>
                                   <span className="text-xs font-mono font-bold text-slate-700 truncate max-w-[220px]">{linkedAccounts[0]}</span>
                               </div>
                           </div>
@@ -387,8 +387,8 @@ const AdminTeachers: React.FC = () => {
                       <div className="w-full p-4 bg-slate-900 rounded-2xl border border-slate-800">
                           <div className="flex items-center justify-between">
                               <div className="space-y-0.5">
-                                  <h4 className="text-xs font-black text-white uppercase tracking-widest">Admin Privileges</h4>
-                                  <p className="text-[7px] text-slate-400 font-bold uppercase tracking-widest">Manage organization data</p>
+                                  <h4 className="text-xs font-black text-white uppercase tracking-widest">{t('teachers.admin_privileges')}</h4>
+                                  <p className="text-[7px] text-slate-400 font-bold uppercase tracking-widest">{t('teachers.admin_privileges_desc')}</p>
                               </div>
                               <button 
                                   onClick={toggleAdminStatus}
@@ -403,10 +403,10 @@ const AdminTeachers: React.FC = () => {
                 ) : (
                   <div className="w-full space-y-6">
                       <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">No account linked yet</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('teachers.no_accounts')}</p>
                       </div>
                       <div className="space-y-4">
-                          <label className="block text-[9px] font-black text-indigo-400 uppercase tracking-widest ml-1">Invite Teacher</label>
+                          <label className="block text-[9px] font-black text-indigo-400 uppercase tracking-widest ml-1">{t('teachers.invite_teacher')}</label>
                           <div className="flex gap-2">
                               <input 
                                   type="email" 
@@ -416,7 +416,7 @@ const AdminTeachers: React.FC = () => {
                                   className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-100 text-xs font-bold text-slate-900"
                               />
                               <button onClick={handleLinkAccess} disabled={isProcessing || !accessEmail.trim()} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl text-[9px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50">
-                                  {isProcessing ? '...' : 'Link'}
+                                  {isProcessing ? '...' : t('students.link')}
                               </button>
                           </div>
                       </div>
@@ -430,7 +430,7 @@ const AdminTeachers: React.FC = () => {
 
       {confirmDeleteId && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-sm overflow-hidden p-8 animate-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-black text-slate-900 mb-2">{t('teachers.delete_title')}</h3>
             <p className="text-slate-500 text-xs mb-8 leading-relaxed">{t('teachers.delete_msg')}</p>
             <div className="flex space-x-3">

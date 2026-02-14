@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
-import { Booking, Student } from '../types';
+import { Student } from '../types';
 import { useTranslation } from 'react-i18next';
 
 const AdminInvoiceCreate: React.FC = () => {
@@ -47,7 +47,6 @@ const AdminInvoiceCreate: React.FC = () => {
       if (unbilled.length > 0) {
         setStudent(unbilled[0].students);
       } else {
-        // Fallback or handle case where student has no unbilled bookings left
         const students = await api.getStudents(orgId);
         const match = students.find((s: Student) => s.id === initialStudentId);
         setStudent(match || null);
@@ -81,12 +80,14 @@ const AdminInvoiceCreate: React.FC = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedBookingIds.size === 0) {
-      alert("Please select at least one booking to invoice.");
+      alert(t('invoices.select_at_least_one'));
       return;
     }
+    if (!orgId) return;
     setIsProcessing(true);
     try {
       await api.createInvoice({
+        org_id: orgId,
         booking_ids: Array.from(selectedBookingIds),
         method: formData.status === 'paid' ? formData.method : 'none',
         amount: finalAmount,
@@ -105,7 +106,7 @@ const AdminInvoiceCreate: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Preparing billing console...</p>
+        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">{t('invoices.preparing')}</p>
       </div>
     );
   }
@@ -113,8 +114,8 @@ const AdminInvoiceCreate: React.FC = () => {
   if (!student) {
     return (
       <div className="text-center py-20">
-        <h3 className="text-xl font-black text-slate-900">Student Not Found</h3>
-        <button onClick={() => navigate(`/org/${orgId}/payments`)} className="mt-4 text-indigo-600 font-bold hover:underline">Back to Payments</button>
+        <h3 className="text-xl font-black text-slate-900">{t('students.no_match')}</h3>
+        <button onClick={() => navigate(`/org/${orgId}/payments`)} className="mt-4 text-indigo-600 font-bold hover:underline">{t('nav.back')}</button>
       </div>
     );
   }
@@ -132,7 +133,6 @@ const AdminInvoiceCreate: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Selection Sidebar */}
         <div className="lg:col-span-2 space-y-8">
            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm">
               <div className="flex items-center space-x-4 mb-8">
@@ -141,7 +141,7 @@ const AdminInvoiceCreate: React.FC = () => {
                  </div>
                  <div>
                     <h2 className="text-2xl font-black text-slate-900 tracking-tight">{student.name}</h2>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Select sessions to group into this invoice</p>
+                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{t('invoices.select_sessions')}</p>
                  </div>
               </div>
 
@@ -169,44 +169,43 @@ const AdminInvoiceCreate: React.FC = () => {
                    </div>
                  ))}
                  {unbilledBookings.length === 0 && (
-                   <div className="py-20 text-center text-slate-400 italic">No unbilled sessions found for this student.</div>
+                   <div className="py-20 text-center text-slate-400 italic">{t('invoices.no_unbilled')}</div>
                  )}
               </div>
            </div>
         </div>
 
-        {/* Invoice Settings Sidebar */}
         <div className="space-y-8">
            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-xl sticky top-28">
               <h3 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-3 mb-8">
                 <div className="w-1.5 h-6 bg-indigo-600 rounded-full" />
-                Invoice Summary
+                {t('invoices.group_summary')}
               </h3>
 
               <form onSubmit={handleCreate} className="space-y-6">
                 <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 mb-8">
                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selected Sessions</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('invoices.selected_sessions')}</span>
                       <span className="text-sm font-black text-slate-900">{selectedBookingIds.size}</span>
                    </div>
                    <div className="flex justify-between items-baseline">
-                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Total Amount</span>
+                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{t('invoices.total_amount')}</span>
                       <div className="text-right">
                          <div className="text-2xl font-black text-slate-900">{formData.currency} {finalAmount.toFixed(2)}</div>
                          {formData.customAmount !== null && (
-                            <button type="button" onClick={() => setFormData({...formData, customAmount: null})} className="text-[9px] font-bold text-indigo-500 hover:underline">Reset to auto-sum</button>
+                            <button type="button" onClick={() => setFormData({...formData, customAmount: null})} className="text-[9px] font-bold text-indigo-500 hover:underline">{t('invoices.reset_auto')}</button>
                          )}
                       </div>
                    </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Custom Total Amount (Optional)</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('invoices.custom_amount')}</label>
                   <input 
                     type="number" 
                     value={formData.customAmount || ''}
                     onChange={(e) => setFormData({...formData, customAmount: e.target.value ? parseFloat(e.target.value) : null})}
-                    placeholder="Overwrite calculated sum..."
+                    placeholder={t('invoices.custom_amount_placeholder')}
                     className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 font-bold text-slate-900"
                   />
                 </div>
@@ -223,20 +222,20 @@ const AdminInvoiceCreate: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Payment Status</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('invoices.payment_status')}</label>
                   <select 
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value as any})}
                     className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none font-bold text-slate-900"
                   >
-                    <option value="paid">Paid Immediately</option>
-                    <option value="issued">Issued (Awaiting Payment)</option>
+                    <option value="paid">{t('invoices.pay_immediately')}</option>
+                    <option value="issued">{t('invoices.issued_awaiting')}</option>
                   </select>
                 </div>
 
                 {formData.status === 'paid' && (
                   <div className="animate-in fade-in slide-in-from-top-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Payment Method</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('invoices.payment_method')}</label>
                     <select 
                       value={formData.method}
                       onChange={(e) => setFormData({...formData, method: e.target.value})}
@@ -245,6 +244,7 @@ const AdminInvoiceCreate: React.FC = () => {
                       <option value="cash">Cash</option>
                       <option value="bank_transfer">Bank Transfer</option>
                       <option value="credit_card">Credit Card</option>
+                      <option value="stripe">Stripe</option>
                       <option value="other">Other</option>
                     </select>
                   </div>
@@ -256,7 +256,7 @@ const AdminInvoiceCreate: React.FC = () => {
                   className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 transition-all active:scale-95 disabled:grayscale disabled:opacity-50 flex items-center justify-center gap-3 mt-4"
                 >
                   {isProcessing && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
-                  Generate Invoice
+                  {t('invoices.generate_btn')}
                 </button>
               </form>
            </div>
