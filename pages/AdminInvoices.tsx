@@ -72,17 +72,22 @@ const AdminInvoices: React.FC = () => {
     if (status === 'paid' && amount === 0) return 'bg-indigo-100 text-indigo-700'; // Waived
     switch (status) {
       case 'paid': return 'bg-emerald-100 text-emerald-700';
-      case 'issued': return 'bg-amber-100 text-amber-700'; // Changed to yellow (amber)
+      case 'issued': return 'bg-amber-100 text-amber-700';
       default: return 'bg-slate-100 text-slate-600';
     }
+  };
+
+  const getStatusLabelFormatted = (status: string, amount: number) => {
+    if (status === 'paid' && amount === 0) return t('status.waived');
+    return t(`status.${status}`);
   };
 
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('nav.invoices')}</h2>
-          <p className="text-slate-500 mt-1 font-medium">Manage student billing and payment records</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('invoices.title')}</h2>
+          <p className="text-slate-500 mt-1 font-medium">{t('invoices.subtitle')}</p>
         </div>
       </div>
 
@@ -95,7 +100,7 @@ const AdminInvoices: React.FC = () => {
              type="text"
              value={searchQuery}
              onChange={(e) => setSearchQuery(e.target.value)}
-             placeholder="Search by student, course, or ID..."
+             placeholder={t('invoices.search_placeholder')}
              className="w-full pl-11 pr-6 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all text-sm font-bold text-slate-700"
            />
         </div>
@@ -109,13 +114,13 @@ const AdminInvoices: React.FC = () => {
             <table className="w-full text-left min-w-[1000px]">
               <thead className="bg-slate-900 border-b border-slate-800">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('date')}>Issued Date {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('student')}>Student {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Course</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('amount')}>Amount {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Method</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('status')}>Status {sortField === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('date')}>{t('invoices.column_issued')} {sortField === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('student')}>{t('invoices.column_student')} {sortField === 'student' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('invoices.column_course')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('amount')}>{t('invoices.column_amount')} {sortField === 'amount' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('invoices.column_method')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer hover:text-white" onClick={() => toggleSort('status')}>{t('invoices.column_status')} {sortField === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('invoices.column_actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -138,7 +143,7 @@ const AdminInvoices: React.FC = () => {
                     </td>
                     <td className="px-6 py-5">
                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight ${getStatusColor(inv.status, inv.amount)}`}>
-                        {inv.status === 'paid' && inv.amount === 0 ? 'waived' : inv.status}
+                        {getStatusLabelFormatted(inv.status, inv.amount)}
                       </span>
                     </td>
                     <td className="px-6 py-5 text-right">
@@ -153,7 +158,7 @@ const AdminInvoices: React.FC = () => {
                 ))}
                 {processedInvoices.length === 0 && !isLoading && (
                   <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center text-slate-400 font-bold italic text-sm">No invoices found.</td>
+                    <td colSpan={7} className="px-6 py-20 text-center text-slate-400 font-bold italic text-sm">{t('invoices.empty_state')}</td>
                   </tr>
                 )}
               </tbody>

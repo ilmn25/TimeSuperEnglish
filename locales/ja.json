@@ -1,3 +1,4 @@
+
 {
   "app": {
     "name": "Time Super English",
@@ -272,6 +273,22 @@
     "delete_msg": "この教師を永久に削除しますか？この操作は元に戻せません。過去の予約データに影響を与える可能性があります。",
     "add_now": "今すぐ教師を追加"
   },
+  "teacher_portal": {
+    "attendance_title": "講師ポータル：出席",
+    "attendance_subtitle": "担当生徒の出席記録：",
+    "bookings_title": "講師ポータル：予約",
+    "bookings_subtitle": "担当講師の月間スケジュール：",
+    "students_title": "あなたの生徒",
+    "students_subtitle": "担当クラスの生徒プロフィール",
+    "courses_title": "講師ポータル：コース",
+    "courses_subtitle": "担当講師のカリキュラムと予約枠の管理：",
+    "not_linked_title": "講師プロフィールが未連携です",
+    "not_linked_msg": "管理者に連絡してアカウントを連携してください。",
+    "no_assigned_students": "この日の担当生徒はいません。",
+    "search_students": "生徒を検索...",
+    "no_students_match": "該当する生徒はいません。",
+    "cycle_position": "サイクル位置"
+  },
   "backup": {
     "title": "履歴",
     "subtitle": "データベーススナップショットと時点復元を管理",
@@ -365,7 +382,7 @@
     "priority_backups": "優先バックアップ",
     "everything_monthly": "月額プランの全機能",
     "one_time": "一回払い",
-    "no_fees": "継続料金なし",
+    "no_fees": "No Recurring Fees",
     "future_updates": "将来のProアップデート",
     "best_value": "最良の価値",
     "stripe_notice": "Stripeによるセキュア処理 • いつでもキャンセル可"
@@ -409,7 +426,7 @@
     "example_title": "CSVの例",
     "select_file": "CSVファイルを選択",
     "map_students": "生徒をマップ",
-    "map_courses": "コースをマップ",
+    "map_courses": "マップコース",
     "create_student": "新しい生徒を作成",
     "create_course": "新しいコースを作成",
     "back_to_upload": "アップロードに戻る",
@@ -526,16 +543,7 @@
     "auto_payments": "自動支払い",
     "auto_payments_desc": "ネイティブ請求とサブスクリプション決済によるハンズフリー収益管理。",
     "client_portals": "クライアントポータル",
-    "client_portals_desc": "保護者・生徒向けのホワイトラベルセルフサービスハブ。",
-    "live_attendance": "ライブ出席",
-    "live_attendance_desc": "欠席処理ロジック付きのリアルタイム出席追跡。",
-    "seamless_migration": "シームレス移行",
-    "seamless_migration_desc": "どんなレガシーCSVやSQLからでも簡単にデータ移行できます。",
-    "brandless_ui": "ブランドレスUI",
-    "brandless_ui_desc": "サイトに完全統合。 \"Powered by\" の表記はありません。",
-    "ai_studio_title": "AI Studio サイト合成",
-    "ai_studio_desc": "既存の機関サイトをGoogle AI Studioに移行し、開発者なしでインテリジェントなWeb体験を実現します。",
-    "return_home": "ホームへ戻る"
+    "client_portals_desc": "保護者・生徒向けのホワイトラベルセルフサービスハブ。"
   },
   "pricing_page": {
     "badge": "透明な請求",

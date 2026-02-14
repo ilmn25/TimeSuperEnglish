@@ -120,7 +120,7 @@ const AdminStudents: React.FC = () => {
       resetForm();
       fetchStudents();
     } catch (err) {
-      alert('Failed to save student');
+      alert(t('common.error'));
     } finally {
       setIsProcessing(false);
     }
@@ -134,7 +134,7 @@ const AdminStudents: React.FC = () => {
       setConfirmDeleteId(null);
       fetchStudents();
     } catch (err) {
-      alert('Failed to delete student');
+      alert(t('common.error'));
     } finally {
       setIsProcessing(false);
     }
@@ -199,7 +199,7 @@ const AdminStudents: React.FC = () => {
           onClick={() => setIsFormOpen(true)}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-[10px] uppercase tracking-widest flex items-center justify-center"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M12 4v16m8-8H4" /></svg>
           {t('students.register')}
         </button>
       </div>
@@ -355,9 +355,6 @@ const AdminStudents: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Access Modal & Delete Confirmation would remain same but slightly compacted in UI padding */}
-      {/* (Skipping repetitive modal adjustments for brevity in this block, applying to directory lists mainly) */}
 
       {accessModalStudent && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">

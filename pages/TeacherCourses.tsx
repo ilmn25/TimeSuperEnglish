@@ -64,7 +64,7 @@ const TeacherCourses: React.FC = () => {
     
     try {
       if (editingCourse) {
-        await api.updateCourse(teacher.org_id!, editingCourse.id, formData.name, formData.color);
+        await api.updateCourse(teacher.org_id!, editingCourse.id, { name: formData.name, color: formData.color });
       } else {
         await api.createCourse(teacher.org_id!, formData.name, formData.color);
       }
@@ -106,7 +106,7 @@ const TeacherCourses: React.FC = () => {
   if (!isLoading && !teacher) {
     return (
       <div className="text-center py-20 bg-white border border-slate-200 rounded-[3rem] shadow-sm">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Teacher Profile Not Linked</h2>
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('teacher_portal.not_linked_title')}</h2>
       </div>
     );
   }
@@ -115,8 +115,8 @@ const TeacherCourses: React.FC = () => {
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
         <div className="space-y-0.5 sm:space-y-1">
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Teacher Portal: {t('courses.title')}</h2>
-          <p className="text-slate-500 font-medium text-xs sm:text-sm">Manage curriculum and class availability for <span className="text-indigo-600 font-bold">{teacher?.name}</span></p>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{t('teacher_portal.courses_title')}</h2>
+          <p className="text-slate-500 font-medium text-xs sm:text-sm">{t('teacher_portal.courses_subtitle')} <span className="text-indigo-600 font-bold">{teacher?.name}</span></p>
         </div>
         <div className="flex items-center space-x-3">
           <button 
@@ -172,7 +172,7 @@ const TeacherCourses: React.FC = () => {
 
       {isFormOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/30">
               <h3 className="text-xl font-black text-slate-900 tracking-tight">{editingCourse ? t('courses.edit_title') : t('courses.create_title')}</h3>
             </div>

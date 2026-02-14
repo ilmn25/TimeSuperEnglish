@@ -158,20 +158,20 @@ const AdminPayments: React.FC = () => {
       setRescheduleModalItem(null);
       await fetchData();
     } catch (err) {
-      alert('Reschedule failed');
+      alert(t('payments.reschedule_fail'));
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleCancelBooking = async (id: string) => {
-    if (!window.confirm("Permanently delete this missed booking?")) return;
+    if (!window.confirm(t('payments.cancel_msg'))) return;
     setIsProcessing(true);
     try {
       await api.deleteBooking(orgId!, id);
       await fetchData();
     } catch (err) {
-      alert('Deletion failed');
+      alert(t('payments.deletion_fail'));
     } finally {
       setIsProcessing(false);
     }
@@ -198,12 +198,25 @@ const AdminPayments: React.FC = () => {
     }
   };
 
+  const getStatusLabelFormatted = (status: string) => {
+    switch (status) {
+      case 'attended': return t('status.attended');
+      case 'missed': return t('status.missed');
+      case 'upcoming': return t('status.upcoming');
+      case 'paid': return t('status.paid');
+      case 'waived': return t('status.waived');
+      case 'awaiting_payment': return t('payments.awaiting');
+      case 'unbilled': return t('payments.unbilled');
+      default: return status;
+    }
+  };
+
   return (
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Payments & Audit</h2>
-          <p className="text-slate-500 mt-1 font-medium">Verify attendance against billing and resolve discrepancies</p>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">{t('payments.title')}</h2>
+          <p className="text-slate-500 mt-1 font-medium">{t('payments.subtitle')}</p>
         </div>
       </div>
 
@@ -213,19 +226,19 @@ const AdminPayments: React.FC = () => {
             onClick={() => { setActiveView('discrepancies'); clearFilters(); }}
             className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'discrepancies' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            Discrepancies
+            {t('payments.discrepancies')}
           </button>
           <button 
             onClick={() => { setActiveView('upcoming'); clearFilters(); }}
             className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'upcoming' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            Upcoming
+            {t('payments.upcoming')}
           </button>
           <button 
             onClick={() => { setActiveView('resolved'); clearFilters(); }}
             className={`px-6 py-2.5 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'resolved' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            Resolved
+            {t('payments.resolved')}
           </button>
         </div>
 
@@ -238,7 +251,7 @@ const AdminPayments: React.FC = () => {
                type="text"
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
-               placeholder="Search student or course..."
+               placeholder={t('payments.search_placeholder')}
                className="w-full pl-11 pr-6 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:bg-white transition-all text-xs font-bold text-slate-700"
              />
           </div>
@@ -250,16 +263,16 @@ const AdminPayments: React.FC = () => {
                 onChange={(e) => setFilterAttendance(e.target.value as any)}
                 className="px-4 py-2.5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-100 text-[10px] font-black uppercase tracking-widest text-slate-600 cursor-pointer"
               >
-                <option value="">All Statuses</option>
-                <option value="attended">Attended</option>
-                <option value="missed">Missed</option>
+                <option value="">{t('payments.all_statuses')}</option>
+                <option value="attended">{t('status.attended')}</option>
+                <option value="missed">{t('status.missed')}</option>
               </select>
             )}
             <button 
               onClick={clearFilters}
               className="px-6 py-2.5 bg-slate-100 text-slate-500 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
             >
-              Reset
+              {t('common.reset')}
             </button>
           </div>
         </div>
@@ -273,12 +286,12 @@ const AdminPayments: React.FC = () => {
             <table className="w-full text-left min-w-[1000px]">
               <thead className="bg-slate-900 border-b border-slate-800">
                 <tr>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Course</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Attendance</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Invoice</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.date')}</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.student')}</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.course')}</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('nav.attendance')}</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('nav.invoices')}</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{t('bookings.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -295,12 +308,12 @@ const AdminPayments: React.FC = () => {
                     </td>
                     <td className="px-8 py-5">
                        <div className={`inline-flex px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight border ${getAttendanceStyle(item.attendanceStatus)}`}>
-                          {item.attendanceStatus}
+                          {getStatusLabelFormatted(item.attendanceStatus)}
                        </div>
                     </td>
                     <td className="px-8 py-5">
                        <div className={`inline-flex px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight border ${getInvoiceStyle(item.invoiceStatus)}`}>
-                          {item.invoiceStatus === 'awaiting_payment' ? 'Awaiting' : item.invoiceStatus}
+                          {getStatusLabelFormatted(item.invoiceStatus)}
                        </div>
                     </td>
                     <td className="px-8 py-5 text-right">
@@ -314,13 +327,13 @@ const AdminPayments: React.FC = () => {
                                   onClick={() => { setRescheduleModalItem(item); setRescheduleFormData({ date: item.date, start: item.start.slice(0,5), end: item.end.slice(0,5) }); }}
                                   className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm"
                                 >
-                                  Reschedule
+                                  {t('payments.reschedule')}
                                 </button>
                                 <button 
                                   onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
                                   className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
                                 >
-                                  Refund / Edit
+                                  {t('payments.refund_edit')}
                                 </button>
                               </>
                             )}
@@ -330,22 +343,22 @@ const AdminPayments: React.FC = () => {
                               <>
                                 <button 
                                   onClick={() => handleCancelBooking(item.id)}
-                                  className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-100 transition-all"
+                                  className="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-100 transition-all"
                                 >
-                                  Cancel Booking
+                                  {t('payments.cancel_booking')}
                                 </button>
                                 <button 
                                   onClick={() => { setRescheduleModalItem(item); setRescheduleFormData({ date: item.date, start: item.start.slice(0,5), end: item.end.slice(0,5) }); }}
                                   className="px-4 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all"
                                 >
-                                  Reschedule
+                                  {t('payments.reschedule')}
                                 </button>
                               </>
                             )}
 
                             {/* CASE: ATTENDED + UNBILLED */}
                             {item.attendanceStatus === 'attended' && item.invoiceStatus === 'unbilled' && (
-                              <button onClick={() => navigateToCreateInvoice(item)} disabled={isProcessing} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-sm">Create Invoice</button>
+                              <button onClick={() => navigateToCreateInvoice(item)} disabled={isProcessing} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all active:scale-95 shadow-sm">{t('payments.create_invoice')}</button>
                             )}
                             
                             {/* CASE: ATTENDED + AWAITING */}
@@ -354,7 +367,7 @@ const AdminPayments: React.FC = () => {
                                 onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm"
                               >
-                                View Invoice
+                                {t('payments.view_invoice')}
                               </button>
                             )}
                           </>
@@ -363,20 +376,20 @@ const AdminPayments: React.FC = () => {
                         {activeView === 'upcoming' && (
                           <>
                             {item.invoiceStatus === 'unbilled' ? (
-                              <button onClick={() => navigateToCreateInvoice(item)} disabled={isProcessing} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all">Pre-bill</button>
+                              <button onClick={() => navigateToCreateInvoice(item)} disabled={isProcessing} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all">{t('payments.pre_bill')}</button>
                             ) : (
                               <button 
                                 onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm"
                               >
-                                View Invoice
+                                {t('payments.view_invoice')}
                               </button>
                             )}
                             <button 
                               onClick={() => { setRescheduleModalItem(item); setRescheduleFormData({ date: item.date, start: item.start.slice(0,5), end: item.end.slice(0,5) }); }}
                               className="px-4 py-2 bg-white border border-slate-200 text-slate-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:text-indigo-600 transition-all"
                             >
-                              Edit
+                              {t('common.edit')}
                             </button>
                           </>
                         )}
@@ -386,7 +399,7 @@ const AdminPayments: React.FC = () => {
                              onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
                              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-sm"
                            >
-                             Details
+                             {t('invoices.detail_title')}
                            </button>
                         )}
                       </div>
@@ -396,7 +409,7 @@ const AdminPayments: React.FC = () => {
                 {processedIssues.length === 0 && !isLoading && (
                   <tr>
                     <td colSpan={6} className="px-8 py-24 text-center text-slate-400 font-bold italic text-sm bg-slate-50/20">
-                      {activeView === 'discrepancies' ? 'Everything looks perfectly aligned!' : activeView === 'upcoming' ? 'No upcoming sessions scheduled.' : 'No resolution history found.'}
+                      {activeView === 'discrepancies' ? t('payments.clean_state') : activeView === 'upcoming' ? t('payments.upcoming_empty') : t('payments.resolved_empty')}
                     </td>
                   </tr>
                 )}
@@ -406,20 +419,19 @@ const AdminPayments: React.FC = () => {
         )}
       </div>
 
-      {/* Reschedule Modal */}
       {rescheduleModalItem && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="px-10 py-8 border-b border-slate-50 bg-indigo-50/30">
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight">Reschedule Session</h3>
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t('payments.reschedule_title')}</h3>
               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
-                For {rescheduleModalItem.studentName}
+                {t('bookings.for')} {rescheduleModalItem.studentName}
               </p>
             </div>
             
             <form onSubmit={handleApproveReschedule} className="p-10 space-y-6">
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">New Date</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">{t('payments.new_date')}</label>
                 <input 
                   type="date" 
                   required
@@ -430,7 +442,7 @@ const AdminPayments: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">Start</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">{t('bookings.start')}</label>
                   <input 
                     type="time" 
                     required
@@ -440,7 +452,7 @@ const AdminPayments: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">End</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2.5 ml-1">{t('bookings.end')}</label>
                   <input 
                     type="time" 
                     required
@@ -452,10 +464,10 @@ const AdminPayments: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-end space-x-4 pt-4">
-                <button type="button" onClick={() => setRescheduleModalItem(null)} className="px-4 py-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">Cancel</button>
+                <button type="button" onClick={() => setRescheduleModalItem(null)} className="px-4 py-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">{t('common.cancel')}</button>
                 <button type="submit" disabled={isProcessing} className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center">
                   {isProcessing && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />}
-                  Save Reschedule
+                  {t('payments.save_reschedule')}
                 </button>
               </div>
             </form>

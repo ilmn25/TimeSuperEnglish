@@ -1,3 +1,4 @@
+
 {
   "app": {
     "name": "Time Super English",
@@ -188,7 +189,7 @@
     "projected_class": "예상 수업",
     "sessions_count": "{{count}} 세션",
     "view_detail": "일정을 보고 예약 요청을 생성",
-    "not_found": "코스를 찾을 수 없음"
+    "not_found": "강좌를 찾을 수 없음"
   },
   "course_schedule": {
     "title": "일정",
@@ -271,6 +272,22 @@
     "delete_title": "프로필을 삭제하시겠습니까?",
     "delete_msg": "이 교사를 영구 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며 과거 예약 데이터에 영향을 줄 수 있습니다.",
     "add_now": "지금 교사 추가"
+  },
+  "teacher_portal": {
+    "attendance_title": "교사 포털: 출석",
+    "attendance_subtitle": "다음에 대한 일일 학생 출석 기록:",
+    "bookings_title": "교사 포털: 예약",
+    "bookings_subtitle": "다음에 대한 월간 일정 개요:",
+    "students_title": "나의 학생",
+    "students_subtitle": "담당 클래스의 학생 프로필",
+    "courses_title": "교사 포털: 강좌",
+    "courses_subtitle": "다음에 대한 커리큘럼 및 가용성 관리:",
+    "not_linked_title": "교사 프로필이 연결되지 않음",
+    "not_linked_msg": "관리자에게 문의하여 계정을 연결하십시오.",
+    "no_assigned_students": "이 날짜에 할당된 학생이 없습니다.",
+    "search_students": "학생 검색...",
+    "no_students_match": "검색어와 일치하는 학생이 없습니다.",
+    "cycle_position": "사이클 위치"
   },
   "backup": {
     "title": "이력",

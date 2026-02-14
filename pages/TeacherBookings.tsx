@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { supabase } from '../services/supabaseClient';
@@ -147,7 +148,6 @@ const TeacherBookings: React.FC = () => {
     });
   }, []);
 
-  // Fix: Added missing changeMonth function
   const changeMonth = (offset: number) => {
     const next = new Date(viewDate);
     next.setMonth(next.getMonth() + offset);
@@ -302,7 +302,7 @@ const TeacherBookings: React.FC = () => {
   if (!isLoading && !teacher) {
     return (
       <div className="text-center py-20 bg-white border border-slate-200 rounded-[3rem] shadow-sm">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Teacher Profile Not Linked</h2>
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('teacher_portal.not_linked_title')}</h2>
       </div>
     );
   }
@@ -313,8 +313,8 @@ const TeacherBookings: React.FC = () => {
     <div className={`space-y-6 pb-10 transition-all duration-500 ease-in-out ${(selectedTimelineInfo && isTimelineExpanded) ? 'xl:pr-96' : 'pr-0'}`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Teacher Portal: {t('bookings.title')}</h2>
-          <p className="text-slate-500 text-xs font-medium">Monthly schedule overview for <span className="text-indigo-600 font-bold">{teacher?.name}</span></p>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">{t('teacher_portal.bookings_title')}</h2>
+          <p className="text-slate-500 text-xs font-medium">{t('teacher_portal.bookings_subtitle')} <span className="text-indigo-600 font-bold">{teacher?.name}</span></p>
         </div>
         <div className="flex items-center space-x-3">
           <button 
@@ -331,19 +331,19 @@ const TeacherBookings: React.FC = () => {
         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
            <div className="flex items-center space-x-1">
               <button onClick={() => changeMonth(-1)} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M15 19l-7-7 7-7" /></svg>
               </button>
               <div className="px-2">
                 <span className="text-sm font-black text-slate-800 uppercase tracking-tighter text-center block w-20">{monthName}</span>
               </div>
               <button onClick={() => changeMonth(1)} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M9 5l7 7-7 7" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M9 5l7 7-7 7" /></svg>
               </button>
            </div>
 
            <div className="flex items-center space-x-2">
               <button onClick={() => setIsCalendarMaximized(!isCalendarMaximized)} className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button onClick={() => setSelectedDates(calendarWeeks.flat().filter(d => d !== null).map(d => d!.toLocaleDateString('en-CA')))} className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:bg-indigo-50 transition-all">{t('bookings.select_month')}</button>
               <button onClick={() => { setSelectedDates([]); setFilterStudent(''); setFilterCourse(''); setFilterStatus(''); }} className="px-3 py-1.5 bg-white text-slate-400 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:bg-red-50 transition-all">{t('bookings.reset')}</button>
@@ -373,7 +373,7 @@ const TeacherBookings: React.FC = () => {
                           key={dateStr}
                           onMouseDown={(e) => handleMouseDown(dateStr, e)}
                           onMouseEnter={() => isDragging && setDragEnd(dateStr)}
-                          className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'} ${isSelected || isPreviewed ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg' : isToday ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200'}`}
+                          className={`flex flex-col items-center justify-start p-1.5 rounded-lg transition-all border font-black relative ${isCalendarMaximized ? 'min-h-[7.5rem]' : 'h-10'} ${isSelected || isPreviewed ? 'bg-indigo-600 border-indigo-600 text-white z-10 shadow-lg shadow-indigo-100' : isToday ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200'}`}
                         >
                           <span className={`text-[11px] ${isCalendarMaximized ? 'mb-1 self-start ml-0.5' : ''}`}>{dateObj.getDate()}</span>
                           {isCalendarMaximized ? (

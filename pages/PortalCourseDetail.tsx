@@ -6,12 +6,30 @@ import { useTranslation } from 'react-i18next';
 import { SUPABASE_ORG_ID } from '../services/supabaseClient';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const ONE_OFF_COLOR = '#f59e0b'; // Amber 500 to match admin
 
 const formatTime = (timeStr: string) => {
   if (!timeStr) return '--:--';
   const parts = timeStr.split(':');
   if (parts.length < 2) return timeStr;
   return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+};
+
+const getCycleWeekIndex = (anchorStr: string, targetDate: Date): number => {
+  const anchor = new Date(anchorStr);
+  const anchorSunday = new Date(anchor);
+  anchorSunday.setDate(anchor.getDate() - anchor.getDay());
+  anchorSunday.setHours(0, 0, 0, 0);
+
+  const targetSunday = new Date(targetDate);
+  targetSunday.setDate(targetDate.getDate() - targetDate.getDay());
+  targetSunday.setHours(0, 0, 0, 0);
+
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const diffWeeks = Math.floor((targetSunday.getTime() - anchorSunday.getTime()) / msPerWeek);
+  
+  if (diffWeeks < 0) return -1;
+  return (diffWeeks % 4) + 1;
 };
 
 const PortalCourseDetail: React.FC = () => {
@@ -24,20 +42,20 @@ const PortalCourseDetail: React.FC = () => {
   const [courseSchedules, setCourseSchedules] = useState<CourseSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // View State
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(new Date().toLocaleDateString('en-CA'));
 
-  // Request Form State
   const [requestingSlot, setRequestingSlot] = useState<{
     course: Course;
+    schedule: CourseSchedule;
     date: string;
-    start: string;
-    end: string;
   } | null>(null);
+
   const [requestFormData, setRequestFormData] = useState({
     student_id: '',
-    message: ''
+    message: '',
+    start_time: '',
+    end_time: ''
   });
   const [isRequesting, setIsRequesting] = useState(false);
 
@@ -69,13 +87,23 @@ const PortalCourseDetail: React.FC = () => {
     fetchDetail();
   }, [fetchDetail]);
 
+  useEffect(() => {
+    if (requestingSlot) {
+      setRequestFormData(prev => ({
+        ...prev,
+        start_time: formatTime(requestingSlot.schedule.start_time),
+        end_time: formatTime(requestingSlot.schedule.end_time)
+      }));
+    }
+  }, [requestingSlot]);
+
   const timeToPercent = (timeStr: string) => {
     const parts = timeStr.split(':');
     const h = Number(parts[0]);
     const m = Number(parts[1]) || 0;
     const totalMinutes = h * 60 + m;
-    const startMinutes = 8 * 60; // Start timeline at 8:00
-    const endMinutes = 22 * 60;  // End timeline at 22:00
+    const startMinutes = 8 * 60; 
+    const endMinutes = 22 * 60;  
     const percent = ((totalMinutes - startMinutes) / (endMinutes - startMinutes)) * 100;
     return Math.max(0, Math.min(100, percent));
   };
@@ -93,24 +121,14 @@ const PortalCourseDetail: React.FC = () => {
       const dayOfWeek = d.getDay();
 
       courseSchedules.forEach(s => {
-        if (s.date && s.date === dateStr) {
+        if (!s.is_recurring && s.one_off_dates?.includes(dateStr)) {
           if (!projections[dateStr]) projections[dateStr] = [];
           projections[dateStr].push(s);
-        }
-        if (s.days_of_week && s.days_of_week.includes(dayOfWeek)) {
-          const startLimit = s.starts_on ? new Date(s.starts_on) : null;
-          if (!startLimit || d >= startLimit) {
-            let isIncluded = true;
-            if (s.biweekly && startLimit) {
-              const diffTime = Math.abs(d.getTime() - startLimit.getTime());
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-              const weekNum = Math.floor(diffDays / 7);
-              if (weekNum % 2 !== 0) isIncluded = false;
-            }
-            if (isIncluded) {
-              if (!projections[dateStr]) projections[dateStr] = [];
-              projections[dateStr].push(s);
-            }
+        } else if (s.is_recurring && s.days_of_week?.includes(dayOfWeek)) {
+          const cycleWeek = getCycleWeekIndex(s.anchor_date!, d);
+          if (cycleWeek !== -1 && s.cycle_pattern?.includes(cycleWeek)) {
+            if (!projections[dateStr]) projections[dateStr] = [];
+            projections[dateStr].push(s);
           }
         }
       });
@@ -154,23 +172,36 @@ const PortalCourseDetail: React.FC = () => {
     return (yiq >= 128) ? '#1e293b' : '#ffffff';
   };
 
+  const isWithinWindow = (start: string, end: string, minStart: string, maxEnd: string) => {
+    return start >= minStart && end <= maxEnd && end > start;
+  };
+
   const handleSendRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!requestingSlot || !requestFormData.student_id) return;
+
+    const minS = formatTime(requestingSlot.schedule.start_time);
+    const maxE = formatTime(requestingSlot.schedule.end_time);
+
+    if (!isWithinWindow(requestFormData.start_time, requestFormData.end_time, minS, maxE)) {
+      alert(t('course_schedule.outside_window_error', { start: minS, end: maxE }));
+      return;
+    }
+
     setIsRequesting(true);
     try {
       await api.createBookingRequest({
         student_id: requestFormData.student_id,
         course_id: requestingSlot.course.id,
         date: requestingSlot.date,
-        start_time: requestingSlot.start,
-        end_time: requestingSlot.end,
+        start_time: requestFormData.start_time,
+        end_time: requestFormData.end_time,
         message: requestFormData.message,
         org_id: SUPABASE_ORG_ID
       });
       alert(t('bookings.request_success'));
       setRequestingSlot(null);
-      setRequestFormData({ student_id: '', message: '' });
+      setRequestFormData({ student_id: '', message: '', start_time: '', end_time: '' });
     } catch (err) {
       alert(t('bookings.request_fail'));
     } finally {
@@ -243,19 +274,29 @@ const PortalCourseDetail: React.FC = () => {
                          <button 
                            key={dateStr} 
                            onClick={() => setSelectedDate(dateStr)}
-                           className={`relative p-2 rounded-[1.25rem] border transition-all cursor-pointer ${
-                             isSelected ? 'ring-2 ring-indigo-500 border-indigo-500' : 
+                           className={`relative p-2 rounded-[1.25rem] border-2 transition-all cursor-pointer ${
+                             isSelected ? 'z-10 border-indigo-500 ring-4 ring-indigo-50' : 
                              isToday ? 'bg-slate-50 border-slate-200' : 'bg-white border-slate-100 hover:border-slate-300'
                            }`}
                          >
                            <span className={`text-[10px] font-black ${isToday ? 'text-indigo-600' : isSelected ? 'text-indigo-700' : 'text-slate-400'}`}>{dateObj.getDate()}</span>
                            <div className="mt-1 space-y-1 overflow-y-auto no-scrollbar max-h-[3rem]">
-                             {daySchedules.slice(0, 2).map((s, idx) => (
-                               <div key={idx} className="px-1 py-0.5 rounded text-[7px] font-black text-white truncate shadow-sm" style={{ backgroundColor: s.date ? '#475569' : (course.color || '#6366f1') }}>
-                                 {formatTime(s.start_time)}
-                               </div>
-                             ))}
-                             {daySchedules.length > 2 && <div className="text-[6px] text-center font-black text-slate-300">+{daySchedules.length-2}</div>}
+                             {daySchedules.slice(0, 2).map((s, idx) => {
+                               const baseColor = !s.is_recurring ? ONE_OFF_COLOR : (course.color || '#6366f1');
+                               return (
+                                 <div 
+                                  key={idx} 
+                                  className={`px-1 py-0.5 rounded text-[7px] font-black truncate shadow-sm transition-all ${!s.is_fixed ? 'border' : 'text-white'}`}
+                                  style={{ 
+                                    backgroundColor: s.is_fixed ? baseColor : `${baseColor}20`,
+                                    color: s.is_fixed ? '#fff' : baseColor,
+                                    borderColor: s.is_fixed ? 'transparent' : baseColor
+                                  }}
+                                 >
+                                   {formatTime(s.start_time)}
+                                 </div>
+                               );
+                             })}
                            </div>
                          </button>
                        );
@@ -284,57 +325,44 @@ const PortalCourseDetail: React.FC = () => {
                   const top = timeToPercent(s.start_time);
                   const bottom = timeToPercent(s.end_time);
                   const slotDuration = (new Date(`2000-01-01T${s.end_time}`).getTime() - new Date(`2000-01-01T${s.start_time}`).getTime()) / (1000 * 60);
+                  const baseColor = s.is_recurring ? (course.color || '#6366f1') : ONE_OFF_COLOR;
 
                   return (
                     <button 
                       key={idx} 
-                      onClick={() => setRequestingSlot({ course: course, date: selectedDate, start: s.start_time, end: s.end_time })}
-                      className="absolute left-0 right-0 rounded-lg border-l-4 shadow-xl flex flex-col p-2 group transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                      onClick={() => setRequestingSlot({ course: course, date: selectedDate, schedule: s })}
+                      className={`absolute left-0 right-0 rounded-lg border-l-4 shadow-xl flex flex-col p-2 group transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${!s.is_fixed ? 'border-dashed' : ''}`}
                       style={{ 
                         top: `${top}%`, 
                         height: `${bottom - top}%`,
-                        backgroundColor: `${course.color}30`, 
-                        borderLeftColor: course.color,
-                        borderColor: `${course.color}50`,
+                        backgroundColor: s.is_fixed ? `${baseColor}40` : `${baseColor}15`, 
+                        borderLeftColor: baseColor,
+                        borderColor: s.is_fixed ? `${baseColor}60` : baseColor,
                         borderWidth: '1px',
                         borderLeftWidth: '4px',
                       }}
                     >
-                        <span className="text-[7px] font-black text-white/40 uppercase tracking-tighter truncate">{t('course_schedule.slot_available')}</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[7px] font-black text-white/40 uppercase tracking-tighter truncate">{s.is_in_person ? 'In-Person' : 'Remote'}</span>
+                          <span className="text-[7px] font-black text-indigo-400 uppercase tracking-tighter">HKD {s.price}{!s.is_fixed && '/hr'}</span>
+                        </div>
                         <span className="text-[10px] font-mono font-black text-white truncate leading-none">{formatTime(s.start_time)}—{formatTime(s.end_time)}</span>
-                        <span className="text-[8px] font-bold text-white/60 truncate leading-none mt-1">{slotDuration} {t('common.minutes_short')}</span>
+                        <span className="text-[8px] font-bold text-white/60 truncate leading-none mt-1">{slotDuration} {t('common.minutes_short')} • {s.is_fixed ? t('course_schedule.fixed_session') : t('course_schedule.flexible_session')}</span>
                     </button>
                   );
                 })}
-                 {!selectedDate && (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-700 opacity-50">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                      <p className="text-[9px] font-black uppercase">{t('course_schedule.inspect_date')}</p>
-                    </div>
-                 )}
               </div>
-            </div>
-            
-            <div className="mt-4 flex flex-col space-y-2">
-                <div className="flex items-center space-x-2">
-                   <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: course?.color }} />
-                   <span className="text-[8px] font-black text-slate-500 uppercase">{t('course_schedule.regular')}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                   <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-                   <span className="text-[8px] font-black text-slate-500 uppercase">{t('course_schedule.one_off')}</span>
-                </div>
             </div>
           </div>
       </div>
 
       {requestingSlot && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-md overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="px-10 py-8 border-b border-slate-50 bg-slate-50/30">
               <h3 className="text-2xl font-black text-slate-900 tracking-tight">{t('bookings.request_session')}</h3>
               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
-                {t('bookings.for')} <span className="text-indigo-600">{requestingSlot.course.name}</span> on <span className="text-indigo-600">{requestingSlot.date}</span> at <span className="text-indigo-600">{formatTime(requestingSlot.start)}</span>
+                {t('bookings.for')} <span className="text-indigo-600">{requestingSlot.course.name}</span> on <span className="text-indigo-600">{requestingSlot.date}</span>
               </p>
             </div>
             
@@ -351,6 +379,44 @@ const PortalCourseDetail: React.FC = () => {
                   {myStudents.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
+
+              {!requestingSlot.schedule.is_fixed ? (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl">
+                     <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest mb-1">{t('course_schedule.flexible_session')}</p>
+                     <p className="text-[10px] text-slate-600 font-bold leading-tight">
+                        {t('course_schedule.allowed_window')}: <span className="font-mono text-indigo-700">{formatTime(requestingSlot.schedule.start_time)} — {formatTime(requestingSlot.schedule.end_time)}</span>
+                     </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.start')}</label>
+                      <input 
+                        type="time" 
+                        required
+                        value={requestFormData.start_time}
+                        onChange={(e) => setRequestFormData({ ...requestFormData, start_time: e.target.value })}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-50 font-black font-mono text-slate-900 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.end')}</label>
+                      <input 
+                        type="time" 
+                        required
+                        value={requestFormData.end_time}
+                        onChange={(e) => setRequestFormData({ ...requestFormData, end_time: e.target.value })}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-4 focus:ring-indigo-50 font-black font-mono text-slate-900 transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex justify-between items-center">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('bookings.time')}</span>
+                  <span className="text-sm font-black text-slate-900 font-mono">{formatTime(requestingSlot.schedule.start_time)} — {formatTime(requestingSlot.schedule.end_time)}</span>
+                </div>
+              )}
 
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t('bookings.optional_message')}</label>
@@ -378,5 +444,4 @@ const PortalCourseDetail: React.FC = () => {
   );
 };
 
-// Added default export
 export default PortalCourseDetail;

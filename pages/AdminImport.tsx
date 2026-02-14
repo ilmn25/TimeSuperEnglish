@@ -275,7 +275,7 @@ const AdminImport: React.FC = () => {
     if (!orgId || resolvedBookings.length === 0) {
         if (resolvedBookings.length === 0) setStep(4);
         return;
-    };
+    }
     setIsProcessing(true);
     setImportSuccessCount(0);
     startImport(resolvedBookings.length);
