@@ -231,7 +231,7 @@
     "edit_profile": "プロフィールを編集",
     "registration": "登録",
     "student_data": "生徒データ",
-    "full_name": "氏名",
+    "full_name": "全名",
     "grade_level": "学年",
     "select": "選択",
     "contact": "連絡先",
@@ -552,6 +552,7 @@
   "footer": {
     "intelligence": "教育インテリジェンス",
     "academy_management": "アカデミー管理",
-    "admin": "管理者"
+    "admin": "管理者",
+    "teacher": "講師"
   }
 }

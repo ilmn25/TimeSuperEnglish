@@ -355,12 +355,13 @@ const AdminCourseSchedule: React.FC = () => {
   };
 
   const handlePublishAll = async () => {
-    if (!courseId) return;
+    if (!courseId || !orgId) return;
     setIsProcessing(true);
     try {
       for (const id of deletedIds) await api.deleteCourseSchedule(id);
       for (const s of localSchedules) {
         const payload = {
+          org_id: orgId,
           course_id: courseId,
           is_recurring: s.is_recurring,
           is_fixed: s.is_fixed,
@@ -382,10 +383,17 @@ const AdminCourseSchedule: React.FC = () => {
   };
 
   const handleCreatePackage = async (e: React.FormEvent) => {
-    e.preventDefault(); if (!courseId) return;
+    e.preventDefault(); if (!courseId || !orgId) return;
     setIsProcessing(true);
     try {
-      await api.createCoursePackage({ course_id: courseId, name: packageFormData.name, count: packageFormData.count, price: packageFormData.price, unit: packageFormData.unit });
+      await api.createCoursePackage({ 
+        org_id: orgId,
+        course_id: courseId, 
+        name: packageFormData.name, 
+        count: packageFormData.count, 
+        price: packageFormData.price, 
+        unit: packageFormData.unit 
+      });
       setShowPackageForm(false); setPackageFormData({ name: '', count: 10, price: 0, unit: 'sessions' }); fetchData();
     } catch (err) { alert(t('common.error')); }
     finally { setIsProcessing(false); }

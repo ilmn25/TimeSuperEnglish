@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { Student, Booking } from '../types';
@@ -190,9 +189,9 @@ const PortalAttendance: React.FC = () => {
                         {isCalendarMaximized ? (
                           <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
                             {studentStatuses.map((s, i) => (
-                              <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
+                              <div key={i} className={`flex items-center space-x-1.5 min-w-0 rounded px-1 py-0.5 ${isSelected ? 'bg-white/10' : 'bg-slate-50'}`}>
                                 <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
-                                <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-50'}`}>{s.name}</span>
+                                <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-50' : 'text-slate-900'}`}>{s.name}</span>
                               </div>
                             ))}
                           </div>

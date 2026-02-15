@@ -552,6 +552,7 @@
   "footer": {
     "intelligence": "교육 인텔리전스",
     "academy_management": "아카데미 관리",
-    "admin": "관리자"
+    "admin": "관리자",
+    "teacher": "교사"
   }
 }

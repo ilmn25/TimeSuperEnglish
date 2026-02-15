@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -380,12 +379,12 @@ const AdminBookingRequests: React.FC = () => {
                                   borderColor: isTarget ? '#6366f1' : hexToRgba(color, 0.3) 
                                 }}
                               />
-                              {item.type === 'booking' && item.check_in && (
+                              {item.type === 'booking' && item.check_in && height > 0 && (
                                 <div 
                                   className={`absolute left-1 right-1 rounded-lg border-l-4 shadow-xl ${!item.check_out ? 'animate-pulse' : ''}`} 
                                   style={{ 
-                                    top: `${attTop - top}%`, 
-                                    height: `${attHeight}%`, 
+                                    top: `${((attTop - top) / height) * 100}%`, 
+                                    height: `${(attHeight / height) * 100}%`, 
                                     backgroundColor: hexToRgba(color, 0.8), 
                                     borderLeftColor: color, 
                                     borderTopColor: hexToRgba(color, 0.2), 
