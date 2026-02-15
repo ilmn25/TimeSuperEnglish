@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { supabase } from '../services/supabaseClient';
@@ -180,23 +179,41 @@ const TeacherAttendance: React.FC = () => {
     if (dayBookings.length === 0) return null;
     const statuses = dayBookings.map(b => getBookingStatus(b));
     if (statuses.every(s => s === 'blue')) return 'blue';
-    if (statuses.some(s => s === 'red')) return 'red';
+    
+    const pastStatuses = statuses.filter(s => s !== 'blue');
+    if (pastStatuses.length === 0) return 'blue';
+
+    const hasMissed = pastStatuses.some(s => s === 'red');
+    const hasAttended = pastStatuses.some(s => s === 'green');
+
+    if (hasMissed && hasAttended) return 'yellow';
+    if (hasMissed) return 'red';
     return 'green';
   };
 
   const getStudentDetailedStatusesForDay = (dateStr: string) => {
     const dayBookings = monthBookings.filter(b => b.date === dateStr);
-    const studentMap = new Map<string, { name: string; status: BookingStatus }>();
+    const studentMap = new Map<string, { name: string; statuses: BookingStatus[] }>();
+    
     dayBookings.forEach(b => {
       const student = b.students as Student;
       if (!student) return;
-      const current = studentMap.get(student.id);
-      const status = getBookingStatus(b);
-      if (!current || (status === 'red' && current.status !== 'red')) {
-        studentMap.set(student.id, { name: student.name, status });
+      if (!studentMap.has(student.id)) {
+        studentMap.set(student.id, { name: student.name, statuses: [] });
       }
+      studentMap.get(student.id)!.statuses.push(getBookingStatus(b));
     });
-    return Array.from(studentMap.values());
+
+    return Array.from(studentMap.values()).map(({ name, statuses }) => {
+      if (statuses.every(s => s === 'blue')) return { name, status: 'blue' as BookingStatus };
+      const past = statuses.filter(s => s !== 'blue');
+      if (past.length === 0) return { name, status: 'blue' as BookingStatus };
+      const hasMissed = past.some(s => s === 'red');
+      const hasAttended = past.some(s => s === 'green');
+      if (hasMissed && hasAttended) return { name, status: 'yellow' as BookingStatus };
+      if (hasMissed) return { name, status: 'red' as BookingStatus };
+      return { name, status: 'green' as BookingStatus };
+    });
   };
 
   const handleCheckIn = async (bookingId: string) => {
@@ -286,7 +303,7 @@ const TeacherAttendance: React.FC = () => {
                 className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
                 title={isCalendarMaximized ? t('common.minimize') : t('common.maximize')}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button 
                 onClick={() => { setDate(hktToday); setViewDate(new Date()); }}
@@ -331,9 +348,9 @@ const TeacherAttendance: React.FC = () => {
                           {isCalendarMaximized ? (
                             <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
                               {studentStatuses.map((s, i) => (
-                                <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
+                                <div key={i} className={`flex items-center space-x-1.5 min-w-0 rounded px-1 py-0.5 ${isSelected ? 'bg-white/10' : 'bg-slate-50'}`}>
                                   <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
-                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-100' : 'text-slate-50'}`}>
+                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected ? 'text-indigo-50' : 'text-slate-900'}`}>
                                     {s.name}
                                   </span>
                                 </div>

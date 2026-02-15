@@ -1,6 +1,6 @@
 
 import { supabase, SUPABASE_URL, SUPABASE_KEY, SUPABASE_ORG_ID } from './supabaseClient';
-import { Teacher, Invoice, Course, CoursePackage, CourseSchedule } from '../types';
+import { Teacher, Invoice, Course, CoursePackage, CourseSchedule, BackupFile } from '../types';
 
 const getHeaders = async (isMutation = false) => {
   const { data: { session } } = await supabase.auth.getSession();
@@ -326,6 +326,7 @@ export const api = {
   },
 
   async createCourseSchedule(data: { 
+    org_id: string;
     course_id: string; 
     is_recurring: boolean;
     is_fixed: boolean;
@@ -375,7 +376,7 @@ export const api = {
     return data;
   },
 
-  async createCoursePackage(data: { course_id: string; name: string; count: number; price: number; unit: 'sessions' | 'hours' }) {
+  async createCoursePackage(data: { org_id: string; course_id: string; name: string; count: number; price: number; unit: 'sessions' | 'hours' }) {
     const { data: inserted, error } = await supabase
       .from('course_packages')
       .insert(data)
@@ -490,16 +491,16 @@ export const api = {
     return handleResponse(response, 'Failed to delete student');
   },
 
-  // BACKUP METHODS (EDGE FUNCTIONS)
-  async listBackups(orgId: string) {
-    const headers = await getHeaders();
-    const url = `${SUPABASE_URL}/functions/v1/backup-list`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ id: orgId })
-    });
-    return handleResponse(response, 'Failed to fetch backups');
+  // BACKUP METHODS
+  async listBackups(orgId: string): Promise<BackupFile[]> {
+    const { data, error } = await supabase
+      .from('backups')
+      .select('*')
+      .eq('org_id', orgId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw new Error(`Failed to fetch backups: ${error.message}`);
+    return data || [];
   },
 
   async createBackup(orgId: string) {

@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Time Super English",
+    "name": "Time Super English Learning Centre",
     "dashboard": "Academy Portal",
     "educational_intelligence": "Educational Intelligence",
     "academy_management": "Academy Management"
@@ -628,37 +628,51 @@
     "step1_headers": "Required Headers:",
     "records_count": "{{count}} Records",
     "view_attendances": "View Attendances",
-    "complete_subtitle": "已成功同步 {{count}} 笔记录。"
+    "complete_subtitle": "Successfully synchronized {{count}} 笔记录。"
   },
   "contact_page": {
     "title": "Contact Us",
     "subtitle": "Get in touch with our team",
     "location": "Location",
-    "location_val": "123 Education St, Central, Hong Kong",
+    "location_val": "Hong Kong, Hung Hom, Wuhu St, 70-74號, Yun Tat Commercial Building, 4C室",
     "phone": "Phone",
-    "phone_val": "+852 2345 6789",
+    "phone_val": "+852 9319 4533",
     "email": "Email",
-    "email_val": "info@timesuperenglish.com",
+    "email_val": "admin@time-super.com",
     "office_hours": "Office Hours",
-    "office_hours_val": "Mon-Sat: 09:00 - 19:00",
-    "status": "System Status",
-    "status_online": "All Systems Operational",
+    "office_hours_val": "Mon-Sat: 11:00 AM – 8:00 PM\nSun: 11:00 AM – 3:00 PM",
     "hero_title": "Let’s Start a",
-    "hero_italic": "Conversation."
+    "hero_italic": "Conversation.",
+    "visit_us": "Visit Us",
+    "whatsapp_btn": "WhatsApp Us",
+    "facebook_btn": "Facebook",
+    "email_btn": "Email Us"
   },
   "homepage": {
     "hero_badge": "Professional English Tutoring",
     "hero_title": "Time Super",
     "hero_subtitle": "English Academy",
-    "hero_desc": "Nurturing confidence and mastery in the English language. Professional tutoring for primary and secondary students.",
+    "hero_desc": "Nurturing confidence and mastery in the English language. Professional tutoring for primary and secondary students (P1 - S3).",
     "curriculum": "Our Curriculum",
     "default_course_desc": "Interactive sessions focusing on language mastery and academic growth.",
     "about_title": "About Our Center",
     "about_p1": "At Time Super English, we believe language learning should be immersive, engaging, and results-oriented. Our center provides a supportive environment where students can thrive and achieve academic excellence.",
-    "about_p2": "With specialized curriculum for all grade levels (P1-F6), we focus on core competencies including grammar, creative writing, and public speaking, ensuring our students are prepared for global challenges.",
-    "levels_offered": "Levels Offered",
+    "about_p2": "With specialized curriculum for grade levels P1 to S3, we focus on core competencies including grammar, creative writing, and public speaking, ensuring our students are prepared for global challenges.",
+    "levels_offered": "Levels (P1 - S3)",
     "digital_attendance": "Digital Attendance",
-    "footer_slogan": "Empowering Students Through Communication"
+    "footer_slogan": "Empowering Students Through Communication",
+    "community_title_prefix": "Engaging",
+    "community_title_span": "Community",
+    "community_title_suffix": "of Learners",
+    "community_desc": "Beyond standard lessons, we foster a collaborative environment where students practice English in real-world scenarios, building social confidence alongside linguistic proficiency.",
+    "speaking_focus": "Speaking Focus",
+    "group_sizes": "Small Group Sizes",
+    "philosophy_title_prefix": "Our Teaching",
+    "philosophy_title_span": "Philosophy",
+    "philosophy_desc": "We believe that every child has a unique learning pace. Our educators utilize multi-sensory techniques to ensure grammar, vocabulary, and phonics are integrated naturally into the student's daily communication.",
+    "philosophy_feat_1": "Personalized Attention",
+    "philosophy_feat_2": "Immersive Curriculum",
+    "philosophy_feat_3": "Holistic Growth"
   },
   "about_page": {
     "hero_badge": "Institutional OS 2.5",
@@ -692,6 +706,7 @@
   "footer": {
     "intelligence": "Educational Intelligence",
     "academy_management": "Academy Management",
-    "admin": "Admin"
+    "admin": "Admin",
+    "teacher": "Teacher"
   }
 }

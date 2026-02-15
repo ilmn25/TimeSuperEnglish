@@ -1,3 +1,4 @@
+
 export interface Student {
   id: string;
   name: string;
@@ -25,6 +26,7 @@ export interface Course {
 export interface CoursePackage {
   id: string;
   course_id: string;
+  org_id: string;
   name: string;
   count: number; // number of slots or hours
   price: number; // total price in HKD
@@ -34,6 +36,7 @@ export interface CoursePackage {
 export interface CourseSchedule {
   id: string;
   course_id: string;
+  org_id: string;
   is_recurring: boolean;
   is_fixed: boolean;
   is_in_person: boolean;

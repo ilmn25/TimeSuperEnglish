@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { supabase } from '../services/supabaseClient';
@@ -94,9 +93,9 @@ const TeacherBookings: React.FC = () => {
     if (booking.check_in) return 'green';
     const hktNow = getHKTNow();
     const bookingDate = new Date(booking.date);
-    const [bStartH, bStartM] = booking.start.split(':').map(Number);
+    const [startH, startM] = booking.start.split(':').map(Number);
     const startDateTime = new Date(bookingDate);
-    startDateTime.setHours(bStartH, bStartM, 0, 0);
+    startDateTime.setHours(startH, startM, 0, 0);
     if (startDateTime > hktNow) return 'blue';
     return 'red';
   }, []);
@@ -327,7 +326,7 @@ const TeacherBookings: React.FC = () => {
         </div>
       </div>
 
-      <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-w-none' : 'max-w-3xl mx-auto'}`}>
+      <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-none' : 'max-w-3xl mx-auto'}`}>
         <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
            <div className="flex items-center space-x-1">
               <button onClick={() => changeMonth(-1)} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
@@ -343,7 +342,7 @@ const TeacherBookings: React.FC = () => {
 
            <div className="flex items-center space-x-2">
               <button onClick={() => setIsCalendarMaximized(!isCalendarMaximized)} className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button onClick={() => setSelectedDates(calendarWeeks.flat().filter(d => d !== null).map(d => d!.toLocaleDateString('en-CA')))} className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:bg-indigo-50 transition-all">{t('bookings.select_month')}</button>
               <button onClick={() => { setSelectedDates([]); setFilterStudent(''); setFilterCourse(''); setFilterStatus(''); }} className="px-3 py-1.5 bg-white text-slate-400 border border-slate-100 rounded-lg text-[9px] font-black uppercase tracking-widest hover:text-red-500 hover:bg-red-50 transition-all">{t('bookings.reset')}</button>
@@ -379,9 +378,9 @@ const TeacherBookings: React.FC = () => {
                           {isCalendarMaximized ? (
                             <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
                               {studentStatuses.map((s, i) => (
-                                <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/5 rounded px-1 py-0.5">
+                                <div key={i} className={`flex items-center space-x-1.5 min-w-0 rounded px-1 py-0.5 ${isSelected || isPreviewed ? 'bg-white/10' : 'bg-slate-50'}`}>
                                   <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/10 ${statusColors[s.status]}`} />
-                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected || isPreviewed ? 'text-indigo-100' : 'text-slate-50'}`}>{s.name}</span>
+                                  <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected || isPreviewed ? 'text-indigo-50' : 'text-slate-900'}`}>{s.name}</span>
                                 </div>
                               ))}
                             </div>

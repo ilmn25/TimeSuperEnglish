@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Time Super English",
+    "name": "Time Super English 英语学习中心",
     "dashboard": "学院门户",
     "educational_intelligence": "教育智能",
     "academy_management": "学院管理"
@@ -464,7 +464,7 @@
     "no_issues": "当前没有已解决的问题。",
     "reschedule": "重新排课",
     "refund": "退款",
-    "waived": "已豁免",
+    "waived": "豁免",
     "billing": "账务",
     "resolved": "已解决",
     "status_unpaid": "未支付",
@@ -634,31 +634,45 @@
     "title": "联系我们",
     "subtitle": "与我们的团队取得联系",
     "location": "位置",
-    "location_val": "香港中环教育街123号",
+    "location_val": "香港红磡芜湖街70-74号，润达商业大厦，4C室",
     "phone": "电话",
-    "phone_val": "+852 2345 6789",
+    "phone_val": "+852 9319 4533",
     "email": "电子邮件",
-    "email_val": "info@timesuperenglish.com",
+    "email_val": "admin@time-super.com",
     "office_hours": "办公时间",
-    "office_hours_val": "周一至周六: 09:00 - 19:00",
-    "status": "系统状态",
-    "status_online": "所有系统正常运行",
+    "office_hours_val": "周一至周六: 11:00 AM – 8:00 PM\n周日: 11:00 AM – 3:00 PM",
     "hero_title": "让我们开始一段",
-    "hero_italic": "对话。"
+    "hero_italic": "对话。",
+    "visit_us": "访问我们",
+    "whatsapp_btn": "WhatsApp 联系",
+    "facebook_btn": "Facebook 关注",
+    "email_btn": "邮件联系"
   },
   "homepage": {
     "hero_badge": "专业英语辅导",
     "hero_title": "Time Super",
     "hero_subtitle": "英语学院",
-    "hero_desc": "培养对英语语言的自信和掌握。为中小学生提供专业辅导。",
+    "hero_desc": "培养对英语语言的自信和掌握。为中小学生提供专业辅导 (P1 - S3)。",
     "curriculum": "我们的课程",
     "default_course_desc": "专注于语言掌握和学业成长的互动式课程。",
     "about_title": "关于我们的中心",
     "about_p1": "在 Time Super English，我们相信语言学习应该是沉浸式的、引人入胜的且以结果为导向的。我们的中心提供了一个支持性的环境，让学生能够茁壮成长并取得优异的学业成绩。",
-    "about_p2": "针对所有年级（P1-F6）设置了专门的课程，我们专注于核心能力，包括语法、创意写作和公众演讲，确保我们的学生为迎接全球挑战做好准备。",
-    "levels_offered": "提供级别",
+    "about_p2": "针对所有年级（P1至S3）设置了专门的课程，我们专注于核心能力，包括语法、创意写作和公众演讲，确保我们的学生为迎接全球挑战做好准备。",
+    "levels_offered": "适用年级 (P1 - S3)",
     "digital_attendance": "数字出勤",
-    "footer_slogan": "通过沟通赋予学生力量"
+    "footer_slogan": "通过沟通赋予学生力量",
+    "community_title_prefix": "充满活力的",
+    "community_title_span": "学习者社区",
+    "community_title_suffix": "",
+    "community_desc": "除了标准课程，我们还营造了一个协作环境，让学生在真实场景中练习英语，在提高语言能力的同时建立社交自信。",
+    "speaking_focus": "口语重心",
+    "group_sizes": "小班授课",
+    "philosophy_title_prefix": "我们的教学",
+    "philosophy_title_span": "理念",
+    "philosophy_desc": "我们相信每个孩子都有独特的学习步调。我们的教育者利用多感官技术，确保语法、词汇和语音自然地融入到学生的日常交流中。",
+    "philosophy_feat_1": "个性化关注",
+    "philosophy_feat_2": "沉浸式课程",
+    "philosophy_feat_3": "全面成长"
   },
   "about_page": {
     "hero_badge": "机构操作系统 2.5",
@@ -670,9 +684,9 @@
     "full_stack_italic": "智能。",
     "full_stack_desc": "一个平台即可取代您整个传统的管理堆栈。",
     "core_db": "核心数据库",
-    "core_db_desc": "用于所有学生和机构记录的集中式、加密引擎。",
+    "core_db_desc": "用于所有学生 and 机构记录的集中式、加密引擎。",
     "auto_payments": "自动付款",
-    "auto_payments_desc": "原生账单和订阅结算，实现免动手的收入管理。",
+    "auto_payments_desc": "原生账单 and 订阅结算，实现免动手的收入管理。",
     "client_portals": "客户门户",
     "client_portals_desc": "为家长和学生提供的白标自服务中心。",
     "live_attendance": "实时出勤",
@@ -692,6 +706,7 @@
   "footer": {
     "intelligence": "教育智能",
     "academy_management": "学院管理",
-    "admin": "管理员"
+    "admin": "管理员",
+    "teacher": "教师"
   }
 }

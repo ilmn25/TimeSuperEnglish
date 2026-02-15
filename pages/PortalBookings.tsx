@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -312,7 +311,7 @@ const PortalBookings: React.FC = () => {
       </div>
 
       {/* Main Control Panel */}
-      <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-w-none' : 'max-w-2xl mx-auto'}`}>
+      <div className={`bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-500 ${isCalendarMaximized ? 'max-none' : 'max-w-2xl mx-auto'}`}>
           <div className="px-5 py-2 border-b border-slate-100 flex flex-wrap items-center justify-between bg-white gap-y-2">
             <div className="flex items-center space-x-1">
               <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1))} className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
@@ -365,9 +364,9 @@ const PortalBookings: React.FC = () => {
                          {isCalendarMaximized ? (
                            <div className="w-full flex flex-col gap-1 mt-1 overflow-y-auto no-scrollbar max-h-[5.5rem]">
                              {studentStatuses.map((s, i) => (
-                               <div key={i} className="flex items-center space-x-1.5 min-w-0 bg-white/10 rounded px-1 py-0.5">
+                               <div key={i} className={`flex items-center space-x-1.5 min-w-0 rounded px-1 py-0.5 ${isSelected || isPreviewed ? 'bg-white/10' : 'bg-slate-50'}`}>
                                  <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-1 ring-white/20 ${statusColors[s.status]}`} />
-                                 <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected || isPreviewed ? 'text-indigo-100' : 'text-slate-500'}`}>{s.name}</span>
+                                 <span className={`text-[9px] font-black truncate leading-none uppercase tracking-tight ${isSelected || isPreviewed ? 'text-indigo-50' : 'text-slate-900'}`}>{s.name}</span>
                                </div>
                              ))}
                            </div>

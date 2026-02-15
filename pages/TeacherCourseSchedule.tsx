@@ -200,10 +200,11 @@ const TeacherCourseSchedule: React.FC = () => {
   }, [isDragging, dragStart, dragEnd, scheduleType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); if (!courseId || hasOverlap) return;
+    e.preventDefault(); if (!courseId || hasOverlap || !teacher) return;
     setIsProcessing(true);
     try {
       const payload = {
+        org_id: teacher.org_id!,
         course_id: courseId, start_time: formData.start_time, end_time: formData.end_time, price: formData.price,
         is_recurring: scheduleType === 'recurring', is_fixed: formData.is_fixed, is_in_person: formData.is_in_person,
         days_of_week: scheduleType === 'recurring' ? formData.days_of_week : null,
