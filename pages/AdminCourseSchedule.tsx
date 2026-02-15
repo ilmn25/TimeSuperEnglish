@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { Course, CourseSchedule, CoursePackage } from '../types';
 import { useTranslation } from 'react-i18next';
 
-import UnifiedEditor from '../components/editors/UnifiedEditor';
+import UnifiedEditor, { type ScheduleFormState } from '../components/editors/UnifiedEditor';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const ONE_OFF_COLOR = '#f59e0b'; // Amber 500 for One-off events
@@ -61,7 +61,7 @@ const AdminCourseSchedule: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [scheduleType, setScheduleType] = useState<'recurring' | 'one-off'>('recurring');
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ScheduleFormState>({
     start_time: '09:00',
     end_time: '10:00',
     is_recurring: true,
@@ -259,7 +259,7 @@ const AdminCourseSchedule: React.FC = () => {
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging && dragStart && dragEnd && scheduleType === 'one-off') {
-        const start = new Date(dragStart), end = new Date(dragEnd), dates = [];
+        const start = new Date(dragStart), end = new Date(dragEnd), dates: string[] = [];
         const curr = new Date(Math.min(start.getTime(), end.getTime()));
         const last = new Date(Math.max(start.getTime(), end.getTime()));
         while (curr <= last) {

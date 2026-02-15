@@ -4,9 +4,22 @@ import React from 'react';
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const CYCLE_WEEKS = [1, 2, 3, 4];
 
+export interface ScheduleFormState {
+  start_time: string;
+  end_time: string;
+  is_recurring: boolean;
+  is_fixed: boolean;
+  is_in_person: boolean;
+  price: number;
+  days_of_week: number[];
+  cycle_pattern: number[];
+  anchor_date: string;
+  one_off_dates: string[];
+}
+
 interface UnifiedEditorProps {
-  formData: any;
-  setFormData: React.Dispatch<React.SetStateAction<any>>;
+  formData: ScheduleFormState;
+  setFormData: React.Dispatch<React.SetStateAction<ScheduleFormState>>;
   scheduleType: 'recurring' | 'one-off';
   setScheduleType: (type: 'recurring' | 'one-off') => void;
   selectedDates: string[];
@@ -195,7 +208,20 @@ const UnifiedEditor: React.FC<UnifiedEditorProps> = ({
             <div className="space-y-3">
               <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('course_schedule.selected_dates', { count: selectedDates.length })}</label>
               <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200 no-scrollbar">
-                {selectedDates.sort().map(d => <div key={d} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[8px] font-black rounded-md flex items-center gap-1 shadow-sm">{d}{!editingId && <button type="button" onClick={() => setSelectedDates(prev => prev.filter(x => x !== d))} className="hover:text-indigo-900">×</button>}</div>)}
+                {selectedDates.slice().sort().map((d: string) => (
+                  <div key={d} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[8px] font-black rounded-md flex items-center gap-1 shadow-sm">
+                    {d}
+                    {!editingId && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDates((prev: string[]) => prev.filter((x) => x !== d))}
+                        className="hover:text-indigo-900"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
                 {selectedDates.length === 0 && <span className="text-[9px] text-slate-400 italic">{t('course_schedule.select_on_calendar')}</span>}
               </div>
             </div>

@@ -164,7 +164,7 @@ const TeacherBookings: React.FC = () => {
         } else {
           const start = new Date(dragStart);
           const end = new Date(dragEnd);
-          const dates = [];
+          const dates: string[] = [];
           const curr = new Date(Math.min(start.getTime(), end.getTime()));
           const last = new Date(Math.max(start.getTime(), end.getTime()));
           while (curr <= last) {
