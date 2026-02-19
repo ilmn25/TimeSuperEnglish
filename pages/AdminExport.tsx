@@ -101,7 +101,7 @@ const AdminExport: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20 px-4">
       <div className="flex items-center space-x-4">
         <button 
-          onClick={() => navigate(`/org/${orgId}/bookings`)} 
+          onClick={() => navigate(`/portal/admin/org/${orgId}/bookings`)} 
           className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all shadow-sm active:scale-90"
           title={t('nav.back')}
         >

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -429,7 +428,7 @@ const AdminCourseSchedule: React.FC = () => {
     <div className="space-y-10 animate-in fade-in duration-500 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center space-x-4">
-           <button onClick={() => navigate(`/org/${orgId}/courses`)} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90 shadow-sm">
+           <button onClick={() => navigate(`/portal/admin/org/${orgId}/courses`)} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90 shadow-sm">
              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
            </button>
            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-black shadow-lg" style={{ backgroundColor: course?.color || '#e2e8f0', color: getContrastColor(course?.color || '') }}>{course?.name?.charAt(0).toUpperCase()}</div>
@@ -531,41 +530,27 @@ const AdminCourseSchedule: React.FC = () => {
                   </div>
                 ))}
                 {packages.length === 0 && !showPackageForm && (
-                  <div className="py-6 text-center border-2 border-dashed border-slate-100 rounded-2xl">
-                    <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{t('course_schedule.no_bundles')}</p>
+                  <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t('course_schedule.no_packages')}</p>
                   </div>
                 )}
               </div>
            </section>
 
-           <section className="bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl overflow-hidden">
-              <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4">{t('course_schedule.active_rules')}</h3>
-              <div className="space-y-2 max-h-[400px] overflow-y-auto no-scrollbar">
-                {localSchedules.map((s) => (
-                  <div key={s.id} className={`bg-slate-800/40 border p-3 rounded-xl flex items-center justify-between transition-all ${editingId === s.id ? 'border-indigo-500' : 'border-slate-700/50 hover:border-slate-600'}`}>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-black text-white font-mono">{formatTime(s.start_time)}—{formatTime(s.end_time)}</p>
-                      <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest truncate">
-                        {s.is_recurring ? (s.days_of_week?.map(d => WEEKDAYS[d].slice(0, 3)).join(', ')) : `${s.one_off_dates?.length || 0} dates`}
-                      </p>
-                      <p className="text-[7px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${!s.is_fixed ? 'border border-indigo-400' : 'bg-indigo-400'}`} />
-                        {s.is_fixed ? t('course_schedule.fixed_session') : t('course_schedule.flexible_session')} 
-                        <span className="opacity-40">•</span>
-                        <span className="text-white opacity-80">HKD {s.price || '--'}</span>
-                        {s.id.startsWith('temp-') && <span className="ml-auto text-emerald-400 text-[6px]">NEW</span>}
-                      </p>
-                    </div>
-                    <div className="flex space-x-1 shrink-0">
-                      <button onClick={() => handleEdit(s)} className="p-1.5 text-slate-500 hover:text-indigo-400 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                      <button onClick={() => setDeleteConfirmId(s.id)} className="p-1.5 text-slate-500 hover:text-red-400 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-           </section>
+           <div className="pt-4">
+             <button 
+               onClick={handlePublishAll}
+               disabled={!isDirty || isProcessing}
+               className={`w-full py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 ${isDirty ? 'bg-indigo-600 text-white shadow-indigo-100 hover:bg-indigo-700' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+             >
+               {isProcessing && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+               {t('course_schedule.publish_all')}
+             </button>
+             {!isDirty && <p className="text-center text-[8px] font-black text-slate-300 uppercase tracking-widest mt-4">{t('course_schedule.no_changes')}</p>}
+           </div>
         </div>
 
+        {/* Calendar Side */}
         <div className="lg:col-span-5 bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden flex flex-col min-h-[600px]">
            <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -588,11 +573,7 @@ const AdminCourseSchedule: React.FC = () => {
                            <div className="mt-1 space-y-1 overflow-y-auto no-scrollbar max-h-[3rem]">
                              {daySchedules.map((s, idx) => {
                                const baseColor = s.isOverlapping ? '#ef4444' : (!s.is_recurring ? ONE_OFF_COLOR : (course?.color || '#6366f1'));
-                               return (
-                                 <div key={idx} className={`px-1 py-0.5 rounded text-[7px] font-black truncate shadow-sm transition-opacity ${s.isPreview ? 'opacity-40 border-dashed' : 'opacity-100'}`} 
-                                   style={{ backgroundColor: !s.is_fixed ? `${baseColor}20` : baseColor, color: !s.is_fixed ? baseColor : '#fff', border: !s.is_fixed ? `1px solid ${baseColor}` : 'none' }}
-                                 >{formatTime(s.start_time)}</div>
-                               );
+                               return <div key={idx} className={`px-1 py-0.5 rounded text-[7px] font-black truncate shadow-sm transition-opacity ${s.isPreview ? 'opacity-40 border-dashed' : 'opacity-100'}`} style={{ backgroundColor: !s.is_fixed ? `${baseColor}20` : baseColor, color: !s.is_fixed ? baseColor : '#fff', border: !s.is_fixed ? `1px solid ${baseColor}` : 'none' }}>{formatTime(s.start_time)}</div>;
                              })}
                            </div>
                          </div>
@@ -604,6 +585,7 @@ const AdminCourseSchedule: React.FC = () => {
            </div>
         </div>
 
+        {/* Inspect Date Timeline */}
         <div className="lg:col-span-3 bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl flex flex-col h-[600px] border border-slate-800">
             <div className="mb-6"><span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">{t('course_schedule.inspect_date')}</span><h4 className="text-xl font-black text-white mt-1 uppercase">{selectedTimelineDate || 'N/A'}</h4></div>
             <div className="flex-1 relative overflow-y-auto no-scrollbar bg-[#0f172a] rounded-2xl p-4 border border-slate-800">
@@ -611,12 +593,9 @@ const AdminCourseSchedule: React.FC = () => {
               <div className="relative h-full mx-auto w-full z-10">
                 {timelineProjections.map((s, idx) => { 
                   const top = timeToPercent(s.start_time), bottom = timeToPercent(s.end_time), color = s.isOverlapping ? '#ef4444' : (!s.is_recurring ? ONE_OFF_COLOR : (course?.color || '#6366f1')); 
-                  const label = s.isOverlapping ? 'OVERLAP' : (!s.is_recurring ? 'One-off' : 'Recurring');
                   return (
-                    <div key={idx} className={`absolute left-0 right-0 rounded-lg border-l-4 shadow-xl flex flex-col p-2 transition-all ${s.isPreview ? 'opacity-40 animate-pulse' : ''}`} 
-                      style={{ top: `${top}%`, height: `${bottom - top}%`, backgroundColor: !s.is_fixed ? `${color}15` : `${color}30`, borderLeftColor: color, borderWidth: '1px', borderLeftWidth: '4px', borderColor: color, borderStyle: s.isPreview ? 'dashed' : 'solid' }}
-                    >
-                      <span className="text-[7px] font-black uppercase tracking-tighter truncate" style={{ color: s.isOverlapping ? '#fecaca' : 'rgba(255,255,255,0.4)' }}>{label}</span>
+                    <div key={idx} className={`absolute left-0 right-0 rounded-lg border-l-4 shadow-xl flex flex-col p-2 transition-all ${s.isPreview ? 'opacity-40 animate-pulse' : ''}`} style={{ top: `${top}%`, height: `${bottom - top}%`, backgroundColor: !s.is_fixed ? `${color}15` : `${color}30`, borderLeftColor: color, borderWidth: '1px', borderLeftWidth: '4px', borderColor: color, borderStyle: s.isPreview ? 'dashed' : 'solid' }}>
+                      <span className="text-[7px] font-black uppercase tracking-tighter truncate" style={{ color: s.isOverlapping ? '#fecaca' : 'rgba(255,255,255,0.4)' }}>{s.isOverlapping ? 'OVERLAP' : (!s.is_recurring ? 'One-off' : 'Recurring')}</span>
                       <span className={`text-[10px] font-mono font-black truncate leading-none ${!s.is_fixed ? 'text-white/70' : 'text-white'}`}>{formatTime(s.start_time)}—{formatTime(s.end_time)}</span>
                     </div>
                   ); 
@@ -626,14 +605,6 @@ const AdminCourseSchedule: React.FC = () => {
         </div>
       </div>
 
-      {isDirty && (
-        <div className="fixed bottom-10 right-10 z-[200] animate-in slide-in-from-bottom-5 duration-500">
-          <button onClick={handlePublishAll} disabled={isProcessing} className="flex items-center space-x-4 px-10 py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2rem] font-black shadow-[0_20px_50px_rgba(99,102,241,0.3)] transition-all hover:scale-105 active:scale-95 text-xs uppercase tracking-[0.2em]">
-            {isProcessing ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>{t('common.publish')}</span></>}
-          </button>
-        </div>
-      )}
-
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDeleteConfirmId(null)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
@@ -641,9 +612,7 @@ const AdminCourseSchedule: React.FC = () => {
             <p className="text-slate-500 text-xs mb-8 leading-relaxed">{t('course_schedule.delete_msg')}</p>
             <div className="flex space-x-3">
               <button onClick={() => setDeleteConfirmId(null)} className="flex-1 px-4 py-2.5 text-[10px] font-black text-slate-500 bg-slate-50 rounded-xl uppercase tracking-widest">{t('common.cancel')}</button>
-              <button onClick={handleDeleteLocally} className="flex-1 px-4 py-2.5 text-[10px] font-black text-white rounded-xl bg-red-600 hover:bg-red-700 uppercase tracking-widest shadow-lg transition-all active:scale-95">
-                {t('common.delete')}
-              </button>
+              <button onClick={handleDeleteLocally} className="flex-1 px-4 py-2.5 text-[10px] font-black text-white rounded-xl bg-red-600 hover:bg-red-700 uppercase tracking-widest shadow-lg transition-all active:scale-95">{t('common.delete')}</button>
             </div>
           </div>
         </div>

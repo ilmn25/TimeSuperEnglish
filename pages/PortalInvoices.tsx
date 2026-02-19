@@ -179,7 +179,7 @@ const PortalInvoices: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {processedInvoices.map(inv => (
-                  <tr key={inv.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/portal/invoices/${inv.id}`)}>
+                  <tr key={inv.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/portal/parent/invoices/${inv.id}`)}>
                     <td className="px-6 py-5 whitespace-nowrap">
                        <span className="text-[11px] font-mono font-bold text-slate-500 uppercase">{inv.issued_at ? new Date(inv.issued_at).toLocaleDateString() : 'Unknown'}</span>
                     </td>
@@ -202,7 +202,7 @@ const PortalInvoices: React.FC = () => {
                     </td>
                     <td className="px-6 py-5 text-right">
                        <button 
-                         onClick={(e) => { e.stopPropagation(); navigate(`/portal/invoices/${inv.id}`); }}
+                         onClick={(e) => { e.stopPropagation(); navigate(`/portal/parent/invoices/${inv.id}`); }}
                          className="p-2 text-slate-300 hover:text-indigo-600 transition-all bg-slate-50 rounded-lg hover:bg-indigo-50"
                        >
                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>

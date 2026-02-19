@@ -74,7 +74,7 @@ const PortalCourses: React.FC = () => {
         <div className="space-y-2">
           {filteredCourses.map(course => (
             <Link 
-              to={`/portal/courses/${course.id}`}
+              to={`/portal/parent/courses/${course.id}`}
               key={course.id}
               className="group bg-white border border-slate-100 rounded-xl p-4 hover:border-indigo-500 hover:shadow-md transition-all duration-200 flex items-center gap-4"
             >

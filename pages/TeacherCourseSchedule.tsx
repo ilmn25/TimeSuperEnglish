@@ -256,7 +256,7 @@ const TeacherCourseSchedule: React.FC = () => {
   return (
     <div className="space-y-10 pb-20">
       <div className="flex items-center space-x-4">
-         <button onClick={() => navigate('/teacher/courses')} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
+         <button onClick={() => navigate('/portal/teacher/courses')} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
          <div><h2 className="text-2xl font-black text-slate-900 tracking-tight">{course?.name} <span className="text-indigo-600">{t('course_schedule.title')}</span></h2><p className="text-slate-500 font-medium text-xs">{t('course_schedule.subtitle')}</p></div>
       </div>
 

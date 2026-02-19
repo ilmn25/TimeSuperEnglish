@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
@@ -94,14 +95,14 @@ const PortalInvoiceSuccess: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row gap-4">
           <button 
-            onClick={() => navigate('/portal/payments')}
+            onClick={() => navigate('/portal/parent/payments')}
             className="flex-1 py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-100 transition-all active:scale-95"
           >
             Go to Audit Hub
           </button>
           {invoiceIds.length === 1 && (
             <button 
-              onClick={() => navigate(`/portal/invoices/${invoiceIds[0]}`)}
+              onClick={() => navigate(`/portal/parent/invoices/${invoiceIds[0]}`)}
               className="flex-1 py-5 bg-white border-2 border-slate-100 text-slate-600 hover:border-indigo-200 hover:text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95"
             >
               View Invoice
@@ -109,7 +110,7 @@ const PortalInvoiceSuccess: React.FC = () => {
           )}
           {invoiceIds.length > 1 && (
              <button 
-              onClick={() => navigate('/portal/invoices')}
+              onClick={() => navigate('/portal/parent/invoices')}
               className="flex-1 py-5 bg-white border-2 border-slate-100 text-slate-600 hover:border-indigo-200 hover:text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95"
             >
               Browse Invoices
