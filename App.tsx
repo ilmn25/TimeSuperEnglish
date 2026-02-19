@@ -1,7 +1,6 @@
 
-import React, { useEffect, useState, useRef, createContext, useContext, useMemo } from 'react';
+import React, { useEffect, useState, createContext, useContext, useMemo } from 'react';
 import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
-import { supabase } from './services/supabaseClient';
 import HomePage from './pages/HomePage';
 import ContactUs from './pages/ContactUs';
 import PortalPage from './pages/PortalPage';
@@ -20,7 +19,7 @@ export const useImportStatus = () => {
       status: { isImporting: false, total: 0, current: 0 },
       startImport: () => {},
       updateImportProgress: () => {},
-      finishImport: () => {}
+      finishImport: () => { }
     };
   }
   return context;
@@ -65,16 +64,12 @@ const LanguageSwitcher: React.FC = () => {
   );
 };
 
-const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ children, userEmail }) => {
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const { t } = useTranslation();
   const isPortal = location.pathname.startsWith('/portal');
 
   if (isPortal) return <>{children}</>;
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
@@ -94,7 +89,6 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
             
             <nav className="hidden md:flex items-center space-x-2">
               <NavLink to="/">{t('nav.home')}</NavLink>
-              <NavLink to="/about">{t('nav.about')}</NavLink>
               <NavLink to="/contact">{t('nav.contact')}</NavLink>
             </nav>
             
@@ -120,11 +114,6 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
           <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.4em]">
             &copy; {new Date().getFullYear()} Time Super English Academy
           </p>
-          <div className="flex items-center space-x-5">
-            <Link to="/portal/teacher" className="text-[9px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('footer.teacher')}</Link>
-            <span className="w-0.5 h-0.5 bg-slate-200 rounded-full" />
-            <Link to="/portal/admin" className="text-[9px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-600 transition-colors">{t('footer.admin')}</Link>
-          </div>
         </div>
       </footer>
     </div>
@@ -132,8 +121,7 @@ const Layout: React.FC<{ children: React.ReactNode; userEmail?: string }> = ({ c
 };
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Global state for long-running CSV import operations
   const [importStatus, setImportStatus] = useState({ isImporting: false, total: 0, current: 0 });
@@ -144,17 +132,6 @@ const App: React.FC = () => {
     updateImportProgress: (current: number) => setImportStatus(prev => ({ ...prev, current })),
     finishImport: () => setImportStatus({ isImporting: false, total: 0, current: 0 })
   }), [importStatus]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
 
   if (loading) {
     return (
@@ -167,7 +144,7 @@ const App: React.FC = () => {
   return (
     <ImportStatusContext.Provider value={importValue}>
       <HashRouter>
-        <Layout userEmail={user?.email}>
+        <Layout>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/contact" element={<ContactUs />} />

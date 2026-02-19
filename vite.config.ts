@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/260131-web/',
+  base: '/TimeSuperEnglish/',
   build: {
     outDir: 'dist',
     emptyOutDir: true,

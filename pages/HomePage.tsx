@@ -1,31 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { api } from '../services/api';
-import { Course } from '../types';
 import { IMAGES } from '../constants/images';
 import { Link } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
   const { t } = useTranslation();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [isCoursesLoading, setIsCoursesLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      setIsCoursesLoading(true);
-      try {
-        const data = await api.getPublicCourses();
-        setCourses(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.warn("Public course directory currently unavailable.");
-        setCourses([]);
-      } finally {
-        setIsCoursesLoading(false);
-      }
-    };
-    fetchCourses();
-  }, []);
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 sm:space-y-32 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700 px-4">
@@ -41,21 +21,7 @@ const HomePage: React.FC = () => {
           </h1>
           <p className="text-slate-500 text-lg sm:text-xl font-medium max-w-2xl mx-auto lg:mx-0 leading-relaxed">
             {t('homepage.hero_desc')}
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-            <Link 
-                to="/portal/parent"
-                className="px-10 py-5 bg-indigo-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-95"
-            >
-                Access Student Portal
-            </Link>
-            <Link 
-                to="/contact"
-                className="px-10 py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:border-indigo-200 transition-all active:scale-95"
-            >
-                Enquire Now
-            </Link>
-          </div>
+          </p> 
         </div>
         <div className="flex-1 relative">
           <div className="absolute inset-0 bg-indigo-600/5 -rotate-3 rounded-[3rem]" />
@@ -68,27 +34,6 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Course Carousel/Grid */}
-      {courses.length > 0 && (
-        <section className="space-y-10">
-          <div className="flex items-center space-x-4">
-             <div className="w-2 h-8 bg-indigo-600 rounded-full" />
-             <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase tracking-widest">{t('homepage.curriculum')}</h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.slice(0, 6).map(course => (
-              <div key={course.id} className="bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm hover:shadow-xl transition-all">
-                <div className="w-12 h-12 rounded-xl mb-6 flex items-center justify-center text-white font-black" style={{ backgroundColor: course.color }}>
-                  {course.name.charAt(0)}
-                </div>
-                <h3 className="text-xl font-black text-slate-900 mb-2">{course.name}</h3>
-                <p className="text-slate-500 text-sm font-medium line-clamp-2">{course.description || t('homepage.default_course_desc')}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Interactive Engagement Section */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
