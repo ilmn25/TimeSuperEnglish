@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { Student, Booking } from '../types';
@@ -21,7 +22,7 @@ interface StudentDetailedData {
   isLoading: boolean;
 }
 
-const PortalAttendance: React.FC = () => {
+const ParentAttendance: React.FC = () => {
   const hktToday = getHKTDateString();
   const { t } = useTranslation();
 
@@ -159,7 +160,7 @@ const PortalAttendance: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <button onClick={() => setIsCalendarMaximized(!isCalendarMaximized)} className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button onClick={() => { setSelectedDate(hktToday); setViewDate(new Date()); }} className="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all">
                 {t('parent.go_today')}
@@ -210,7 +211,7 @@ const PortalAttendance: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-12 animate-in fade-in duration-500">
         {displayedStudents.map((item) => (
-          <PortalAttendanceCard 
+          <ParentAttendanceCard 
             key={item.student.id} 
             data={{ ...item, bookings: item.bookings.filter(b => b.date === selectedDate) }} 
             isSelected={selectedTimelineInfo?.studentId === item.student.id && selectedTimelineInfo?.date === selectedDate}
@@ -230,7 +231,7 @@ const PortalAttendance: React.FC = () => {
   );
 };
 
-const PortalAttendanceCard: React.FC<{ 
+const ParentAttendanceCard: React.FC<{ 
   data: StudentDetailedData; 
   isSelected: boolean;
   onSelect: () => void;
@@ -279,4 +280,4 @@ const PortalAttendanceCard: React.FC<{
   );
 };
 
-export default PortalAttendance;
+export default ParentAttendance;

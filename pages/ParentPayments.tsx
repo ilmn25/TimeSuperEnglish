@@ -35,7 +35,7 @@ interface DerivedIssue {
 
 type PaymentView = 'discrepancies' | 'resolved' | 'upcoming';
 
-const PortalPayments: React.FC = () => {
+const ParentPayments: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
@@ -268,7 +268,7 @@ const PortalPayments: React.FC = () => {
                         <div className="flex items-center justify-end space-x-2">
                           {invoiceId && (
                             <button 
-                              onClick={() => navigate(`/portal/invoices/${invoiceId}`)}
+                              onClick={() => navigate(`/portal/parent/invoices/${invoiceId}`)}
                               className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm"
                             >
                               View Invoice
@@ -298,4 +298,4 @@ const PortalPayments: React.FC = () => {
   );
 };
 
-export default PortalPayments;
+export default ParentPayments;

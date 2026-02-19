@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 type SortField = 'date' | 'amount' | 'status' | 'student';
 type SortOrder = 'asc' | 'desc';
 
-const PortalInvoices: React.FC = () => {
+const ParentInvoices: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
@@ -224,4 +224,4 @@ const PortalInvoices: React.FC = () => {
   );
 };
 
-export default PortalInvoices;
+export default ParentInvoices;

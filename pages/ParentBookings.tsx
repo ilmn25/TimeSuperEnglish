@@ -36,7 +36,7 @@ interface StudentDetailedData {
   isLoading: boolean;
 }
 
-const PortalBookings: React.FC = () => {
+const ParentBookings: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [viewDate, setViewDate] = useState(new Date()); 
@@ -328,7 +328,7 @@ const PortalBookings: React.FC = () => {
             
             <div className="flex items-center space-x-2">
               <button onClick={() => setIsCalendarMaximized(!isCalendarMaximized)} className="p-1 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button onClick={handleSelectMonth} className="px-2 py-1 bg-slate-50 text-slate-600 rounded-lg text-[8px] font-black uppercase tracking-widest border border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 transition-all">{t('bookings.select_month')}</button>
               <button onClick={clearFilters} className="px-2 py-1 bg-white text-slate-400 border border-slate-100 rounded-lg text-[8px] font-black uppercase tracking-widest hover:text-red-500 hover:bg-red-50 transition-all">{t('bookings.reset')}</button>
@@ -530,4 +530,4 @@ const PortalBookings: React.FC = () => {
   );
 };
 
-export default PortalBookings;
+export default ParentBookings;

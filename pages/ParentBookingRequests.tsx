@@ -18,7 +18,7 @@ const hexToRgba = (hex: string, alpha: number) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-const PortalBookingRequests: React.FC = () => {
+const ParentBookingRequests: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -433,4 +433,4 @@ const PortalBookingRequests: React.FC = () => {
   );
 };
 
-export default PortalBookingRequests;
+export default ParentBookingRequests;

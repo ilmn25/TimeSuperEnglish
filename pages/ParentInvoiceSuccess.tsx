@@ -4,7 +4,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useTranslation } from 'react-i18next';
 
-const PortalInvoiceSuccess: React.FC = () => {
+const ParentInvoiceSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -128,4 +128,4 @@ const PortalInvoiceSuccess: React.FC = () => {
   );
 };
 
-export default PortalInvoiceSuccess;
+export default ParentInvoiceSuccess;

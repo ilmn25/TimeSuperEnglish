@@ -33,7 +33,7 @@ const getCycleWeekIndex = (anchorStr: string, targetDate: Date): number => {
   return (diffWeeks % 4) + 1;
 };
 
-const PortalCourseDetail: React.FC = () => {
+const ParentCourseDetail: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -445,4 +445,4 @@ const PortalCourseDetail: React.FC = () => {
   );
 };
 
-export default PortalCourseDetail;
+export default ParentCourseDetail;

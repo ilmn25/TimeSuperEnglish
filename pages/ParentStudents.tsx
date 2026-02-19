@@ -7,7 +7,7 @@ import { SUPABASE_ORG_ID } from '../services/supabaseClient';
 
 const LEVELS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6'];
 
-const PortalStudents: React.FC = () => {
+const ParentStudents: React.FC = () => {
   const { t } = useTranslation();
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -203,7 +203,7 @@ const PortalStudents: React.FC = () => {
       {/* Delete Confirmation Modal */}
       {confirmDeleteId && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-sm overflow-hidden p-8 animate-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-sm overflow-hidden p-8 animate-in fade-in zoom-in duration-300 text-center" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-black text-slate-900 mb-2">{t('students.delete_title')}</h3>
             <p className="text-slate-500 text-xs mb-8 leading-relaxed">{t('students.delete_msg')}</p>
             <div className="flex space-x-3">
@@ -219,4 +219,4 @@ const PortalStudents: React.FC = () => {
   );
 };
 
-export default PortalStudents;
+export default ParentStudents;
