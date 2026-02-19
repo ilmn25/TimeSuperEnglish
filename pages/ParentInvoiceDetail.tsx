@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { Invoice } from '../types';
 import { useTranslation } from 'react-i18next';
 
-const PortalInvoiceDetail: React.FC = () => {
+const ParentInvoiceDetail: React.FC = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -57,7 +57,7 @@ const PortalInvoiceDetail: React.FC = () => {
     if (status === 'paid' && amount === 0) return 'bg-indigo-100 text-indigo-700';
     switch (status) {
       case 'paid': return 'bg-emerald-100 text-emerald-700';
-      case 'issued': return 'bg-amber-100 text-amber-700'; // Changed to yellow (amber)
+      case 'issued': return 'bg-amber-100 text-amber-700'; 
       default: return 'bg-slate-100 text-slate-600';
     }
   };
@@ -222,4 +222,4 @@ const PortalInvoiceDetail: React.FC = () => {
   );
 };
 
-export default PortalInvoiceDetail;
+export default ParentInvoiceDetail;

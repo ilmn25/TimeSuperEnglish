@@ -6,7 +6,7 @@ import { Course } from '../types';
 import { useTranslation } from 'react-i18next';
 import { SUPABASE_ORG_ID } from '../services/supabaseClient';
 
-const PortalCourses: React.FC = () => {
+const ParentCourses: React.FC = () => {
   const { t } = useTranslation();
   const [courses, setCourses] = useState<(Course & { org_name: string })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,4 +102,4 @@ const PortalCourses: React.FC = () => {
   );
 };
 
-export default PortalCourses;
+export default ParentCourses;

@@ -18,16 +18,16 @@ import AdminBackup from './pages/AdminBackup';
 import AdminImport from './pages/AdminImport';
 import AdminOrgSelection from './pages/AdminOrgSelection';
 import AdminTeachers from './pages/AdminTeachers';
-import PortalAttendance from './pages/PortalAttendance';
-import PortalBookings from './pages/PortalBookings';
-import PortalPayments from './pages/PortalPayments';
-import PortalInvoices from './pages/PortalInvoices';
-import PortalInvoiceDetail from './pages/PortalInvoiceDetail';
-import PortalInvoiceSuccess from './pages/PortalInvoiceSuccess';
-import PortalStudents from './pages/PortalStudents';
-import PortalCourses from './pages/PortalCourses';
-import PortalCourseDetail from './pages/PortalCourseDetail';
-import PortalBookingRequests from './pages/PortalBookingRequests';
+import ParentAttendance from './pages/ParentAttendance';
+import ParentBookings from './pages/ParentBookings';
+import ParentPayments from './pages/ParentPayments';
+import ParentInvoices from './pages/ParentInvoices';
+import ParentInvoiceDetail from './pages/ParentInvoiceDetail';
+import ParentInvoiceSuccess from './pages/ParentInvoiceSuccess';
+import ParentStudents from './pages/ParentStudents';
+import ParentCourses from './pages/ParentCourses';
+import ParentCourseDetail from './pages/ParentCourseDetail';
+import ParentBookingRequests from './pages/ParentBookingRequests';
 import TeacherAttendance from './pages/TeacherAttendance';
 import TeacherBookings from './pages/TeacherBookings';
 import TeacherStudents from './pages/TeacherStudents';
@@ -504,17 +504,17 @@ const App: React.FC = () => {
             <Route path="/portal/admin/org/:orgId/import" element={user ? <AdminImport /> : <Navigate to="/login" replace />} />
             <Route path="/portal/admin/org/:orgId/export" element={user ? <AdminExport /> : <Navigate to="/login" replace />} />
 
-            {/* Portal Routes */}
-            <Route path="/portal/parent/attendance" element={user ? <PortalAttendance /> : <Navigate to="/login" replace />} />
-            <Route path="/portal/parent/bookings" element={user ? <PortalBookings /> : <Navigate to="/login" replace />} />
-            <Route path="/portal/parent/payments" element={user ? <PortalPayments /> : <Navigate to="/login" replace />} />
-            <Route path="/portal/parent/invoices" element={user ? <PortalInvoices /> : <Navigate to="/login" replace />} />
-            <Route path="/portal/parent/invoices/:invoiceId" element={user ? <PortalInvoiceDetail /> : <Navigate to="/login" replace />} />
-            <Route path="/portal/parent/invoices/success" element={user ? <PortalInvoiceSuccess /> : <Navigate to="/login" replace />} />
-            <Route path="/portal/parent/students" element={user ? <PortalStudents /> : <Navigate to="/login" replace />} />
-            <Route path="/portal/parent/courses" element={user ? <PortalCourses /> : <Navigate to="/login" replace />} />
-            <Route path="/portal/parent/courses/:courseId" element={user ? <PortalCourseDetail /> : <Navigate to="/login" replace />} />
-            <Route path="/portal/parent/requests" element={user ? <PortalBookingRequests /> : <Navigate to="/login" replace />} />
+            {/* Parent Routes */}
+            <Route path="/portal/parent/attendance" element={user ? <ParentAttendance /> : <Navigate to="/login" replace />} />
+            <Route path="/portal/parent/bookings" element={user ? <ParentBookings /> : <Navigate to="/login" replace />} />
+            <Route path="/portal/parent/payments" element={user ? <ParentPayments /> : <Navigate to="/login" replace />} />
+            <Route path="/portal/parent/invoices" element={user ? <ParentInvoices /> : <Navigate to="/login" replace />} />
+            <Route path="/portal/parent/invoices/:invoiceId" element={user ? <ParentInvoiceDetail /> : <Navigate to="/login" replace />} />
+            <Route path="/portal/parent/invoices/success" element={user ? <ParentInvoiceSuccess /> : <Navigate to="/login" replace />} />
+            <Route path="/portal/parent/students" element={user ? <ParentStudents /> : <Navigate to="/login" replace />} />
+            <Route path="/portal/parent/courses" element={user ? <ParentCourses /> : <Navigate to="/login" replace />} />
+            <Route path="/portal/parent/courses/:courseId" element={user ? <ParentCourseDetail /> : <Navigate to="/login" replace />} />
+            <Route path="/portal/parent/requests" element={user ? <ParentBookingRequests /> : <Navigate to="/login" replace />} />
 
             {/* Teacher Routes */}
             <Route path="/portal/teacher/attendance" element={user ? <TeacherAttendance /> : <Navigate to="/login" replace />} />
