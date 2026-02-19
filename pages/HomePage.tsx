@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../services/api';
 import { Course } from '../types';
 import { IMAGES } from '../constants/images';
+import { Link } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
   const { t } = useTranslation();
@@ -16,7 +18,7 @@ const HomePage: React.FC = () => {
         const data = await api.getPublicCourses();
         setCourses(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.warn("Public course directory currently unavailable (Check Supabase RLS settings).");
+        console.warn("Public course directory currently unavailable.");
         setCourses([]);
       } finally {
         setIsCoursesLoading(false);
@@ -40,6 +42,20 @@ const HomePage: React.FC = () => {
           <p className="text-slate-500 text-lg sm:text-xl font-medium max-w-2xl mx-auto lg:mx-0 leading-relaxed">
             {t('homepage.hero_desc')}
           </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+            <Link 
+                to="/portal/parent"
+                className="px-10 py-5 bg-indigo-600 text-white rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-95"
+            >
+                Access Student Portal
+            </Link>
+            <Link 
+                to="/contact"
+                className="px-10 py-5 bg-white border-2 border-slate-100 text-slate-600 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:border-indigo-200 transition-all active:scale-95"
+            >
+                Enquire Now
+            </Link>
+          </div>
         </div>
         <div className="flex-1 relative">
           <div className="absolute inset-0 bg-indigo-600/5 -rotate-3 rounded-[3rem]" />
@@ -141,7 +157,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Modern Learning Philosophy - OVERLAPPING IMAGES SECTION */}
+      {/* Modern Learning Philosophy */}
       <section className="space-y-12 pb-12">
         <div className="max-w-3xl space-y-6">
           <h2 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight">
@@ -162,11 +178,8 @@ const HomePage: React.FC = () => {
         
         {/* Overlapping Images Layout */}
         <div className="relative flex flex-col items-center justify-center pt-10 sm:pt-20 pb-20 sm:pb-32">
-           {/* Subtle background glow */}
            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-64 bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none" />
-           
            <div className="relative w-full max-w-5xl flex flex-col md:flex-row items-center justify-center gap-0">
-             {/* First Image - Bottom/Left Layer */}
              <div className="relative z-0 w-[90%] md:w-[55%] lg:w-[50%] -rotate-3 transition-all hover:rotate-0 hover:z-30 duration-500 group">
                <div className="aspect-[4/3] rounded-[2.5rem] sm:rounded-[3.5rem] overflow-hidden shadow-2xl border-4 sm:border-8 border-white bg-slate-200">
                  <img 
@@ -176,8 +189,6 @@ const HomePage: React.FC = () => {
                  />
                </div>
              </div>
-             
-             {/* Second Image - Top/Right Overlapping Layer */}
              <div className="relative z-10 w-[90%] md:w-[55%] lg:w-[50%] -mt-20 md:-mt-0 md:-ml-32 lg:-ml-40 rotate-3 transition-all hover:rotate-0 hover:z-30 duration-500 group">
                <div className="aspect-[4/3] rounded-[2.5rem] sm:rounded-[3.5rem] overflow-hidden shadow-2xl border-4 sm:border-8 border-white bg-slate-200">
                  <img 
