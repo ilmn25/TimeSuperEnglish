@@ -35,6 +35,7 @@ import TeacherCourses from './pages/TeacherCourses';
 import TeacherCourseSchedule from './pages/TeacherCourseSchedule';
 import ContactUs from './pages/ContactUs';
 import AuthPage from './pages/AuthPage';
+import "./index.css"
 import HomePage from './pages/HomePage';
 import CounterAbout from './pages/CounterAbout';
 import { useTranslation } from 'react-i18next';
@@ -485,7 +486,12 @@ const App: React.FC = () => {
             <Route path="/about" element={<CounterAbout />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/login" element={user ? <Navigate to="/portal/admin/org" replace /> : <AuthPage />} />
-            
+
+            {/* Embedded Portal Entry Points */}
+            <Route path="/portal/parent" element={<Navigate to="/portal/parent/attendance" replace />} />
+            <Route path="/portal/teacher" element={<Navigate to="/portal/teacher/attendance" replace />} />
+            <Route path="/portal/admin" element={<Navigate to="/portal/admin/org" replace />} />
+
             {/* Admin Routes */}
             <Route path="/portal/admin/org" element={user ? <AdminOrgSelection /> : <Navigate to="/login" replace />} />
             <Route path="/portal/admin/org/:orgId/attendance" element={user ? <AdminAttendance /> : <Navigate to="/login" replace />} />
