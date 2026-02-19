@@ -168,7 +168,7 @@
     "choose_child": "Choose a child",
     "proposed_time": "Proposed Time",
     "optional_message": "Optional Message",
-    "academy_notes": "Any special notes for the academy...",
+    "academy_notes": "給學院的備註...",
     "available_slots": "Available Slots",
     "timeline_instruction": "Click on any block in the timeline to send a booking request for your child.",
     "only": "Only",
@@ -646,6 +646,7 @@
     "visit_us": "Visit Us",
     "whatsapp_btn": "WhatsApp Us",
     "facebook_btn": "Facebook",
+    "facebook_follow": "Follow Us",
     "email_btn": "Email Us"
   },
   "homepage": {

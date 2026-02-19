@@ -1,7 +1,7 @@
 export const IMAGES = {
-  HERO: "https://cdn.discordapp.com/attachments/643815263648612359/1472621492121374752/1.png?ex=69933d23&is=6991eba3&hm=9c117e982355fcaacaaa7e7e6e24783c80e8b17fee18adad71808f4d4b0307af&",
-  STUDENTS_GROUP: "https://media.discordapp.net/attachments/643815263648612359/1472621493509689620/3.png?ex=69933d24&is=6991eba4&hm=336ad56c8ee53a2254eb90640628f33d6de7e5da930102766f6160e68ac27b34&=&format=webp&quality=lossless&width=609&height=813",
-  LEARNING_ENVIRONMENT: "https://media.discordapp.net/attachments/643815263648612359/1472621494965108787/5.png?ex=69933d24&is=6991eba4&hm=3b45361a4c4a8820aa27599360e0f4d523cbc35dacbf375b2c82290c8ecca251&=&format=webp&quality=lossless&width=1084&height=813", 
-  ACTIVITY: "https://media.discordapp.net/attachments/643815263648612359/1472621495330144277/6.png?ex=69933d24&is=6991eba4&hm=12d2b8fecc8465d54c4bbdc8c2d6102bb988534a09ca528aafe3c49752f3b892&=&format=webp&quality=lossless&width=1084&height=813",
-  COMPUTER: "https://media.discordapp.net/attachments/643815263648612359/1472621494273183955/4.png?ex=69933d24&is=6991eba4&hm=4172016faab8c5347522846da06d37acc80607c397074ff338d95c138cfc3ad9&=&format=webp&quality=lossless&width=1200&height=800"
+  HERO: "https://github.com/ilmn25/TSE/blob/master/assets/1.png?raw=true",
+  STUDENTS_GROUP: "https://github.com/ilmn25/TSE/blob/master/assets/3.png?raw=true",
+  LEARNING_ENVIRONMENT: "https://github.com/ilmn25/TSE/blob/master/assets/2.png?raw=true", 
+  ACTIVITY: "https://github.com/ilmn25/TSE/blob/master/assets/5.png?raw=true", 
+  COMPUTER: "https://github.com/ilmn25/TSE/blob/master/assets/4.png?raw=true", 
 };

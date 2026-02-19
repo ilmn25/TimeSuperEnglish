@@ -557,7 +557,7 @@
     "title": "聯絡我們",
     "subtitle": "與我們的團隊聯絡",
     "location": "地點",
-    "location_val": "香港紅磡蕪湖街70-74號，潤達商業大廈，4C室",
+    "location_val": "香港紅磡蕪湖街70-74號，潤達商業大厦，4C室",
     "phone": "電話",
     "phone_val": "+852 9319 4533",
     "email": "電子郵件",
@@ -568,7 +568,8 @@
     "hero_italic": "對話。",
     "visit_us": "訪問我們",
     "whatsapp_btn": "WhatsApp 聯絡",
-    "facebook_btn": "Facebook 關注",
+    "facebook_btn": "Facebook",
+    "facebook_follow": "追蹤我們",
     "email_btn": "電郵聯絡"
   },
   "homepage": {
