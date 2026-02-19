@@ -486,7 +486,12 @@ const App: React.FC = () => {
             <Route path="/about" element={<CounterAbout />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/login" element={user ? <Navigate to="/portal/admin/org" replace /> : <AuthPage />} />
-            
+
+            {/* Embedded Portal Entry Points */}
+            <Route path="/portal/parent" element={<Navigate to="/portal/parent/attendance" replace />} />
+            <Route path="/portal/teacher" element={<Navigate to="/portal/teacher/attendance" replace />} />
+            <Route path="/portal/admin" element={<Navigate to="/portal/admin/org" replace />} />
+
             {/* Admin Routes */}
             <Route path="/portal/admin/org" element={user ? <AdminOrgSelection /> : <Navigate to="/login" replace />} />
             <Route path="/portal/admin/org/:orgId/attendance" element={user ? <AdminAttendance /> : <Navigate to="/login" replace />} />
