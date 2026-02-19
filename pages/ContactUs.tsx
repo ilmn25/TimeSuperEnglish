@@ -76,7 +76,7 @@ const ContactUs: React.FC = () => {
             </div>
             <div>
               <h4 className="text-sm font-black text-blue-900 leading-none">{t('contact_page.facebook_btn')}</h4>
-              <p className="text-blue-700/60 text-[9px] font-black uppercase tracking-widest mt-1.5">{t('status.accepted')}</p>
+              <p className="text-blue-700/60 text-[9px] font-black uppercase tracking-widest mt-1.5">{t('contact_page.facebook_follow')}</p>
             </div>
           </a>
 

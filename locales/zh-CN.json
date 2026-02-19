@@ -567,7 +567,7 @@
     "complete_title": "导入完成！",
     "complete_subtitle": "已成功同步 {{count}} 笔预约。",
     "view_bookings": "查看预约",
-    "error_file": "CSV 文件必须包含标题行和至少一个数据行。",
+    "error_file": "CSV 文件必须包含标题行 and 至少一个数据行。",
     "error_no_data": "CSV 中未找到有效的数据行。",
     "in_progress_title": "导入中",
     "warning_refresh": "在处理完成之前，请不要刷新或关闭此页面。",
@@ -645,7 +645,8 @@
     "hero_italic": "对话。",
     "visit_us": "访问我们",
     "whatsapp_btn": "WhatsApp 联系",
-    "facebook_btn": "Facebook 关注",
+    "facebook_btn": "Facebook",
+    "facebook_follow": "关注我们",
     "email_btn": "邮件联系"
   },
   "homepage": {
