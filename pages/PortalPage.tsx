@@ -6,8 +6,9 @@ interface PortalPageProps {
   role: 'parent' | 'teacher' | 'admin';
 }
 
-const PortalPage: React.FC<PortalPageProps> = ({ role }) => {
-  const portalUrl = `https://ilmn25.github.io/260131-web/#/portal/${role}`;
+const PortalPage: React.FC<PortalPageProps> = () => {
+  const org_id = '228a7079-75c9-4417-ab52-87b9a6d06f34';
+  const portalUrl = `https://ilmn25.github.io/260131-web/#/portal/${org_id}`;
 
   return (
     <div className="fixed inset-0 bg-white z-[9999] flex flex-col">
@@ -32,7 +33,7 @@ const PortalPage: React.FC<PortalPageProps> = ({ role }) => {
       <iframe 
         src={portalUrl}
         className="flex-1 w-full border-none"
-        title={`Counter ${role} Portal`}
+        title={`Counter Portal`}
         allow="camera; microphone; geolocation; clipboard-read; clipboard-write"
       />
     </div>
