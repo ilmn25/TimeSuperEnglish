@@ -116,7 +116,7 @@ const AdminAttendanceImport: React.FC = () => {
   };
   
   const handleGoToBackup = () => {
-    navigate(`/org/${orgId}/backup`);
+    navigate(`/portal/admin/org/${orgId}/backup`);
   };
   
   const handleCancelBackupDialog = () => {
@@ -381,7 +381,7 @@ const AdminAttendanceImport: React.FC = () => {
               <p className="text-slate-500 font-medium">{t('attendance_import_page.complete_subtitle', { count: resolvedAttendances.length })}</p>
             </div>
             <button 
-              onClick={() => navigate(`/org/${orgId}/attendance`)}
+              onClick={() => navigate(`/portal/admin/org/${orgId}/attendance`)}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest"
             >
               {t('attendance_import_page.view_attendances')}

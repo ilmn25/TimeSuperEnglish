@@ -44,7 +44,7 @@ const AdminOrgSelection: React.FC = () => {
   }, []);
 
   const handleOrgSelect = (orgId: string) => {
-    navigate(`/org/${orgId}/attendance`);
+    navigate(`/portal/admin/org/${orgId}/attendance`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -289,7 +290,7 @@ const PortalBookings: React.FC = () => {
         </div>
         <div className="flex items-center space-x-3">
           <button 
-            onClick={() => navigate('/portal/requests')}
+            onClick={() => navigate('/portal/parent/requests')}
             className="relative flex items-center space-x-2 px-6 py-2.5 bg-indigo-50 border-2 border-indigo-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-100 transition-all active:scale-95"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -301,7 +302,7 @@ const PortalBookings: React.FC = () => {
             )}
           </button>
           <Link 
-            to="/portal/courses"
+            to="/portal/parent/courses"
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-black shadow-lg shadow-indigo-100 transition-all active:scale-95 text-xs uppercase tracking-widest flex items-center"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M12 4v16m8-8H4" /></svg>
@@ -327,7 +328,7 @@ const PortalBookings: React.FC = () => {
             
             <div className="flex items-center space-x-2">
               <button onClick={() => setIsCalendarMaximized(!isCalendarMaximized)} className="p-1 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button onClick={handleSelectMonth} className="px-2 py-1 bg-slate-50 text-slate-600 rounded-lg text-[8px] font-black uppercase tracking-widest border border-slate-200 hover:bg-indigo-50 hover:border-indigo-200 transition-all">{t('bookings.select_month')}</button>
               <button onClick={clearFilters} className="px-2 py-1 bg-white text-slate-400 border border-slate-100 rounded-lg text-[8px] font-black uppercase tracking-widest hover:text-red-500 hover:bg-red-50 transition-all">{t('bookings.reset')}</button>

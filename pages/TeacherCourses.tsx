@@ -150,7 +150,7 @@ const TeacherCourses: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3 shrink-0">
                 <button 
-                  onClick={() => navigate(`/teacher/courses/${course.id}/schedule`)}
+                  onClick={() => navigate(`/portal/teacher/courses/${course.id}/schedule`)}
                   className="hidden md:block px-4 py-2 bg-slate-900 hover:bg-indigo-600 text-white font-black rounded-lg text-[8px] uppercase tracking-widest transition-all"
                 >
                   {t('courses.manage_schedule')}

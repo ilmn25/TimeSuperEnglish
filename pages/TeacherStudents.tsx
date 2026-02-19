@@ -102,7 +102,7 @@ const TeacherStudents: React.FC = () => {
               </div>
             </div>
             <button 
-               onClick={() => navigate(`/teacher/attendance?studentId=${student.id}`)}
+               onClick={() => navigate(`/portal/teacher/attendance?studentId=${student.id}`)}
                className="p-2 text-slate-300 hover:text-indigo-600 transition-colors"
             >
                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>

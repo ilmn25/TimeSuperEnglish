@@ -235,7 +235,7 @@ const AdminBookingRequests: React.FC = () => {
     <div className={`space-y-8 animate-in fade-in duration-500 pb-20 transition-all ${selectedRequestId ? 'xl:pr-[450px]' : ''}`}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center space-x-4">
-           <button onClick={() => navigate(`/org/${orgId}/bookings`)} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90 shadow-sm">
+           <button onClick={() => navigate(`/portal/admin/org/${orgId}/bookings`)} className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 transition-all active:scale-90 shadow-sm">
              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
            </button>
            <div>

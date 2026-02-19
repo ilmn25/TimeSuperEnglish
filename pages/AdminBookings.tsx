@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -251,7 +252,7 @@ const AdminBookings: React.FC = () => {
       // Time calc
       const [sH, sM] = booking.start.split(':').map(Number);
       const [eH, eM] = booking.end.split(':').map(Number);
-      totalMinutes += (eH * 60 + eM) - (sH * 60 + sM);
+      totalMinutes += (eH * 60 + (eM || 0)) - (sH * 60 + (sM || 0));
 
       const status = booking.calculatedStatus;
       if (status === 'green' || status === 'yellow') attendedCount++;
@@ -384,7 +385,7 @@ const AdminBookings: React.FC = () => {
 
   const handleExport = () => {
     if (!orgId) return;
-    navigate(`/org/${orgId}/export`, { 
+    navigate(`/portal/admin/org/${orgId}/export`, { 
       state: { 
         bookings: processedBookings
       } 
@@ -481,7 +482,7 @@ const AdminBookings: React.FC = () => {
         </div>
         <div className="flex items-center space-x-3">
           <button 
-            onClick={() => navigate(`/org/${orgId}/booking-requests`)}
+            onClick={() => navigate(`/portal/admin/org/${orgId}/booking-requests`)}
             className="relative flex items-center space-x-2 px-6 py-2.5 bg-indigo-50 border-2 border-indigo-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-100 transition-all active:scale-95"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -493,7 +494,7 @@ const AdminBookings: React.FC = () => {
             )}
           </button>
           <button 
-            onClick={() => navigate(`/org/${orgId}/import`)}
+            onClick={() => navigate(`/portal/admin/org/${orgId}/import`)}
             className="flex items-center space-x-2 px-6 py-2.5 bg-white border-2 border-slate-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 hover:border-indigo-100 hover:bg-indigo-50 transition-all active:scale-95"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4v12" /></svg>
@@ -537,7 +538,7 @@ const AdminBookings: React.FC = () => {
                 className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-all"
                 title={isCalendarMaximized ? t('common.minimize') : t('common.maximize')}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
               </button>
               <button 
                 onClick={handleSelectMonth}
@@ -701,7 +702,7 @@ const AdminBookings: React.FC = () => {
                 </div>
                 <select 
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
+                  onChange={(e) => setFilterStatus(e.target.value as any)}
                   className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-100 text-xs font-bold text-slate-700 transition-all appearance-none cursor-pointer"
                 >
                   <option value="">{t('bookings.all_statuses')}</option>

@@ -101,7 +101,7 @@ const AdminInvoiceDetail: React.FC = () => {
     return (
       <div className="text-center py-20">
         <h3 className="text-xl font-black text-slate-900">{t('invoices.not_found')}</h3>
-        <button onClick={() => navigate(`/org/${orgId}/invoices`)} className="mt-4 text-indigo-600 font-bold hover:underline">{t('invoices.back_to_list')}</button>
+        <button onClick={() => navigate(`/portal/admin/org/${orgId}/invoices`)} className="mt-4 text-indigo-600 font-bold hover:underline">{t('invoices.back_to_list')}</button>
       </div>
     );
   }
@@ -110,7 +110,7 @@ const AdminInvoiceDetail: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-500 pb-20">
       <div className="flex items-center justify-between">
         <button 
-          onClick={() => navigate(`/org/${orgId}/invoices`)}
+          onClick={() => navigate(`/portal/admin/org/${orgId}/invoices`)}
           className="flex items-center space-x-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>

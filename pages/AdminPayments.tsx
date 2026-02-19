@@ -178,7 +178,7 @@ const AdminPayments: React.FC = () => {
   };
 
   const navigateToCreateInvoice = (item: DerivedIssue) => {
-    navigate(`/org/${orgId}/invoices/new?studentId=${item.booking.student_id}&bookingId=${item.id}`);
+    navigate(`/portal/admin/org/${orgId}/invoices/new?studentId=${item.booking.student_id}&bookingId=${item.id}`);
   };
 
   const getAttendanceStyle = (status: AttendanceStatus) => {
@@ -330,7 +330,7 @@ const AdminPayments: React.FC = () => {
                                   {t('payments.reschedule')}
                                 </button>
                                 <button 
-                                  onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
+                                  onClick={() => navigate(`/portal/admin/org/${orgId}/invoices/${item.booking.invoice_id}`)}
                                   className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
                                 >
                                   {t('payments.refund_edit')}
@@ -364,7 +364,7 @@ const AdminPayments: React.FC = () => {
                             {/* CASE: ATTENDED + AWAITING */}
                             {item.attendanceStatus === 'attended' && item.invoiceStatus === 'awaiting_payment' && (
                               <button 
-                                onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
+                                onClick={() => navigate(`/portal/admin/org/${orgId}/invoices/${item.booking.invoice_id}`)}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm"
                               >
                                 {t('payments.view_invoice')}
@@ -379,7 +379,7 @@ const AdminPayments: React.FC = () => {
                               <button onClick={() => navigateToCreateInvoice(item)} disabled={isProcessing} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-50 hover:text-indigo-600 transition-all">{t('payments.pre_bill')}</button>
                             ) : (
                               <button 
-                                onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
+                                onClick={() => navigate(`/portal/admin/org/${orgId}/invoices/${item.booking.invoice_id}`)}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-sm"
                               >
                                 {t('payments.view_invoice')}
@@ -396,7 +396,7 @@ const AdminPayments: React.FC = () => {
 
                         {activeView === 'resolved' && (
                            <button 
-                             onClick={() => navigate(`/org/${orgId}/invoices/${item.booking.invoice_id}`)}
+                             onClick={() => navigate(`/portal/admin/org/${orgId}/invoices/${item.booking.invoice_id}`)}
                              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-sm"
                            >
                              {t('invoices.detail_title')}
