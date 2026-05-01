@@ -8,7 +8,7 @@ interface PortalPageProps {
 
 const PortalPage: React.FC<PortalPageProps> = () => {
   const org_id = '1e3ea358-4832-4337-b19a-fa83b9eabf28';
-  const portalUrl = `https://ilmn25.github.io/260131-web/#/portal/${org_id}`;
+  const portalUrl = `https://portfolio.ilmnn.net/Counter/#/portal/${org_id}`;
 
   return (
     <div className="fixed inset-0 bg-white z-[9999] flex flex-col">
